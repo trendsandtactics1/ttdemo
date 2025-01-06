@@ -13,9 +13,7 @@ interface AttendanceRecord {
   effectiveHours: number;
 }
 
-const SHEETS_API_KEY_STORAGE_KEY = 'sheets_api_key';
-const SHEET_ID = ''; // User needs to provide their Sheet ID
-const RANGE = 'A2:B'; // Adjust based on your sheet structure
+const SCRIPT_URL_STORAGE_KEY = 'apps_script_url';
 
 const calculateHours = (start: string, end: string): number => {
   const startTime = new Date(start).getTime();
@@ -57,28 +55,25 @@ const getSampleData = (): AttendanceRecord[] => {
 };
 
 const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
-  const apiKey = localStorage.getItem(SHEETS_API_KEY_STORAGE_KEY);
+  const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
   
-  if (!apiKey || !SHEET_ID) {
-    console.log('No API key or Sheet ID configured, returning sample data');
+  if (!scriptUrl) {
+    console.log('No Apps Script URL configured, returning sample data');
     return [];
   }
 
   try {
-    const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${apiKey}`
-    );
+    const response = await fetch(scriptUrl);
 
     if (!response.ok) {
       throw new Error('Failed to fetch attendance data');
     }
 
     const data = await response.json();
-    
-    return data.values?.map((row: string[]) => ({
-      employeeId: row[0],
-      timestamp: row[1],
-    })) || [];
+    return data.map((row: any) => ({
+      employeeId: row.employeeId,
+      timestamp: row.timestamp,
+    }));
   } catch (error) {
     console.error('Error fetching attendance data:', error);
     return [];
@@ -138,15 +133,11 @@ export const attendanceService = {
     return processAttendanceLogs(logs);
   },
   
-  setApiKey: (apiKey: string) => {
-    localStorage.setItem(SHEETS_API_KEY_STORAGE_KEY, apiKey);
+  setScriptUrl: (url: string) => {
+    localStorage.setItem(SCRIPT_URL_STORAGE_KEY, url);
   },
   
-  getApiKey: () => {
-    return localStorage.getItem(SHEETS_API_KEY_STORAGE_KEY);
-  },
-  
-  setSheetId: (sheetId: string) => {
-    localStorage.setItem('sheets_id', sheetId);
+  getScriptUrl: () => {
+    return localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
   }
 };

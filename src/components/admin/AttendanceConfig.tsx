@@ -5,38 +5,30 @@ import { attendanceService } from "@/services/attendanceService";
 import { useToast } from "@/components/ui/use-toast";
 
 const AttendanceConfig = () => {
-  const [apiKey, setApiKey] = useState(attendanceService.getApiKey() || '');
-  const [sheetId, setSheetId] = useState(localStorage.getItem('sheets_id') || '');
+  const [scriptUrl, setScriptUrl] = useState(attendanceService.getScriptUrl() || '');
   const { toast } = useToast();
 
   const handleSave = () => {
-    attendanceService.setApiKey(apiKey);
-    attendanceService.setSheetId(sheetId);
+    attendanceService.setScriptUrl(scriptUrl);
     toast({
       title: "Settings saved",
-      description: "Google Sheets configuration has been updated.",
+      description: "Google Apps Script configuration has been updated.",
     });
   };
 
   return (
     <div className="space-y-4 p-4 border rounded-lg">
-      <h3 className="text-lg font-semibold">Google Sheets Configuration</h3>
+      <h3 className="text-lg font-semibold">Google Apps Script Configuration</h3>
       <div className="space-y-2">
-        <label className="text-sm font-medium">API Key</label>
+        <label className="text-sm font-medium">Apps Script Web App URL</label>
         <Input
-          type="password"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder="Enter your Google Sheets API Key"
+          value={scriptUrl}
+          onChange={(e) => setScriptUrl(e.target.value)}
+          placeholder="Enter your Google Apps Script Web App URL"
         />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Sheet ID</label>
-        <Input
-          value={sheetId}
-          onChange={(e) => setSheetId(e.target.value)}
-          placeholder="Enter your Google Sheet ID"
-        />
+        <p className="text-sm text-muted-foreground">
+          Deploy your Apps Script as a web app and paste the URL here
+        </p>
       </div>
       <Button onClick={handleSave}>Save Configuration</Button>
     </div>
