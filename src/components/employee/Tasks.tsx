@@ -5,7 +5,6 @@ import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Task, localStorageService } from "@/services/localStorageService";
-import ProfileUpdateModal from "./ProfileUpdateModal";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -22,10 +21,7 @@ const Tasks = () => {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">My Tasks</h2>
-        <ProfileUpdateModal />
-      </div>
+      <h2 className="text-3xl font-bold tracking-tight">My Tasks</h2>
       <div className="grid gap-4">
         {tasks.length === 0 ? (
           <Card>
