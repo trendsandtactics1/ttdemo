@@ -24,10 +24,18 @@ const Tasks = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setTasks(localStorageService.getTasks());
+    const sortedTasks = localStorageService.getTasks().sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    setTasks(sortedTasks);
+    
     const handleTasksUpdate = () => {
-      setTasks(localStorageService.getTasks());
+      const updatedTasks = localStorageService.getTasks().sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setTasks(updatedTasks);
     };
+    
     window.addEventListener('tasks-updated', handleTasksUpdate);
     return () => window.removeEventListener('tasks-updated', handleTasksUpdate);
   }, []);

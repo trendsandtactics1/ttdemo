@@ -10,7 +10,9 @@ const LeaveRequests = () => {
   const [requests, setRequests] = useState<any[]>([]);
 
   useEffect(() => {
-    const allRequests = leaveRequestService.getAllRequests();
+    const allRequests = leaveRequestService.getAllRequests().sort((a, b) => 
+      new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+    );
     setRequests(allRequests);
   }, []);
 

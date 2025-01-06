@@ -27,7 +27,11 @@ const Announcements = () => {
   useEffect(() => {
     const stored = localStorage.getItem("announcements");
     if (stored) {
-      setAnnouncements(JSON.parse(stored));
+      // Sort announcements in descending order by createdAt
+      const sortedAnnouncements = JSON.parse(stored).sort((a: Announcement, b: Announcement) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setAnnouncements(sortedAnnouncements);
     }
   }, []);
 
