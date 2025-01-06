@@ -7,6 +7,7 @@ export interface Employee {
   employeeId: string;
   designation: string;
   password: string;
+  profilePhoto?: string;
 }
 
 export interface Task {
@@ -57,6 +58,12 @@ export const localStorageService = {
     localStorageService.setTasks(updatedTasks);
   },
 
+  deleteTask: (taskId: string) => {
+    const tasks = localStorageService.getTasks();
+    const updatedTasks = tasks.filter(task => task.id !== taskId);
+    localStorageService.setTasks(updatedTasks);
+  },
+
   getEmployees: (): Employee[] => {
     const employees = localStorage.getItem(EMPLOYEES_KEY);
     return employees ? JSON.parse(employees) : [];
@@ -70,5 +77,21 @@ export const localStorageService = {
     };
     localStorage.setItem(EMPLOYEES_KEY, JSON.stringify([...employees, newEmployee]));
     return newEmployee;
+  },
+
+  updateEmployee: (employeeId: string, updates: Partial<Employee>) => {
+    const employees = localStorageService.getEmployees();
+    const updatedEmployees = employees.map(emp => 
+      emp.employeeId === employeeId ? { ...emp, ...updates } : emp
+    );
+    localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(updatedEmployees));
+    window.dispatchEvent(new Event('employees-updated'));
+  },
+
+  deleteEmployee: (employeeId: string) => {
+    const employees = localStorageService.getEmployees();
+    const updatedEmployees = employees.filter(emp => emp.employeeId !== employeeId);
+    localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(updatedEmployees));
+    window.dispatchEvent(new Event('employees-updated'));
   },
 };

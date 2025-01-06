@@ -24,6 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Trash2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const employeeSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -88,6 +90,15 @@ const Employees = () => {
     toast({
       title: "Success",
       description: "Employee added successfully",
+    });
+  };
+
+  const handleDeleteEmployee = (employeeId: string) => {
+    localStorageService.deleteEmployee(employeeId);
+    setEmployees(localStorageService.getEmployees());
+    toast({
+      title: "Success",
+      description: "Employee deleted successfully",
     });
   };
 
@@ -193,19 +204,36 @@ const Employees = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Profile</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Employee ID</TableHead>
                     <TableHead>Designation</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {employees.map((employee) => (
                     <TableRow key={employee.id}>
+                      <TableCell>
+                        <Avatar>
+                          <AvatarImage src={employee.profilePhoto} />
+                          <AvatarFallback>{employee.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
                       <TableCell>{employee.name}</TableCell>
                       <TableCell>{employee.email}</TableCell>
                       <TableCell>{employee.employeeId}</TableCell>
                       <TableCell>{employee.designation}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteEmployee(employee.employeeId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

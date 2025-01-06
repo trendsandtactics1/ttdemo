@@ -4,6 +4,7 @@ import EmployeeSidebar from "@/components/employee/EmployeeSidebar";
 import Tasks from "@/components/employee/Tasks";
 import LeaveRequest from "@/components/employee/LeaveRequest";
 import ViewAnnouncements from "@/components/employee/ViewAnnouncements";
+import EmployeeProfile from "@/components/employee/EmployeeProfile";
 
 const EmployeeDashboard = () => {
   return (
@@ -13,6 +14,7 @@ const EmployeeDashboard = () => {
         <main className="flex-1 p-6">
           <Routes>
             <Route path="/" element={<Tasks />} />
+            <Route path="/profile" element={<EmployeeProfile />} />
             <Route path="/leave-request" element={<LeaveRequest />} />
             <Route path="/announcements" element={<ViewAnnouncements />} />
           </Routes>

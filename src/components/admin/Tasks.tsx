@@ -48,6 +48,14 @@ const Tasks = () => {
     });
   };
 
+  const handleDeleteTask = (taskId: string) => {
+    localStorageService.deleteTask(taskId);
+    toast({
+      title: "Task Deleted",
+      description: "Task has been successfully deleted.",
+    });
+  };
+
   const filteredTasks = tasks
     .filter((task) => {
       const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,6 +168,13 @@ const Tasks = () => {
                       }
                     }}
                   />
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteTask(task.id)}
+                  >
+                    Delete
+                  </Button>
                 </div>
               </CardContent>
             </Card>
