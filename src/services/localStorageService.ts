@@ -8,9 +8,12 @@ export interface Task {
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;
+  dueDate: string;
+  assignedDate: string;
 }
 
 const TASKS_KEY = 'workstream_tasks';
+const EMPLOYEES_KEY = 'workstream_employees';
 
 export const localStorageService = {
   getTasks: (): Task[] => {
@@ -20,7 +23,6 @@ export const localStorageService = {
 
   setTasks: (tasks: Task[]) => {
     localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
-    // Dispatch custom event for real-time updates
     window.dispatchEvent(new Event('tasks-updated'));
   },
 
@@ -44,5 +46,15 @@ export const localStorageService = {
         : task
     );
     localStorageService.setTasks(updatedTasks);
+  },
+
+  getEmployees: () => {
+    const employees = localStorage.getItem(EMPLOYEES_KEY);
+    return employees ? JSON.parse(employees) : [];
+  },
+
+  addEmployee: (employee: { id: string; name: string }) => {
+    const employees = localStorageService.getEmployees();
+    localStorage.setItem(EMPLOYEES_KEY, JSON.stringify([...employees, employee]));
   },
 };
