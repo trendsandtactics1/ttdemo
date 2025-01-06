@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { Task, localStorageService } from "@/services/localStorageService";
+import { MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Initial load
@@ -28,6 +31,10 @@ const Tasks = () => {
       title: "Task Updated",
       description: "Task status has been successfully updated.",
     });
+  };
+
+  const handleChatClick = (taskId: string) => {
+    navigate(`/employee/tasks/${taskId}/chat`);
   };
 
   return (
@@ -76,6 +83,14 @@ const Tasks = () => {
                     onClick={() => handleStatusUpdate(task.id, 'completed')}
                   >
                     Complete
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleChatClick(task.id)}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Chat
                   </Button>
                 </div>
               </CardContent>
