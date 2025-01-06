@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CheckCircle, XCircle, ClipboardList } from "lucide-react";
 import { localStorageService } from "@/services/localStorageService";
 import { leaveRequestService } from "@/services/leaveRequestService";
+import AttendanceTable from "./AttendanceTable";
 
 const AdminHome = () => {
   const [stats, setStats] = useState([
@@ -118,6 +119,11 @@ const AdminHome = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+      
+      <div className="space-y-4">
+        <h3 className="text-2xl font-bold tracking-tight">Attendance Logs</h3>
+        <AttendanceTable />
       </div>
     </div>
   );
