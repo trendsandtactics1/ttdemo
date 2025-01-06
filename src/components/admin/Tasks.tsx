@@ -13,11 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Task, localStorageService } from "@/services/localStorageService";
+import { Task, Employee, localStorageService } from "@/services/localStorageService";
 import CreateTaskModal from "./CreateTaskModal";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
@@ -28,6 +29,7 @@ const Tasks = () => {
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     setTasks(sortedTasks);
+    setEmployees(localStorageService.getEmployees());
     
     const handleTasksUpdate = () => {
       const updatedTasks = localStorageService.getTasks().sort((a, b) => 
@@ -35,9 +37,17 @@ const Tasks = () => {
       );
       setTasks(updatedTasks);
     };
+
+    const handleEmployeesUpdate = () => {
+      setEmployees(localStorageService.getEmployees());
+    };
     
     window.addEventListener('tasks-updated', handleTasksUpdate);
-    return () => window.removeEventListener('tasks-updated', handleTasksUpdate);
+    window.addEventListener('employees-updated', handleEmployeesUpdate);
+    return () => {
+      window.removeEventListener('tasks-updated', handleTasksUpdate);
+      window.removeEventListener('employees-updated', handleEmployeesUpdate);
+    };
   }, []);
 
   const handleStatusUpdate = (taskId: string, newStatus: Task['status']) => {
@@ -48,8 +58,8 @@ const Tasks = () => {
     });
   };
 
-  const handleReassign = (taskId: string, newAssignee: string) => {
-    localStorageService.updateTask(taskId, { assignedTo: newAssignee });
+  const handleReassign = (taskId: string, newAssigneeId: string) => {
+    localStorageService.updateTask(taskId, { assignedTo: newAssigneeId });
     toast({
       title: "Task Reassigned",
       description: "Task has been successfully reassigned.",
@@ -134,6 +144,24 @@ const Tasks = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">{task.description}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Due Date</p>
+                    <p>{new Date(task.dueDate).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Assigned Date</p>
+                    <p>{new Date(task.assignedDate).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Created At</p>
+                    <p>{new Date(task.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
+                    <p>{new Date(task.updatedAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
                     variant="outline"
@@ -156,26 +184,21 @@ const Tasks = () => {
                       <SelectItem value="completed">Completed</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input
-                    placeholder="Reassign to..."
-                    className="w-[140px]"
-                    onBlur={(e) => {
-                      if (e.target.value) {
-                        handleReassign(task.id, e.target.value);
-                        e.target.value = '';
-                      }
-                    }}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        const input = e.target as HTMLInputElement;
-                        if (input.value) {
-                          handleReassign(task.id, input.value);
-                          input.value = '';
-                          input.blur();
-                        }
-                      }
-                    }}
-                  />
+                  <Select
+                    onValueChange={(value) => handleReassign(task.id, value)}
+                    defaultValue={task.assignedTo}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Reassign to..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {employees.map((employee) => (
+                        <SelectItem key={employee.id} value={employee.id}>
+                          {employee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Button
                     variant="destructive"
                     size="sm"
