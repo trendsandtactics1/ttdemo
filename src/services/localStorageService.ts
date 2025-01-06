@@ -1,5 +1,14 @@
 export type TaskStatus = 'pending' | 'in-progress' | 'completed';
 
+export interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  employeeId: string;
+  designation: string;
+  password: string;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -48,13 +57,18 @@ export const localStorageService = {
     localStorageService.setTasks(updatedTasks);
   },
 
-  getEmployees: () => {
+  getEmployees: (): Employee[] => {
     const employees = localStorage.getItem(EMPLOYEES_KEY);
     return employees ? JSON.parse(employees) : [];
   },
 
-  addEmployee: (employee: { id: string; name: string }) => {
+  addEmployee: (employee: Omit<Employee, 'id'>) => {
     const employees = localStorageService.getEmployees();
-    localStorage.setItem(EMPLOYEES_KEY, JSON.stringify([...employees, employee]));
+    const newEmployee: Employee = {
+      ...employee,
+      id: crypto.randomUUID(),
+    };
+    localStorage.setItem(EMPLOYEES_KEY, JSON.stringify([...employees, newEmployee]));
+    return newEmployee;
   },
 };
