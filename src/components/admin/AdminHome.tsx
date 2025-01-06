@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CheckCircle, XCircle, ClipboardList } from "lucide-react";
 import { localStorageService } from "@/services/localStorageService";
+import { leaveRequestService } from "@/services/leaveRequestService";
 
 const AdminHome = () => {
   const [stats, setStats] = useState([
@@ -35,11 +36,27 @@ const AdminHome = () => {
     const updateStats = () => {
       const employees = localStorageService.getEmployees();
       const tasks = localStorageService.getTasks();
+      const leaveRequests = leaveRequestService.getAllRequests();
       const pendingTasks = tasks.filter(task => task.status === 'pending').length;
       const totalEmployees = employees.length;
-      // Mock present/absent for demo
-      const presentToday = Math.floor(totalEmployees * 0.85);
-      const absentToday = totalEmployees - presentToday;
+
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Count approved leave requests for today
+      const approvedLeavesToday = leaveRequests.filter(request => {
+        const startDate = new Date(request.startDate).toISOString().split('T')[0];
+        const endDate = new Date(request.endDate).toISOString().split('T')[0];
+        return (
+          request.status === 'approved' &&
+          today >= startDate &&
+          today <= endDate
+        );
+      }).length;
+
+      // Calculate present and absent counts
+      const absentToday = approvedLeavesToday;
+      const presentToday = totalEmployees - absentToday;
       
       setStats([
         {
@@ -72,10 +89,12 @@ const AdminHome = () => {
     updateStats();
     window.addEventListener('employees-updated', updateStats);
     window.addEventListener('tasks-updated', updateStats);
+    window.addEventListener('leave-requests-updated', updateStats);
     
     return () => {
       window.removeEventListener('employees-updated', updateStats);
       window.removeEventListener('tasks-updated', updateStats);
+      window.removeEventListener('leave-requests-updated', updateStats);
     };
   }, []);
 
