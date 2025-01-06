@@ -25,7 +25,7 @@ const AdminSidebar = () => {
 
   const menuItems = [
     { title: "Dashboard", path: "/admin", icon: LayoutDashboard },
-    { title: "Attendance", path: "/admin/attendance", icon: Calendar, disabled: true },
+    { title: "Attendance", path: "/admin/attendance", icon: Calendar },
     { title: "Leave Requests", path: "/admin/leave-requests", icon: ClipboardList },
     { title: "Tasks", path: "/admin/tasks", icon: ClipboardList },
     { title: "Employees", path: "/admin/employees", icon: Users },
