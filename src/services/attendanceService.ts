@@ -13,18 +13,43 @@ interface AttendanceRecord {
   effectiveHours: number;
 }
 
-// Mock data - replace with Google Sheets API call later
-const mockCheckInLogs: CheckInLog[] = [
-  { employeeId: "1", timestamp: "2024-03-20 09:00:00" },
-  { employeeId: "1", timestamp: "2024-03-20 11:30:00" },
-  { employeeId: "1", timestamp: "2024-03-20 12:30:00" },
-  { employeeId: "1", timestamp: "2024-03-20 17:00:00" },
-];
+const SHEETS_API_KEY_STORAGE_KEY = 'sheets_api_key';
+const SHEET_ID = ''; // User needs to provide their Sheet ID
+const RANGE = 'A2:B'; // Adjust based on your sheet structure
 
 const calculateHours = (start: string, end: string): number => {
   const startTime = new Date(start).getTime();
   const endTime = new Date(end).getTime();
   return (endTime - startTime) / (1000 * 60 * 60); // Convert to hours
+};
+
+const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
+  const apiKey = localStorage.getItem(SHEETS_API_KEY_STORAGE_KEY);
+  
+  if (!apiKey || !SHEET_ID) {
+    console.error('Google Sheets API key or Sheet ID not configured');
+    return [];
+  }
+
+  try {
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${apiKey}`
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch attendance data');
+    }
+
+    const data = await response.json();
+    
+    return data.values?.map((row: string[]) => ({
+      employeeId: row[0],
+      timestamp: row[1],
+    })) || [];
+  } catch (error) {
+    console.error('Error fetching attendance data:', error);
+    return [];
+  }
 };
 
 const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] => {
@@ -71,8 +96,20 @@ const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] => {
 };
 
 export const attendanceService = {
-  getAttendanceLogs: () => {
-    // Mock implementation - replace with actual Google Sheets API call
-    return processAttendanceLogs(mockCheckInLogs);
+  getAttendanceLogs: async () => {
+    const logs = await fetchCheckInLogs();
+    return processAttendanceLogs(logs);
+  },
+  
+  setApiKey: (apiKey: string) => {
+    localStorage.setItem(SHEETS_API_KEY_STORAGE_KEY, apiKey);
+  },
+  
+  getApiKey: () => {
+    return localStorage.getItem(SHEETS_API_KEY_STORAGE_KEY);
+  },
+  
+  setSheetId: (sheetId: string) => {
+    localStorage.setItem('sheets_id', sheetId);
   }
 };
