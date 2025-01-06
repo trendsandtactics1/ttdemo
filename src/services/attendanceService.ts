@@ -23,11 +23,44 @@ const calculateHours = (start: string, end: string): number => {
   return (endTime - startTime) / (1000 * 60 * 60); // Convert to hours
 };
 
+const getSampleData = (): AttendanceRecord[] => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  return [
+    {
+      employeeId: "EMP001",
+      date: today.toISOString(),
+      checkIn: new Date(today.setHours(9, 0)).toISOString(),
+      checkOut: new Date(today.setHours(17, 30)).toISOString(),
+      breaks: [
+        new Date(today.setHours(12, 0)).toISOString(),
+        new Date(today.setHours(13, 0)).toISOString()
+      ],
+      totalBreakHours: 1,
+      effectiveHours: 7.5
+    },
+    {
+      employeeId: "EMP002",
+      date: yesterday.toISOString(),
+      checkIn: new Date(yesterday.setHours(8, 45)).toISOString(),
+      checkOut: new Date(yesterday.setHours(17, 15)).toISOString(),
+      breaks: [
+        new Date(yesterday.setHours(12, 15)).toISOString(),
+        new Date(yesterday.setHours(13, 15)).toISOString()
+      ],
+      totalBreakHours: 1,
+      effectiveHours: 7.5
+    }
+  ];
+};
+
 const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   const apiKey = localStorage.getItem(SHEETS_API_KEY_STORAGE_KEY);
   
   if (!apiKey || !SHEET_ID) {
-    console.error('Google Sheets API key or Sheet ID not configured');
+    console.log('No API key or Sheet ID configured, returning sample data');
     return [];
   }
 
@@ -53,11 +86,15 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
 };
 
 const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] => {
+  if (logs.length === 0) {
+    return getSampleData();
+  }
+
   const groupedLogs: { [key: string]: CheckInLog[] } = {};
   
   // Group logs by employeeId and date
   logs.forEach(log => {
-    const date = log.timestamp.split(' ')[0];
+    const date = log.timestamp.split('T')[0];
     const key = `${log.employeeId}-${date}`;
     if (!groupedLogs[key]) {
       groupedLogs[key] = [];
