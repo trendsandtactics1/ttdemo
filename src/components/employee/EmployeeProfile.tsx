@@ -6,9 +6,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { localStorageService } from "@/services/localStorageService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
+import { Employee } from "@/services/localStorageService";
 
 const EmployeeProfile = () => {
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<Partial<Employee>>({
     name: "",
     email: "",
     employeeId: "",
@@ -22,7 +23,10 @@ const EmployeeProfile = () => {
     // In a real app, this would come from auth context
     const currentEmployee = employees[0];
     if (currentEmployee) {
-      setProfile(currentEmployee);
+      setProfile({
+        ...currentEmployee,
+        profilePhoto: currentEmployee.profilePhoto || "",
+      });
     }
   }, []);
 
@@ -38,9 +42,11 @@ const EmployeeProfile = () => {
     }
   };
 
-  const handleUpdateProfile = (updates: Partial<typeof profile>) => {
+  const handleUpdateProfile = (updates: Partial<Employee>) => {
+    if (!profile.employeeId) return;
+    
     const updatedProfile = { ...profile, ...updates };
-    localStorageService.updateEmployee(profile.employeeId, updatedProfile);
+    localStorageService.updateEmployee(profile.employeeId, updatedProfile as Employee);
     setProfile(updatedProfile);
     toast({
       title: "Success",
@@ -80,14 +86,14 @@ const EmployeeProfile = () => {
           <div className="grid gap-4">
             <div>
               <Input
-                value={profile.name}
+                value={profile.name || ""}
                 onChange={(e) => handleUpdateProfile({ name: e.target.value })}
                 placeholder="Name"
               />
             </div>
             <div>
               <Input
-                value={profile.email}
+                value={profile.email || ""}
                 onChange={(e) => handleUpdateProfile({ email: e.target.value })}
                 placeholder="Email"
                 type="email"
@@ -95,7 +101,7 @@ const EmployeeProfile = () => {
             </div>
             <div>
               <Input
-                value={profile.designation}
+                value={profile.designation || ""}
                 onChange={(e) =>
                   handleUpdateProfile({ designation: e.target.value })
                 }
@@ -103,7 +109,7 @@ const EmployeeProfile = () => {
               />
             </div>
             <div>
-              <Input value={profile.employeeId} disabled placeholder="Employee ID" />
+              <Input value={profile.employeeId || ""} disabled placeholder="Employee ID" />
             </div>
           </div>
         </CardContent>
