@@ -3,32 +3,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { leaveRequestService } from "@/services/leaveRequestService";
 
 const LeaveRequests = () => {
-  // Simulated data - replace with actual data fetching
-  const requests = [
-    {
-      id: 1,
-      employee: "John Doe",
-      type: "Vacation",
-      startDate: "2024-03-20",
-      endDate: "2024-03-25",
-      reason: "Annual leave",
-      status: "pending"
-    },
-    {
-      id: 2,
-      employee: "Jane Smith",
-      type: "Sick Leave",
-      startDate: "2024-03-18",
-      endDate: "2024-03-19",
-      reason: "Medical appointment",
-      status: "approved"
-    }
-  ];
+  const [requests, setRequests] = useState<any[]>([]);
 
-  const handleStatusUpdate = (id: number, newStatus: string) => {
-    // Simulated status update - replace with actual API call
+  useEffect(() => {
+    const allRequests = leaveRequestService.getAllRequests();
+    setRequests(allRequests);
+  }, []);
+
+  const handleStatusUpdate = (id: number, newStatus: "approved" | "rejected") => {
+    const updatedRequests = leaveRequestService.updateRequestStatus(id, newStatus);
+    setRequests(updatedRequests);
     toast.success(`Leave request ${newStatus}`);
   };
 

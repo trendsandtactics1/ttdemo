@@ -6,24 +6,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { leaveRequestService } from "@/services/leaveRequestService";
 
 const LeaveRequest = () => {
-  const [requests, setRequests] = useState([
-    {
-      id: 1,
-      type: "Vacation",
-      startDate: "2024-03-20",
-      endDate: "2024-03-25",
-      reason: "Annual leave",
-      status: "pending"
-    }
-  ]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    type: "",
+    startDate: "",
+    endDate: "",
+    reason: ""
+  });
+
+  useEffect(() => {
+    // In a real app, we'd get the employee ID from auth
+    const employeeRequests = leaveRequestService.getAllRequests();
+    setRequests(employeeRequests);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulated form submission - replace with actual API call
+    const newRequest = leaveRequestService.addRequest(formData);
+    setRequests(prev => [...prev, newRequest]);
+    setFormData({ type: "", startDate: "", endDate: "", reason: "" });
     toast.success("Leave request submitted successfully");
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
   };
 
   const getStatusBadge = (status: string) => {
@@ -39,37 +50,59 @@ const LeaveRequest = () => {
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Leave Request</h2>
       
-      {/* Submit Leave Request Form */}
       <Card>
         <CardHeader>
           <CardTitle>Submit Leave Request</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="type">Leave Type</Label>
-                <Input id="type" placeholder="e.g., Vacation, Sick Leave" required />
+                <Input 
+                  id="type" 
+                  placeholder="e.g., Vacation, Sick Leave" 
+                  required 
+                  value={formData.type}
+                  onChange={handleInputChange}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="startDate">Start Date</Label>
-                <Input id="startDate" type="date" required />
+                <Input 
+                  id="startDate" 
+                  type="date" 
+                  required 
+                  value={formData.startDate}
+                  onChange={handleInputChange}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endDate">End Date</Label>
-                <Input id="endDate" type="date" required />
+                <Input 
+                  id="endDate" 
+                  type="date" 
+                  required 
+                  value={formData.endDate}
+                  onChange={handleInputChange}
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="reason">Reason</Label>
-              <Textarea id="reason" placeholder="Please provide a reason for your leave request" required />
+              <Textarea 
+                id="reason" 
+                placeholder="Please provide a reason for your leave request" 
+                required 
+                value={formData.reason}
+                onChange={handleInputChange}
+              />
             </div>
             <Button type="submit">Submit Request</Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Leave Request History */}
       <Card>
         <CardHeader>
           <CardTitle>My Leave Requests</CardTitle>
