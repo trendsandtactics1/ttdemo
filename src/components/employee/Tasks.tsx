@@ -1,46 +1,31 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
-import { Task, localStorageService } from "@/services/localStorageService";
-import { MessageCircle } from "lucide-react";
+import { MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Task, localStorageService } from "@/services/localStorageService";
+import ProfileUpdateModal from "./ProfileUpdateModal";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Initial load
     setTasks(localStorageService.getTasks());
-
-    // Listen for updates
     const handleTasksUpdate = () => {
       setTasks(localStorageService.getTasks());
     };
-
     window.addEventListener('tasks-updated', handleTasksUpdate);
     return () => window.removeEventListener('tasks-updated', handleTasksUpdate);
   }, []);
 
-  const handleStatusUpdate = (taskId: string, newStatus: Task['status']) => {
-    localStorageService.updateTask(taskId, { status: newStatus });
-    toast({
-      title: "Task Updated",
-      description: "Task status has been successfully updated.",
-    });
-  };
-
-  const handleChatClick = (taskId: string) => {
-    navigate(`/employee/tasks/${taskId}/chat`);
-  };
-
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <h2 className="text-3xl font-bold tracking-tight">My Tasks</h2>
-
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold tracking-tight">My Tasks</h2>
+        <ProfileUpdateModal />
+      </div>
       <div className="grid gap-4">
         {tasks.length === 0 ? (
           <Card>
@@ -69,28 +54,14 @@ const Tasks = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">{task.description}</p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleStatusUpdate(task.id, 'in-progress')}
+                    onClick={() => navigate(`/employee/tasks/${task.id}/chat`)}
                   >
-                    Start Progress
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStatusUpdate(task.id, 'completed')}
-                  >
-                    Complete
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleChatClick(task.id)}
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Chat
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Chat with Manager
                   </Button>
                 </div>
               </CardContent>

@@ -1,34 +1,83 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CheckCircle, XCircle, ClipboardList } from "lucide-react";
+import { localStorageService } from "@/services/localStorageService";
 
 const AdminHome = () => {
-  // Mock data - in a real app, this would come from an API
-  const stats = [
+  const [stats, setStats] = useState([
     {
       title: "Total Employees",
-      value: "150",
+      value: "0",
       icon: Users,
       description: "Active employees",
     },
     {
       title: "Present Today",
-      value: "132",
+      value: "0",
       icon: CheckCircle,
-      description: "88% attendance",
+      description: "Attendance rate",
     },
     {
       title: "Absent Today",
-      value: "18",
+      value: "0",
       icon: XCircle,
-      description: "12% absence rate",
+      description: "Absence rate",
     },
     {
       title: "Pending Tasks",
-      value: "24",
+      value: "0",
       icon: ClipboardList,
       description: "Due this week",
     },
-  ];
+  ]);
+
+  useEffect(() => {
+    const updateStats = () => {
+      const employees = localStorageService.getEmployees();
+      const tasks = localStorageService.getTasks();
+      const pendingTasks = tasks.filter(task => task.status === 'pending').length;
+      const totalEmployees = employees.length;
+      // Mock present/absent for demo
+      const presentToday = Math.floor(totalEmployees * 0.85);
+      const absentToday = totalEmployees - presentToday;
+      
+      setStats([
+        {
+          title: "Total Employees",
+          value: totalEmployees.toString(),
+          icon: Users,
+          description: "Active employees",
+        },
+        {
+          title: "Present Today",
+          value: presentToday.toString(),
+          icon: CheckCircle,
+          description: `${Math.round((presentToday/totalEmployees || 0) * 100)}% attendance`,
+        },
+        {
+          title: "Absent Today",
+          value: absentToday.toString(),
+          icon: XCircle,
+          description: `${Math.round((absentToday/totalEmployees || 0) * 100)}% absence rate`,
+        },
+        {
+          title: "Pending Tasks",
+          value: pendingTasks.toString(),
+          icon: ClipboardList,
+          description: "Due this week",
+        },
+      ]);
+    };
+
+    updateStats();
+    window.addEventListener('employees-updated', updateStats);
+    window.addEventListener('tasks-updated', updateStats);
+    
+    return () => {
+      window.removeEventListener('employees-updated', updateStats);
+      window.removeEventListener('tasks-updated', updateStats);
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
