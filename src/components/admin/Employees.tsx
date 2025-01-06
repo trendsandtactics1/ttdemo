@@ -50,6 +50,16 @@ const Employees = () => {
   });
 
   const onSubmit = (data: EmployeeFormData) => {
+    // Ensure all required fields are present before adding employee
+    if (!data.name || !data.email || !data.employeeId || !data.designation || !data.password) {
+      toast({
+        title: "Error",
+        description: "All fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const existingEmployee = employees.find(
       (emp) => emp.email === data.email || emp.employeeId === data.employeeId
     );
@@ -63,7 +73,15 @@ const Employees = () => {
       return;
     }
 
-    const newEmployee = localStorageService.addEmployee(data);
+    // Now we know all required fields are present
+    const newEmployee = localStorageService.addEmployee({
+      name: data.name,
+      email: data.email,
+      employeeId: data.employeeId,
+      designation: data.designation,
+      password: data.password,
+    });
+    
     setEmployees([...employees, newEmployee]);
     form.reset();
 
