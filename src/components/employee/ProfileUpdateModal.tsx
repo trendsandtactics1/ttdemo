@@ -27,7 +27,7 @@ const ProfileUpdateModal = () => {
     if (currentEmployee) {
       setProfile(currentEmployee);
     }
-  }, []);
+  }, [open]); // Refresh profile data when modal opens
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,29 +35,30 @@ const ProfileUpdateModal = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        handleUpdateProfile({ profilePhoto: base64String });
+        setProfile(prev => ({ ...prev, profilePhoto: base64String }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleUpdateProfile = (updates: Partial<Employee>) => {
+  const handleUpdateProfile = () => {
     if (!profile.employeeId) return;
     
-    const updatedProfile = { ...profile, ...updates };
-    localStorageService.updateEmployee(profile.employeeId, updatedProfile as Employee);
-    setProfile(updatedProfile);
+    localStorageService.updateEmployee(profile.employeeId, profile as Employee);
     toast({
       title: "Success",
       description: "Profile updated successfully",
     });
     setOpen(false);
+    
+    // Dispatch an event to notify other components of the update
+    window.dispatchEvent(new Event('profile-updated'));
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="ghost" className="w-full justify-start">
           <User className="h-4 w-4 mr-2" />
           Update Profile
         </Button>
@@ -93,7 +94,7 @@ const ProfileUpdateModal = () => {
             <Input
               id="name"
               value={profile.name || ""}
-              onChange={(e) => handleUpdateProfile({ name: e.target.value })}
+              onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Your name"
             />
           </div>
@@ -103,7 +104,7 @@ const ProfileUpdateModal = () => {
               id="email"
               type="email"
               value={profile.email || ""}
-              onChange={(e) => handleUpdateProfile({ email: e.target.value })}
+              onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
               placeholder="Your email"
             />
           </div>
@@ -112,7 +113,7 @@ const ProfileUpdateModal = () => {
             <Input
               id="designation"
               value={profile.designation || ""}
-              onChange={(e) => handleUpdateProfile({ designation: e.target.value })}
+              onChange={(e) => setProfile(prev => ({ ...prev, designation: e.target.value }))}
               placeholder="Your designation"
             />
           </div>
@@ -125,6 +126,9 @@ const ProfileUpdateModal = () => {
               placeholder="Employee ID"
             />
           </div>
+          <Button onClick={handleUpdateProfile} className="w-full">
+            Save Changes
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

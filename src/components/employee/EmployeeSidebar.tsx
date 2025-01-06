@@ -4,6 +4,7 @@ import {
   Calendar,
   Bell,
   LogOut,
+  User,
 } from "lucide-react";
 import {
   Sidebar,
@@ -15,6 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import ProfileUpdateModal from "./ProfileUpdateModal";
 
 const EmployeeSidebar = () => {
   const navigate = useNavigate();
@@ -50,6 +52,9 @@ const EmployeeSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <ProfileUpdateModal />
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
