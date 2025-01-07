@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { AttendanceRecord } from "@/services/attendance/types";
+import { formatHoursToHHMM } from "@/utils/timeFormat";
 
 interface AttendanceDetailsModalProps {
   log: AttendanceRecord | null;
@@ -73,11 +74,11 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
                 </div>
                 <div>
                   <h4 className="font-semibold">Total Break Hours</h4>
-                  <p>{log.totalBreakHours.toFixed(2)} hrs</p>
+                  <p>{formatHoursToHHMM(log.totalBreakHours)}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold">Effective Hours</h4>
-                  <p>{log.effectiveHours.toFixed(2)} hrs</p>
+                  <p>{formatHoursToHHMM(log.effectiveHours)}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold">Status</h4>
