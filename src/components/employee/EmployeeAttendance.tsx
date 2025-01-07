@@ -18,9 +18,7 @@ const EmployeeAttendance = () => {
 
   useEffect(() => {
     const fetchLogs = async () => {
-      setIsLoading(true);
       try {
-        // Get current user from session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
 
@@ -29,12 +27,10 @@ const EmployeeAttendance = () => {
           return;
         }
 
-        const currentUser = session.user;
-
         const { data: userProfile, error: profileError } = await supabase
           .from('profiles')
           .select('employee_id')
-          .eq('id', currentUser.id)
+          .eq('id', session.user.id)
           .maybeSingle();
 
         if (profileError) {
