@@ -6,11 +6,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { attendanceService } from "@/services/attendanceService";
 import { useEffect, useState } from "react";
 import AttendanceConfig from "./AttendanceConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface EmployeeAttendance {
   employeeId: string;
@@ -62,7 +63,32 @@ const AttendanceTable = () => {
   }, []);
 
   const formatTime = (dateTimeString: string) => {
-    return format(new Date(dateTimeString), "hh:mm a");
+    try {
+      const date = parseISO(dateTimeString);
+      return format(date, "hh:mm a");
+    } catch (error) {
+      console.error("Error formatting time:", error);
+      return "Invalid time";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return format(date, "MMM dd, yyyy");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
+  };
+
+  const getAttendanceStatus = (effectiveHours: number) => {
+    if (effectiveHours >= 8) {
+      return <Badge className="bg-green-500">Full Day</Badge>;
+    } else if (effectiveHours > 0) {
+      return <Badge className="bg-yellow-500">Partial Day</Badge>;
+    }
+    return <Badge className="bg-red-500">Absent</Badge>;
   };
 
   if (loading) {
@@ -76,8 +102,8 @@ const AttendanceTable = () => {
       {employeeAttendance.map((employee) => (
         <Card key={employee.employeeId} className="mt-4">
           <CardHeader>
-            <CardTitle>
-              {employee.employeeName} (ID: {employee.employeeId})
+            <CardTitle className="flex items-center justify-between">
+              <span>{employee.employeeName} (ID: {employee.employeeId})</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -90,18 +116,18 @@ const AttendanceTable = () => {
                     <TableHead>Check Out</TableHead>
                     <TableHead>Break Hours</TableHead>
                     <TableHead>Effective Hours</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {employee.logs.map((log, index) => (
                     <TableRow key={index}>
-                      <TableCell>
-                        {format(new Date(log.date), "MMM dd, yyyy")}
-                      </TableCell>
+                      <TableCell>{formatDate(log.date)}</TableCell>
                       <TableCell>{formatTime(log.checkIn)}</TableCell>
                       <TableCell>{formatTime(log.checkOut)}</TableCell>
-                      <TableCell>{log.breakHours} hrs</TableCell>
-                      <TableCell>{log.effectiveHours} hrs</TableCell>
+                      <TableCell>{log.breakHours.toFixed(2)} hrs</TableCell>
+                      <TableCell>{log.effectiveHours.toFixed(2)} hrs</TableCell>
+                      <TableCell>{getAttendanceStatus(log.effectiveHours)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
