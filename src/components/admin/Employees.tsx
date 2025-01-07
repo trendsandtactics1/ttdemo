@@ -10,7 +10,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,7 +23,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -70,18 +69,42 @@ const Employees = () => {
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
       // 1. Create the user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        email_confirm: true,
-        user_metadata: {
-          name: data.name,
-          employeeId: data.employeeId,
-          role: 'EMPLOYEE',
+        options: {
+          data: {
+            name: data.name,
+            employeeId: data.employeeId,
+            role: 'EMPLOYEE',
+          },
         },
       });
 
       if (authError) throw authError;
+
+      // 2. Create the profile (this will be handled by the database trigger)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user!.id,
+          name: data.name,
+          email: data.email,
+          employee_id: data.employeeId,
+          position: data.designation,
+        });
+
+      if (profileError) throw profileError;
+
+      // 3. Create user role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user!.id,
+          role: 'EMPLOYEE',
+        });
+
+      if (roleError) throw roleError;
 
       return authData;
     },
