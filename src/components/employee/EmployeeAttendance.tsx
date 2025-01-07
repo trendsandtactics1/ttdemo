@@ -7,7 +7,6 @@ import AttendanceTable from "./attendance/AttendanceTable";
 import AttendanceDetailsModal from "./attendance/AttendanceDetailsModal";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
@@ -31,22 +30,12 @@ const EmployeeAttendance = () => {
       }
 
       try {
-        const { data: userProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('employee_id')
-          .eq('id', currentUser.id)
-          .single();
-
-        if (profileError) {
-          throw profileError;
-        }
-
         const allLogs = await attendanceService.getAttendanceLogs();
         console.log('All logs:', allLogs);
         console.log('Current user:', currentUser);
         
         const employeeLogs = allLogs
-          .filter(log => log.employeeId === userProfile.employee_id)
+          .filter(log => log.employeeId === currentUser.employeeId)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
         console.log('Filtered logs:', employeeLogs);
