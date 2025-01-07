@@ -7,6 +7,7 @@ import Tasks from "@/components/admin/Tasks";
 import TaskChat from "@/components/admin/TaskChat";
 import Employees from "@/components/admin/Employees";
 import Announcements from "@/components/admin/Announcements";
+import AttendanceTable from "@/components/admin/AttendanceTable";
 
 const AdminDashboard = () => {
   return (
@@ -16,6 +17,7 @@ const AdminDashboard = () => {
         <main className="flex-1 p-6">
           <Routes>
             <Route path="/" element={<AdminHome />} />
+            <Route path="/attendance" element={<AttendanceTable />} />
             <Route path="/leave-requests" element={<LeaveRequests />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/tasks/:taskId/chat" element={<TaskChat />} />

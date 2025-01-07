@@ -7,6 +7,7 @@ import Tasks from "@/components/admin/Tasks";
 import Employees from "@/components/admin/Employees";
 import Announcements from "@/components/admin/Announcements";
 import LeaveRequest from "@/components/employee/LeaveRequest";
+import ManagerAttendance from "@/components/manager/ManagerAttendance";
 
 const ManagerDashboard = () => {
   return (
@@ -16,6 +17,7 @@ const ManagerDashboard = () => {
         <main className="flex-1 p-6">
           <Routes>
             <Route path="/" element={<AdminHome />} />
+            <Route path="/attendance" element={<ManagerAttendance />} />
             <Route path="/leave-requests" element={<LeaveRequests />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/employees" element={<Employees />} />

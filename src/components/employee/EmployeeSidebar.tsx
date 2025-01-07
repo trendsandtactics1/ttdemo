@@ -23,7 +23,7 @@ const EmployeeSidebar = () => {
   const location = useLocation();
 
   const menuItems = [
-    { title: "Attendance", path: "/employee/attendance", icon: Calendar, disabled: true },
+    { title: "Attendance", path: "/employee/attendance", icon: Calendar },
     { title: "Tasks", path: "/employee", icon: ClipboardList },
     { title: "Leave Request", path: "/employee/leave-request", icon: ClipboardList },
     { title: "Announcements", path: "/employee/announcements", icon: Bell },
