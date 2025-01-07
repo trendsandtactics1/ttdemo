@@ -22,39 +22,6 @@ const calculateHours = (start: string, end: string): number => {
   return (endTime - startTime) / (1000 * 60 * 60); // Convert to hours
 };
 
-const getSampleData = (): AttendanceRecord[] => {
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  return [
-    {
-      employeeId: "EMP001",
-      date: today.toISOString(),
-      checkIn: new Date(today.setHours(9, 0)).toISOString(),
-      checkOut: new Date(today.setHours(17, 30)).toISOString(),
-      breaks: [
-        new Date(today.setHours(12, 0)).toISOString(),
-        new Date(today.setHours(13, 0)).toISOString()
-      ],
-      totalBreakHours: 1,
-      effectiveHours: 7.5
-    },
-    {
-      employeeId: "EMP002",
-      date: yesterday.toISOString(),
-      checkIn: new Date(yesterday.setHours(8, 45)).toISOString(),
-      checkOut: new Date(yesterday.setHours(17, 15)).toISOString(),
-      breaks: [
-        new Date(yesterday.setHours(12, 15)).toISOString(),
-        new Date(yesterday.setHours(13, 15)).toISOString()
-      ],
-      totalBreakHours: 1,
-      effectiveHours: 7.5
-    }
-  ];
-};
-
 const parseGoogleSheetJson = (text: string): CheckInLog[] => {
   try {
     // Remove Google's JSON API response prefix and suffix
@@ -106,6 +73,39 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   }
   
   return [];
+};
+
+const getSampleData = (): AttendanceRecord[] => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  return [
+    {
+      employeeId: "EMP001",
+      date: today.toISOString(),
+      checkIn: new Date(today.setHours(9, 0)).toISOString(),
+      checkOut: new Date(today.setHours(17, 30)).toISOString(),
+      breaks: [
+        new Date(today.setHours(12, 0)).toISOString(),
+        new Date(today.setHours(13, 0)).toISOString()
+      ],
+      totalBreakHours: 1,
+      effectiveHours: 7.5
+    },
+    {
+      employeeId: "EMP002",
+      date: yesterday.toISOString(),
+      checkIn: new Date(yesterday.setHours(8, 45)).toISOString(),
+      checkOut: new Date(yesterday.setHours(17, 15)).toISOString(),
+      breaks: [
+        new Date(yesterday.setHours(12, 15)).toISOString(),
+        new Date(yesterday.setHours(13, 15)).toISOString()
+      ],
+      totalBreakHours: 1,
+      effectiveHours: 7.5
+    }
+  ];
 };
 
 const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] => {
