@@ -16,8 +16,20 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Delete existing test users if they exist
+    const { data: existingUsers } = await supabaseClient
+      .from('profiles')
+      .select('id')
+      .in('email', ['admin@company.com', 'manager@company.com', 'employee@company.com']);
+
+    if (existingUsers && existingUsers.length > 0) {
+      for (const user of existingUsers) {
+        await supabaseClient.auth.admin.deleteUser(user.id);
+      }
+    }
+
     // Create HR Admin
-    await supabaseClient.auth.admin.createUser({
+    const { data: adminData, error: adminError } = await supabaseClient.auth.admin.createUser({
       email: 'admin@company.com',
       password: 'admin123',
       email_confirm: true,
@@ -29,8 +41,10 @@ Deno.serve(async (req) => {
       }
     })
 
+    if (adminError) throw adminError;
+
     // Create Manager
-    await supabaseClient.auth.admin.createUser({
+    const { data: managerData, error: managerError } = await supabaseClient.auth.admin.createUser({
       email: 'manager@company.com',
       password: 'manager123',
       email_confirm: true,
@@ -42,8 +56,10 @@ Deno.serve(async (req) => {
       }
     })
 
+    if (managerError) throw managerError;
+
     // Create Employee
-    await supabaseClient.auth.admin.createUser({
+    const { data: employeeData, error: employeeError } = await supabaseClient.auth.admin.createUser({
       email: 'employee@company.com',
       password: 'employee123',
       email_confirm: true,
@@ -55,14 +71,22 @@ Deno.serve(async (req) => {
       }
     })
 
+    if (employeeError) throw employeeError;
+
     return new Response(
-      JSON.stringify({ message: 'Test users created successfully' }),
+      JSON.stringify({ 
+        message: 'Test users created successfully',
+        admin: adminData,
+        manager: managerData,
+        employee: employeeData
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     )
   } catch (error) {
+    console.error('Error creating test users:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
