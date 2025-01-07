@@ -33,10 +33,35 @@ const parseGoogleSheetJson = (text: string): CheckInLog[] => {
       return [];
     }
 
-    return data.table.rows.map((row: any) => ({
-      employeeId: row.c[0]?.v?.toString() || '',
-      timestamp: new Date(row.c[1]?.v || '').toISOString()
-    })).filter((log: CheckInLog) => log.employeeId && log.timestamp);
+    return data.table.rows.map((row: any) => {
+      // Get the employee ID from the first column
+      const employeeId = row.c[0]?.v?.toString() || '';
+      
+      // Get the timestamp from the second column and convert it to ISO string
+      let timestamp;
+      const dateValue = row.c[1]?.v;
+      
+      if (typeof dateValue === 'number') {
+        // Convert Excel/Sheets date number to JavaScript date
+        // Excel dates are number of days since December 30, 1899
+        const date = new Date((dateValue - 25569) * 86400 * 1000);
+        timestamp = date.toISOString();
+      } else if (typeof dateValue === 'string') {
+        // If it's already a string, try to parse it
+        const date = new Date(dateValue);
+        timestamp = date.toISOString();
+      } else {
+        console.error('Invalid date format:', dateValue);
+        return null;
+      }
+
+      return {
+        employeeId,
+        timestamp
+      };
+    }).filter((log: CheckInLog | null): log is CheckInLog => 
+      log !== null && Boolean(log.employeeId) && Boolean(log.timestamp)
+    );
   } catch (error) {
     console.error('Error parsing Google Sheet data:', error);
     return [];
@@ -54,7 +79,7 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
 
   try {
     if (sheetId) {
-      // Direct Google Sheets approach - Fixed URL construction
+      // Direct Google Sheets approach
       const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
       const response = await fetch(url);
       if (!response.ok) {
