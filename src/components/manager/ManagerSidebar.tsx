@@ -18,13 +18,20 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+interface MenuItem {
+  title: string;
+  path: string;
+  icon: typeof LayoutDashboard;
+  disabled?: boolean;
+}
+
 const ManagerSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { title: "Dashboard", path: "/manager", icon: LayoutDashboard },
-    { title: "Attendance", path: "/manager/attendance", icon: Calendar, disabled: true },
+    { title: "Attendance", path: "/manager/attendance", icon: Calendar },
     { title: "Leave Requests", path: "/manager/leave-requests", icon: ClipboardList },
     { title: "Tasks", path: "/manager/tasks", icon: ClipboardList },
     { title: "Employees", path: "/manager/employees", icon: Users },

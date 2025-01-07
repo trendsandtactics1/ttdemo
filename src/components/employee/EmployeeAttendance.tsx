@@ -12,8 +12,19 @@ import { attendanceService } from "@/services/attendanceService";
 import { Badge } from "@/components/ui/badge";
 import { localStorageService } from "@/services/localStorageService";
 
+interface AttendanceRecord {
+  employeeId: string;
+  employeeName: string;
+  date: string;
+  checkIn: string;
+  checkOut: string;
+  breaks: string[];
+  totalBreakHours: number;
+  effectiveHours: number;
+}
+
 const EmployeeAttendance = () => {
-  const [attendanceLogs, setAttendanceLogs] = useState([]);
+  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const currentUser = localStorageService.getCurrentUser();
 
@@ -21,8 +32,10 @@ const EmployeeAttendance = () => {
     const fetchLogs = async () => {
       setLoading(true);
       const allLogs = await attendanceService.getAttendanceLogs();
-      // Filter logs for current employee
-      const employeeLogs = allLogs.filter(log => log.employeeId === currentUser?.id);
+      // Filter logs for current employee and sort by date in descending order
+      const employeeLogs = allLogs
+        .filter(log => log.employeeId === currentUser?.id)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setAttendanceLogs(employeeLogs);
       setLoading(false);
     };
