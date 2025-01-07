@@ -15,6 +15,32 @@ interface Message {
   timestamp: string;
 }
 
+interface SupabaseTask {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  assigned_to: string | null;
+  assigned_by: string | null;
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+const convertSupabaseTask = (supabaseTask: SupabaseTask): Task => {
+  return {
+    id: supabaseTask.id,
+    title: supabaseTask.title,
+    description: supabaseTask.description || "",
+    assignedTo: supabaseTask.assigned_to || "",
+    status: supabaseTask.status as Task["status"],
+    createdAt: supabaseTask.created_at,
+    updatedAt: supabaseTask.updated_at,
+    dueDate: supabaseTask.due_date || new Date().toISOString(),
+    assignedDate: supabaseTask.created_at, // Using created_at as assigned date
+  };
+};
+
 const TaskChat = () => {
   const { taskId } = useParams();
   const [task, setTask] = useState<Task | null>(null);
@@ -33,7 +59,9 @@ const TaskChat = () => {
           .single();
 
         if (error) throw error;
-        if (taskData) setTask(taskData as Task);
+        if (taskData) {
+          setTask(convertSupabaseTask(taskData as SupabaseTask));
+        }
 
         // Load messages from localStorage for now
         // TODO: Create messages table in Supabase
@@ -61,7 +89,7 @@ const TaskChat = () => {
         },
         (payload) => {
           if (payload.new) {
-            setTask(payload.new as Task);
+            setTask(convertSupabaseTask(payload.new as SupabaseTask));
           }
         }
       )
