@@ -14,6 +14,7 @@ interface AttendanceRecord {
 }
 
 const SCRIPT_URL_STORAGE_KEY = 'apps_script_url';
+const SHEET_ID_STORAGE_KEY = 'sheet_id';
 
 const calculateHours = (start: string, end: string): number => {
   const startTime = new Date(start).getTime();
@@ -54,30 +55,57 @@ const getSampleData = (): AttendanceRecord[] => {
   ];
 };
 
+const parseGoogleSheetJson = (text: string): CheckInLog[] => {
+  try {
+    // Remove Google's JSON API response prefix and suffix
+    const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+    const data = JSON.parse(jsonString);
+    
+    if (!data.table || !data.table.rows) {
+      console.error('Invalid Google Sheets data format');
+      return [];
+    }
+
+    return data.table.rows.map((row: any) => ({
+      employeeId: row.c[0]?.v?.toString() || '',
+      timestamp: new Date(row.c[1]?.v || '').toISOString()
+    })).filter((log: CheckInLog) => log.employeeId && log.timestamp);
+  } catch (error) {
+    console.error('Error parsing Google Sheet data:', error);
+    return [];
+  }
+};
+
 const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
+  const sheetId = localStorage.getItem(SHEET_ID_STORAGE_KEY);
   
-  if (!scriptUrl) {
-    console.log('No Apps Script URL configured, returning sample data');
+  if (!scriptUrl && !sheetId) {
+    console.log('No configuration found, returning sample data');
     return [];
   }
 
   try {
-    const response = await fetch(scriptUrl);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch attendance data');
+    if (sheetId) {
+      // Direct Google Sheets approach
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+      const response = await fetch(url);
+      const text = await response.text();
+      return parseGoogleSheetJson(text);
+    } else if (scriptUrl) {
+      // Apps Script approach
+      const response = await fetch(scriptUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendance data');
+      }
+      return await response.json();
     }
-
-    const data = await response.json();
-    return data.map((row: any) => ({
-      employeeId: row.employeeId,
-      timestamp: row.timestamp,
-    }));
   } catch (error) {
     console.error('Error fetching attendance data:', error);
     return [];
   }
+  
+  return [];
 };
 
 const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] => {
@@ -135,9 +163,19 @@ export const attendanceService = {
   
   setScriptUrl: (url: string) => {
     localStorage.setItem(SCRIPT_URL_STORAGE_KEY, url);
+    localStorage.removeItem(SHEET_ID_STORAGE_KEY); // Clear sheet ID when using script URL
   },
   
   getScriptUrl: () => {
     return localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
+  },
+
+  setSheetId: (id: string) => {
+    localStorage.setItem(SHEET_ID_STORAGE_KEY, id);
+    localStorage.removeItem(SCRIPT_URL_STORAGE_KEY); // Clear script URL when using sheet ID
+  },
+
+  getSheetId: () => {
+    return localStorage.getItem(SHEET_ID_STORAGE_KEY);
   }
 };
