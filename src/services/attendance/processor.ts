@@ -7,7 +7,7 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
   // Group logs by employee and date
   const groupedLogs: { [key: string]: CheckInLog[] } = {};
   logs.forEach(log => {
-    const date = log.timestamp.split('T')[0];
+    const date = new Date(log.timestamp).toISOString().split('T')[0];
     const key = `${log.employeeId}-${date}`;
     if (!groupedLogs[key]) {
       groupedLogs[key] = [];
@@ -23,14 +23,20 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
 
     const firstLog = sortedLogs[0];
     const lastLog = sortedLogs[sortedLogs.length - 1];
-    const breakLogs = sortedLogs.slice(1, -1).map(log => log.timestamp);
+    
+    // Get all timestamps between first and last as breaks
+    const breakLogs = sortedLogs
+      .slice(1, -1)
+      .map(log => log.timestamp);
 
     // Calculate total break hours
     let totalBreakHours = 0;
-    for (let i = 1; i < sortedLogs.length - 1; i += 2) {
-      const breakStart = new Date(sortedLogs[i].timestamp);
-      const breakEnd = sortedLogs[i + 1] ? new Date(sortedLogs[i + 1].timestamp) : new Date(lastLog.timestamp);
-      totalBreakHours += (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+    if (breakLogs.length > 0) {
+      for (let i = 0; i < breakLogs.length - 1; i += 2) {
+        const breakStart = new Date(breakLogs[i]);
+        const breakEnd = breakLogs[i + 1] ? new Date(breakLogs[i + 1]) : new Date(lastLog.timestamp);
+        totalBreakHours += (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+      }
     }
 
     const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
@@ -39,7 +45,7 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     return {
       employeeId: firstLog.employeeId,
       employeeName: firstLog.employeeName,
-      date: firstLog.timestamp.split('T')[0],
+      date: new Date(firstLog.timestamp).toISOString().split('T')[0],
       checkIn: firstLog.timestamp,
       checkOut: lastLog.timestamp,
       breaks: breakLogs,
