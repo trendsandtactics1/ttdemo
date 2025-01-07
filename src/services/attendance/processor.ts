@@ -7,7 +7,14 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
   // Group logs by employee and date
   const groupedLogs: { [key: string]: CheckInLog[] } = {};
   logs.forEach(log => {
-    const date = new Date(log.timestamp).toISOString().split('T')[0];
+    // Parse the timestamp to ensure we're working with valid dates
+    const timestamp = new Date(log.timestamp);
+    if (isNaN(timestamp.getTime())) {
+      console.error('Invalid timestamp:', log.timestamp);
+      return;
+    }
+    
+    const date = timestamp.toISOString().split('T')[0];
     const key = `${log.employeeId}-${date}`;
     if (!groupedLogs[key]) {
       groupedLogs[key] = [];
@@ -42,10 +49,14 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
     const effectiveHours = Math.max(0, totalHours - totalBreakHours);
 
+    // Ensure we're using the correct date from the timestamp
+    const logDate = new Date(firstLog.timestamp);
+    const formattedDate = logDate.toISOString().split('T')[0];
+
     return {
       employeeId: firstLog.employeeId,
       employeeName: firstLog.employeeName,
-      date: new Date(firstLog.timestamp).toISOString().split('T')[0],
+      date: formattedDate,
       checkIn: firstLog.timestamp,
       checkOut: lastLog.timestamp,
       breaks: breakLogs,
