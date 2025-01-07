@@ -4,8 +4,9 @@ import { calculateHours } from './utils';
 export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] => {
   if (!logs.length) return [];
 
-  // Group logs by employee and date
-  const groupedLogs: { [key: string]: CheckInLog[] } = {};
+  // First, group logs by employee and date
+  const groupedByEmployeeAndDate: { [key: string]: CheckInLog[] } = {};
+  
   logs.forEach(log => {
     // Parse the timestamp to ensure we're working with valid dates
     const timestamp = new Date(log.timestamp);
@@ -16,54 +17,55 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     
     const date = timestamp.toISOString().split('T')[0];
     const key = `${log.employeeId}-${date}`;
-    if (!groupedLogs[key]) {
-      groupedLogs[key] = [];
+    
+    if (!groupedByEmployeeAndDate[key]) {
+      groupedByEmployeeAndDate[key] = [];
     }
-    groupedLogs[key].push(log);
+    groupedByEmployeeAndDate[key].push(log);
   });
 
-  // Process each group of logs and ensure single entry per date
-  const processedLogs = Object.entries(groupedLogs).map(([key, dayLogs]) => {
-    // Sort logs by timestamp for each day
-    const sortedLogs = dayLogs.sort((a, b) => 
+  // Process each group to create a single entry per employee per date
+  const processedLogs = Object.entries(groupedByEmployeeAndDate).map(([key, employeeDayLogs]) => {
+    // Sort logs chronologically
+    const sortedLogs = employeeDayLogs.sort((a, b) => 
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
-    // First log is check-in, last log is check-out
     const firstLog = sortedLogs[0];
     const lastLog = sortedLogs[sortedLogs.length - 1];
+    const date = new Date(firstLog.timestamp).toISOString().split('T')[0];
 
-    // Calculate breaks and total break hours
+    // Calculate breaks and hours
     let totalBreakHours = 0;
     const breaks: string[] = [];
-    
-    // Process all logs between first and last as breaks
-    for (let i = 1; i < sortedLogs.length - 1; i++) {
-      const currentLog = sortedLogs[i];
-      breaks.push(currentLog.timestamp);
-      
-      // If we have a pair of break logs (in/out)
-      if (i < sortedLogs.length - 2 && i % 2 === 1) {
-        const breakStart = new Date(currentLog.timestamp);
-        const breakEnd = new Date(sortedLogs[i + 1].timestamp);
+
+    // Process intermediate logs as breaks
+    if (sortedLogs.length > 2) {
+      for (let i = 1; i < sortedLogs.length - 1; i += 2) {
+        const breakStart = new Date(sortedLogs[i].timestamp);
+        const breakEnd = new Date(sortedLogs[i + 1]?.timestamp || lastLog.timestamp);
+        
+        breaks.push(sortedLogs[i].timestamp);
+        if (sortedLogs[i + 1]) {
+          breaks.push(sortedLogs[i + 1].timestamp);
+        }
+
         const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-        totalBreakHours += breakDuration;
+        if (!isNaN(breakDuration) && breakDuration > 0) {
+          totalBreakHours += breakDuration;
+        }
       }
     }
 
-    // Calculate total and effective hours
+    // Calculate total working hours and effective hours
     const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
     const effectiveHours = Math.max(0, totalHours - totalBreakHours);
 
-    // Ensure we're using the correct date from the timestamp
-    const logDate = new Date(firstLog.timestamp);
-    const formattedDate = logDate.toISOString().split('T')[0];
-
-    // Return a single entry for this employee and date
+    // Create single attendance record for this employee and date
     return {
       employeeId: firstLog.employeeId,
       employeeName: firstLog.employeeName,
-      date: formattedDate,
+      date: date,
       checkIn: firstLog.timestamp,
       checkOut: lastLog.timestamp,
       breaks: breaks,
@@ -72,7 +74,7 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     };
   });
 
-  // Sort all entries by date in descending order
+  // Sort all entries by date in descending order (newest first)
   return processedLogs.sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
