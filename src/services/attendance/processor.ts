@@ -30,24 +30,29 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       );
 
+      // First log is check-in, last log is check-out
       const firstLog = sortedLogs[0];
       const lastLog = sortedLogs[sortedLogs.length - 1];
-      
-      // Get all timestamps between first and last as breaks
-      const breakLogs = sortedLogs
-        .slice(1, -1)
-        .map(log => log.timestamp);
 
-      // Calculate total break hours
+      // Calculate breaks and total break hours
       let totalBreakHours = 0;
-      if (breakLogs.length > 0) {
-        for (let i = 0; i < breakLogs.length - 1; i += 2) {
-          const breakStart = new Date(breakLogs[i]);
-          const breakEnd = breakLogs[i + 1] ? new Date(breakLogs[i + 1]) : new Date(lastLog.timestamp);
-          totalBreakHours += (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+      const breaks: string[] = [];
+      
+      // Process all logs between first and last as breaks
+      for (let i = 1; i < sortedLogs.length - 1; i++) {
+        const currentLog = sortedLogs[i];
+        breaks.push(currentLog.timestamp);
+        
+        // If we have a pair of break logs (in/out)
+        if (i < sortedLogs.length - 2 && i % 2 === 1) {
+          const breakStart = new Date(currentLog.timestamp);
+          const breakEnd = new Date(sortedLogs[i + 1].timestamp);
+          const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+          totalBreakHours += breakDuration;
         }
       }
 
+      // Calculate total and effective hours
       const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
       const effectiveHours = Math.max(0, totalHours - totalBreakHours);
 
@@ -61,7 +66,7 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
         date: formattedDate,
         checkIn: firstLog.timestamp,
         checkOut: lastLog.timestamp,
-        breaks: breakLogs,
+        breaks: breaks,
         totalBreakHours: Math.round(totalBreakHours * 100) / 100,
         effectiveHours: Math.round(effectiveHours * 100) / 100
       };
