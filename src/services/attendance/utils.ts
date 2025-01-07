@@ -3,7 +3,8 @@ import { CheckInLog } from './types';
 export const calculateHours = (start: string, end: string): number => {
   const startTime = new Date(start).getTime();
   const endTime = new Date(end).getTime();
-  return (endTime - startTime) / (1000 * 60 * 60); // Convert to hours
+  const hours = (endTime - startTime) / (1000 * 60 * 60);
+  return Math.round(hours * 100) / 100; // Round to 2 decimal places
 };
 
 export const parseGoogleSheetJson = (text: string): CheckInLog[] => {
@@ -42,16 +43,19 @@ export const parseGoogleSheetJson = (text: string): CheckInLog[] => {
         Number(year),
         Number(month),
         Number(day),
-        isPM ? hours + 12 : hours,
+        isPM ? (hours === 12 ? 12 : hours + 12) : (hours === 12 ? 0 : hours),
         minutes
       );
+
+      // Convert punch type to standardized format
+      const punchType = cols[6]?.v?.toString()?.toUpperCase().includes('OUT') ? 'OUT' : 'IN';
 
       return {
         employeeId: cols[2]?.v?.toString() || '',
         employeeName: cols[3]?.v?.toString() || '',
         emailId: cols[4]?.v?.toString() || '',
         position: cols[5]?.v?.toString() || '',
-        punchType: cols[6]?.v?.toString()?.toUpperCase() === 'OUT' ? 'OUT' : 'IN',
+        punchType: punchType,
         timestamp: date.toISOString()
       };
     }).filter((log: CheckInLog | null): log is CheckInLog => 

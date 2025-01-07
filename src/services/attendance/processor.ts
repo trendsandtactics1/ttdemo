@@ -35,30 +35,33 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     const lastLog = sortedLogs[sortedLogs.length - 1];
     const date = new Date(firstLog.timestamp).toISOString().split('T')[0];
 
-    // Calculate breaks and hours
+    // Calculate total working hours (from first check-in to last check-out)
+    const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
+
+    // Process breaks and calculate total break hours
     let totalBreakHours = 0;
     const breaks: string[] = [];
+    let lastCheckIn: Date | null = null;
 
-    // Process intermediate logs as breaks
-    if (sortedLogs.length > 2) {
-      for (let i = 1; i < sortedLogs.length - 1; i += 2) {
-        const breakStart = new Date(sortedLogs[i].timestamp);
-        const breakEnd = new Date(sortedLogs[i + 1]?.timestamp || lastLog.timestamp);
-        
-        breaks.push(sortedLogs[i].timestamp);
-        if (sortedLogs[i + 1]) {
-          breaks.push(sortedLogs[i + 1].timestamp);
-        }
-
-        const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-        if (!isNaN(breakDuration) && breakDuration > 0) {
+    // Process all logs to identify breaks
+    sortedLogs.forEach((log) => {
+      const currentTime = new Date(log.timestamp);
+      
+      if (log.punchType === 'OUT' && lastCheckIn) {
+        // Calculate break duration when there's a check-out after a check-in
+        const breakDuration = (currentTime.getTime() - lastCheckIn.getTime()) / (1000 * 60 * 60);
+        if (breakDuration > 0) {
           totalBreakHours += breakDuration;
+          breaks.push(lastCheckIn.toISOString());
+          breaks.push(currentTime.toISOString());
         }
+        lastCheckIn = null;
+      } else if (log.punchType === 'IN') {
+        lastCheckIn = currentTime;
       }
-    }
+    });
 
-    // Calculate total working hours and effective hours
-    const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
+    // Calculate effective hours (total hours - break hours)
     const effectiveHours = Math.max(0, totalHours - totalBreakHours);
 
     // Create single attendance record for this employee and date
