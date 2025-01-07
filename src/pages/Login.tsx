@@ -155,13 +155,6 @@ const Login = () => {
               },
             }}
             providers={[]}
-            onError={(error) => {
-              toast({
-                title: "Authentication Error",
-                description: error.message,
-                variant: "destructive",
-              });
-            }}
           />
         </CardContent>
       </Card>
