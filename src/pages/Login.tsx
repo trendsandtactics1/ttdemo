@@ -13,16 +13,15 @@ const Login = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Map email to specific employee IDs for testing
     let employeeId;
     if (email === "karthikjungleemara@gmail.com") {
-      employeeId = "TT012";  // This matches the attendance log
+      employeeId = "TT012";
     } else if (email.includes("admin")) {
       employeeId = "ADMIN001";
     } else if (email.includes("manager")) {
       employeeId = "MGR001";
     } else {
-      employeeId = `TT${Math.floor(Math.random() * 100)}`;  // Fallback format matching attendance logs
+      employeeId = `TT${Math.floor(Math.random() * 100)}`;
     }
 
     let userData = {
@@ -34,7 +33,6 @@ const Login = () => {
       password: password
     };
 
-    // For demo purposes, hardcoded roles
     if (email.includes("admin")) {
       userData.designation = "Admin";
       navigate("/admin");
@@ -46,7 +44,6 @@ const Login = () => {
       navigate("/employee");
     }
 
-    // Store user data in localStorage
     localStorage.setItem('workstream_current_user', JSON.stringify(userData));
     
     toast({
@@ -56,18 +53,23 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <div className="mb-8">
-        <img src="/logo.png" alt="Trends & Tactics Logo" className="w-32 h-32" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 px-4">
+      <div className="mb-8 flex flex-col items-center">
+        <img 
+          src="/logo.png" 
+          alt="Trends & Tactics Logo" 
+          className="w-32 h-32 object-contain mb-4"
+        />
+        <h1 className="text-2xl font-bold text-gray-900">Trends & Tactics</h1>
       </div>
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>Login</CardTitle>
+      <Card className="w-full max-w-[350px]">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl text-center">Login</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
+              <label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email
               </label>
               <Input
@@ -76,10 +78,11 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="w-full"
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
+              <label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
               </label>
               <Input
@@ -88,11 +91,12 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className="w-full"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
             >
               Sign In
             </button>

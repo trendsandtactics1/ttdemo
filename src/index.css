@@ -57,3 +57,46 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile-first responsive utilities */
+@layer utilities {
+  .responsive-container {
+    @apply w-full px-4 sm:px-6 md:px-8 mx-auto;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4;
+  }
+  
+  .responsive-text {
+    @apply text-sm sm:text-base md:text-lg;
+  }
+  
+  .responsive-padding {
+    @apply p-4 sm:p-6 md:p-8;
+  }
+}
+
+/* Ensure proper modal display on mobile */
+@media (max-width: 640px) {
+  .dialog-overlay {
+    padding: 1rem;
+  }
+  
+  .dialog-content {
+    width: 95% !important;
+    max-width: none !important;
+    margin: 1rem auto !important;
+  }
+}
+
+/* Improve form elements on mobile */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+  
+  .form-container {
+    padding: 1rem !important;
+  }
+}
