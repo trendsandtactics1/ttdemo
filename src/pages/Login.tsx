@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { localStorageService } from "@/services/localStorageService";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,14 +15,29 @@ const Login = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
+    let userData = {
+      id: crypto.randomUUID(),
+      name: email.split('@')[0],
+      email: email,
+      employeeId: `EMP${Math.floor(Math.random() * 1000)}`,
+      designation: "Employee",
+      password: password
+    };
+
     // For demo purposes, hardcoded roles
     if (email.includes("admin")) {
+      userData.designation = "Admin";
       navigate("/admin");
     } else if (email.includes("manager")) {
+      userData.designation = "Manager";
       navigate("/manager");
     } else {
+      userData.designation = "Employee";
       navigate("/employee");
     }
+
+    // Store user data in localStorage
+    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
     
     toast({
       title: "Logged in successfully",
