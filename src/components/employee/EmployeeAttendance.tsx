@@ -31,44 +31,48 @@ const EmployeeAttendance = () => {
 
         const currentUser = session.user;
 
-        try {
-          const { data: userProfile, error: profileError } = await supabase
-            .from('profiles')
-            .select('employee_id')
-            .eq('id', currentUser.id)
-            .maybeSingle();
+        const { data: userProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('employee_id')
+          .eq('id', currentUser.id)
+          .maybeSingle();
 
-          if (profileError) {
-            throw profileError;
-          }
-
-          if (!userProfile?.employee_id) {
-            toast({
-              title: "Profile Not Found",
-              description: "Your employee profile is not set up. Please contact HR.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          const allLogs = await attendanceService.getAttendanceLogs();
-          console.log('All logs:', allLogs);
-          console.log('Current user profile:', userProfile);
-          
-          const employeeLogs = allLogs
-            .filter(log => log.employeeId === userProfile.employee_id)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          
-          console.log('Filtered logs:', employeeLogs);
-          setAttendanceLogs(employeeLogs);
-        } catch (error) {
-          console.error('Error:', error);
+        if (profileError) {
+          console.error('Profile error:', profileError);
           toast({
             title: "Error",
-            description: "Failed to fetch attendance logs. Please try again later.",
+            description: "Failed to fetch user profile. Please try again later.",
             variant: "destructive",
           });
+          return;
         }
+
+        if (!userProfile?.employee_id) {
+          toast({
+            title: "Profile Not Found",
+            description: "Your employee profile is not set up. Please contact HR.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const allLogs = await attendanceService.getAttendanceLogs();
+        console.log('All logs:', allLogs);
+        console.log('Current user profile:', userProfile);
+        
+        const employeeLogs = allLogs
+          .filter(log => log.employeeId === userProfile.employee_id)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        console.log('Filtered logs:', employeeLogs);
+        setAttendanceLogs(employeeLogs);
+      } catch (error) {
+        console.error('Error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch attendance logs. Please try again later.",
+          variant: "destructive",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -86,8 +90,8 @@ const EmployeeAttendance = () => {
       <Card className="p-6">
         <h2 className="text-2xl font-bold mb-4">My Attendance</h2>
         <AttendanceTable
-          logs={attendanceLogs}
-          onRowClick={(log) => setSelectedLog(log)}
+          attendanceLogs={attendanceLogs}
+          onViewDetails={(log) => setSelectedLog(log)}
         />
       </Card>
 
