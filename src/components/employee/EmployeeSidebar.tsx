@@ -18,11 +18,18 @@ import {
 } from "@/components/ui/sidebar";
 import ProfileUpdateModal from "./ProfileUpdateModal";
 
+interface MenuItem {
+  title: string;
+  path: string;
+  icon: typeof ClipboardList;
+  disabled?: boolean;
+}
+
 const EmployeeSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { title: "Attendance", path: "/employee/attendance", icon: Calendar },
     { title: "Tasks", path: "/employee", icon: ClipboardList },
     { title: "Leave Request", path: "/employee/leave-request", icon: ClipboardList },

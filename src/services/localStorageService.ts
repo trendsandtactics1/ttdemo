@@ -24,6 +24,7 @@ export interface Task {
 
 const TASKS_KEY = 'workstream_tasks';
 const EMPLOYEES_KEY = 'workstream_employees';
+const CURRENT_USER_KEY = 'workstream_current_user';
 
 export const localStorageService = {
   getTasks: (): Task[] => {
@@ -67,6 +68,11 @@ export const localStorageService = {
   getEmployees: (): Employee[] => {
     const employees = localStorage.getItem(EMPLOYEES_KEY);
     return employees ? JSON.parse(employees) : [];
+  },
+
+  getCurrentUser: (): Employee | null => {
+    const user = localStorage.getItem(CURRENT_USER_KEY);
+    return user ? JSON.parse(user) : null;
   },
 
   addEmployee: (employee: Omit<Employee, 'id'>) => {
