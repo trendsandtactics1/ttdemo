@@ -11,6 +11,14 @@ import { format, parseISO } from "date-fns";
 import { attendanceService } from "@/services/attendanceService";
 import { Badge } from "@/components/ui/badge";
 import { localStorageService } from "@/services/localStorageService";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AttendanceRecord {
   employeeId: string;
@@ -26,6 +34,8 @@ interface AttendanceRecord {
 const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const currentUser = localStorageService.getCurrentUser();
 
   useEffect(() => {
@@ -84,6 +94,11 @@ const EmployeeAttendance = () => {
     return <Badge className="bg-red-500">Absent</Badge>;
   };
 
+  const handleViewDetails = (log: AttendanceRecord) => {
+    setSelectedLog(log);
+    setShowModal(true);
+  };
+
   if (loading) {
     return <div>Loading attendance logs...</div>;
   }
@@ -110,6 +125,7 @@ const EmployeeAttendance = () => {
               <TableHead>Break Hours</TableHead>
               <TableHead>Effective Hours</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -121,11 +137,90 @@ const EmployeeAttendance = () => {
                 <TableCell>{log.totalBreakHours.toFixed(2)} hrs</TableCell>
                 <TableCell>{log.effectiveHours.toFixed(2)} hrs</TableCell>
                 <TableCell>{getAttendanceStatus(log.effectiveHours)}</TableCell>
+                <TableCell>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleViewDetails(log)}
+                  >
+                    View Details
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Attendance Details</DialogTitle>
+          </DialogHeader>
+          {selectedLog && (
+            <ScrollArea className="max-h-[80vh]">
+              <div className="space-y-4 p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold">Date</h4>
+                    <p>{formatDate(selectedLog.date)}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Employee Name</h4>
+                    <p>{selectedLog.employeeName}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Check In</h4>
+                    <p>{formatTime(selectedLog.checkIn)}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Check Out</h4>
+                    <p>{formatTime(selectedLog.checkOut)}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Total Break Hours</h4>
+                    <p>{selectedLog.totalBreakHours.toFixed(2)} hrs</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Effective Hours</h4>
+                    <p>{selectedLog.effectiveHours.toFixed(2)} hrs</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Status</h4>
+                    <div className="mt-1">
+                      {getAttendanceStatus(selectedLog.effectiveHours)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <h4 className="font-semibold mb-2">Break Details</h4>
+                  {selectedLog.breaks.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedLog.breaks.reduce((acc: JSX.Element[], break1, index, array) => {
+                        if (index % 2 === 0) {
+                          const break2 = array[index + 1];
+                          if (break2) {
+                            acc.push(
+                              <div key={index} className="flex gap-4 text-sm">
+                                <span>Start: {formatTime(break1)}</span>
+                                <span>End: {formatTime(break2)}</span>
+                              </div>
+                            );
+                          }
+                        }
+                        return acc;
+                      }, [])}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No breaks recorded</p>
+                  )}
+                </div>
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
