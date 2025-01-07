@@ -7,12 +7,13 @@ import AttendanceTable from "./attendance/AttendanceTable";
 import AttendanceDetailsModal from "./attendance/AttendanceDetailsModal";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
-  const [showModal, setShowModal] = useState(true); // Changed to true by default
+  const [showModal, setShowModal] = useState(false);
   const currentUser = localStorageService.getCurrentUser();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -30,20 +31,30 @@ const EmployeeAttendance = () => {
       }
 
       try {
+        const { data: userProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('employee_id')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (profileError) {
+          throw profileError;
+        }
+
         const allLogs = await attendanceService.getAttendanceLogs();
         console.log('All logs:', allLogs);
         console.log('Current user:', currentUser);
         
         const employeeLogs = allLogs
-          .filter(log => log.employeeId === currentUser.employeeId)
+          .filter(log => log.employeeId === userProfile.employee_id)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
         console.log('Filtered logs:', employeeLogs);
         setAttendanceLogs(employeeLogs);
         
-        // Set the first log as selected by default if available
         if (employeeLogs.length > 0) {
           setSelectedLog(employeeLogs[0]);
+          setShowModal(true);
         }
         
         setLoading(false);
