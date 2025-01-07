@@ -63,16 +63,16 @@ const CreateTaskModal = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Add New Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] w-[95%] mx-auto">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 px-1">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
@@ -80,6 +80,7 @@ const CreateTaskModal = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter task title"
+              className="w-full"
             />
           </div>
           <div className="space-y-2">
@@ -89,12 +90,13 @@ const CreateTaskModal = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter task description"
+              className="min-h-[100px]"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="assignedTo">Assign To</Label>
             <Select onValueChange={setAssignedTo} value={assignedTo}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
               <SelectContent>
@@ -121,12 +123,13 @@ const CreateTaskModal = () => {
                   {assignedDate ? format(assignedDate, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={assignedDate}
                   onSelect={(date) => date && setAssignedDate(date)}
                   initialFocus
+                  disabled={(date) => date < new Date()}
                 />
               </PopoverContent>
             </Popover>
@@ -146,12 +149,13 @@ const CreateTaskModal = () => {
                   {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={dueDate}
                   onSelect={(date) => date && setDueDate(date)}
                   initialFocus
+                  disabled={(date) => date < new Date()}
                 />
               </PopoverContent>
             </Popover>
