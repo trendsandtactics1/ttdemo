@@ -27,6 +27,17 @@ const employeeSchema = z.object({
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
 
+const defaultEmployees = [
+  { email: "gowshikdr@gmail.com", password: "Gowshik@003", name: "Gowshik", employeeId: "EMP001", designation: "Employee" },
+  { email: "shinujeopoulose@gmail.com", password: "Shinu@TT006", name: "Shinu", employeeId: "EMP002", designation: "Employee" },
+  { email: "sristar.live@gmail.com", password: "Sridhar@83", name: "Sridhar", employeeId: "EMP003", designation: "Employee" },
+  { email: "tnmani.manikandan11@gmail.com", password: "Tnmani@2512", name: "Mani", employeeId: "EMP004", designation: "Employee" },
+  { email: "unnihari15@gmail.com", password: "Harry@15", name: "Hari", employeeId: "EMP005", designation: "Employee" },
+  { email: "sonukrishnan1313@gmail.com", password: "Sonu@123", name: "Sonu", employeeId: "EMP006", designation: "Employee" },
+  { email: "karthikjungleemara@gmail.com", password: "Karthik@12345", name: "Karthik", employeeId: "EMP007", designation: "Employee" },
+  { email: "vinodvinod18696@gmail.com", password: "Vinod@12345", name: "Vinod", employeeId: "EMP008", designation: "Employee" },
+];
+
 export const EmployeeForm = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -99,6 +110,21 @@ export const EmployeeForm = () => {
       });
     },
   });
+
+  const createDefaultEmployees = async () => {
+    for (const employee of defaultEmployees) {
+      try {
+        await createEmployee.mutateAsync(employee);
+        console.log(`Created employee: ${employee.email}`);
+      } catch (error) {
+        console.error(`Error creating employee ${employee.email}:`, error);
+      }
+    }
+    toast({
+      title: "Success",
+      description: "Default employees created successfully",
+    });
+  };
 
   const onSubmit = (data: EmployeeFormData) => {
     createEmployee.mutate(data);
@@ -183,10 +209,20 @@ export const EmployeeForm = () => {
                 )}
               />
             </div>
-            <Button type="submit" disabled={createEmployee.isPending}>
-              <Plus className="h-4 w-4 mr-2" />
-              {createEmployee.isPending ? "Adding..." : "Add Employee"}
-            </Button>
+            <div className="flex space-x-4">
+              <Button type="submit" disabled={createEmployee.isPending}>
+                <Plus className="h-4 w-4 mr-2" />
+                {createEmployee.isPending ? "Adding..." : "Add Employee"}
+              </Button>
+              <Button 
+                type="button" 
+                variant="secondary"
+                onClick={createDefaultEmployees}
+                disabled={createEmployee.isPending}
+              >
+                Create Default Employees
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>
