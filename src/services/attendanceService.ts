@@ -53,12 +53,6 @@ export const attendanceService = {
     const logs = await fetchCheckInLogs();
     console.log('Total fetched logs:', logs.length);
     
-    // Only use sample data if no configuration exists
-    if (!localStorage.getItem(SCRIPT_URL_STORAGE_KEY) && !localStorage.getItem(SHEET_ID_STORAGE_KEY)) {
-      console.log('Using sample data as no configuration exists');
-      return getSampleData();
-    }
-    
     // If we have configuration but no logs, return empty array
     if (logs.length === 0) {
       console.log('No logs found in configured source');
