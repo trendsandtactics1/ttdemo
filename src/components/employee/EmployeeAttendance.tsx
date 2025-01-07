@@ -30,18 +30,30 @@ const EmployeeAttendance = () => {
 
   useEffect(() => {
     const fetchLogs = async () => {
-      setLoading(true);
-      const allLogs = await attendanceService.getAttendanceLogs();
-      // Filter logs for current employee and sort by date in descending order
-      const employeeLogs = allLogs
-        .filter(log => log.employeeId === currentUser?.id)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      setAttendanceLogs(employeeLogs);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const allLogs = await attendanceService.getAttendanceLogs();
+        console.log('All logs:', allLogs);
+        console.log('Current user:', currentUser);
+        
+        // Filter logs for current employee and sort by date in descending order
+        const employeeLogs = allLogs
+          .filter(log => log.employeeId === currentUser?.employeeId)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        console.log('Filtered logs:', employeeLogs);
+        setAttendanceLogs(employeeLogs);
+      } catch (error) {
+        console.error('Error fetching attendance logs:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchLogs();
-  }, [currentUser?.id]);
+    if (currentUser?.employeeId) {
+      fetchLogs();
+    }
+  }, [currentUser?.employeeId]);
 
   const formatTime = (dateTimeString: string) => {
     try {
@@ -74,6 +86,14 @@ const EmployeeAttendance = () => {
 
   if (loading) {
     return <div>Loading attendance logs...</div>;
+  }
+
+  if (!currentUser) {
+    return <div>Please log in to view attendance.</div>;
+  }
+
+  if (attendanceLogs.length === 0) {
+    return <div>No attendance records found.</div>;
   }
 
   return (
