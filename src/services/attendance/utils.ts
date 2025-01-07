@@ -20,10 +20,31 @@ export const parseGoogleSheetJson = (text: string): CheckInLog[] => {
     return data.table.rows.map((row: any) => {
       const cols = row.c || [];
       
-      // Extract date and time
-      const dateStr = cols[0]?.v || '';
+      // Parse date from Google Sheets format
+      const dateObj = cols[0]?.v;
       const timeStr = cols[1]?.v || '';
-      const timestamp = new Date(`${dateStr} ${timeStr}`).toISOString();
+      
+      // Extract the date components from the "Date(year,month,day)" string
+      const dateMatch = dateObj?.match(/Date\((\d+),(\d+),(\d+)\)/);
+      if (!dateMatch) {
+        console.error('Invalid date format:', dateObj);
+        return null;
+      }
+      
+      const [_, year, month, day] = dateMatch;
+      
+      // Parse time (assuming format like "03.44 AM")
+      const [hours, minutes] = timeStr.split(' ')[0].split('.').map(Number);
+      const isPM = timeStr.includes('PM');
+      
+      // Create date object
+      const date = new Date(
+        Number(year),
+        Number(month),
+        Number(day),
+        isPM ? hours + 12 : hours,
+        minutes
+      );
 
       return {
         employeeId: cols[2]?.v?.toString() || '',
@@ -31,7 +52,7 @@ export const parseGoogleSheetJson = (text: string): CheckInLog[] => {
         emailId: cols[4]?.v?.toString() || '',
         position: cols[5]?.v?.toString() || '',
         punchType: cols[6]?.v?.toString()?.toUpperCase() === 'OUT' ? 'OUT' : 'IN',
-        timestamp
+        timestamp: date.toISOString()
       };
     }).filter((log: CheckInLog | null): log is CheckInLog => 
       log !== null && Boolean(log.employeeId) && Boolean(log.timestamp)
