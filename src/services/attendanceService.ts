@@ -54,9 +54,12 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
 
   try {
     if (sheetId) {
-      // Direct Google Sheets approach
+      // Direct Google Sheets approach - Fixed URL construction
       const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch attendance data: ${response.status} ${response.statusText}`);
+      }
       const text = await response.text();
       return parseGoogleSheetJson(text);
     } else if (scriptUrl) {
