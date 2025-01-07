@@ -5,6 +5,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionContext } from "@supabase/auth-helpers-react";
+import { AuthError, AuthApiError } from "@supabase/supabase-js";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -23,10 +24,8 @@ const Login = () => {
 
       if (error) throw error;
 
-      // Store user role in localStorage
       localStorage.setItem("userRole", userRole.role);
 
-      // Redirect based on role
       switch (userRole.role) {
         case "HR":
           navigate("/admin");
@@ -54,6 +53,42 @@ const Login = () => {
       checkUserRoleAndRedirect(session.user.id);
     }
   }, [session]);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        checkUserRoleAndRedirect(session.user.id);
+      }
+      if (event === 'USER_UPDATED') {
+        const { error } = await supabase.auth.getSession();
+        if (error) {
+          toast({
+            title: "Authentication Error",
+            description: getErrorMessage(error),
+            variant: "destructive",
+          });
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const getErrorMessage = (error: AuthError) => {
+    if (error instanceof AuthApiError) {
+      switch (error.code) {
+        case 'invalid_credentials':
+          return 'Invalid email or password. Please check your credentials and try again.';
+        case 'email_not_confirmed':
+          return 'Please verify your email address before signing in.';
+        case 'user_not_found':
+          return 'No user found with these credentials.';
+        default:
+          return error.message;
+      }
+    }
+    return error.message;
+  };
 
   if (isLoading || isCheckingRole) {
     return (
