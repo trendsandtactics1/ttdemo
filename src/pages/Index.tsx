@@ -5,12 +5,29 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AuthError, AuthApiError } from "@supabase/supabase-js";
 
 const Index = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const getErrorMessage = (error: AuthError) => {
+    if (error instanceof AuthApiError) {
+      switch (error.code) {
+        case 'invalid_credentials':
+          return 'Invalid email or password. Please check your credentials and try again.';
+        case 'email_not_confirmed':
+          return 'Please verify your email address before signing in.';
+        case 'user_not_found':
+          return 'No user found with these credentials.';
+        default:
+          return error.message;
+      }
+    }
+    return error.message;
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,16 +40,21 @@ const Index = () => {
       });
 
       if (error) {
-        toast.error(error.message);
+        toast.error(getErrorMessage(error));
         return;
       }
 
       if (data.user) {
-        const { data: roleData } = await supabase
+        const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', data.user.id)
           .single();
+
+        if (roleError) {
+          toast.error('Error fetching user role');
+          return;
+        }
 
         if (roleData) {
           switch (roleData.role) {
@@ -48,10 +70,13 @@ const Index = () => {
             default:
               toast.error('Invalid user role');
           }
+        } else {
+          toast.error('No role assigned to user');
         }
       }
     } catch (error) {
-      toast.error('An error occurred during login');
+      toast.error('An unexpected error occurred during login');
+      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
