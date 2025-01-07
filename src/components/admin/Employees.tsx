@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/form";
 import { Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { localStorageService } from "@/services/localStorageService";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,6 +25,8 @@ import {
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const employeeSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -38,8 +39,8 @@ const employeeSchema = z.object({
 type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 const Employees = () => {
-  const [employees, setEmployees] = useState(localStorageService.getEmployees());
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
@@ -51,56 +52,85 @@ const Employees = () => {
     },
   });
 
+  // Fetch employees
+  const { data: employees = [], isLoading } = useQuery({
+    queryKey: ['employees'],
+    queryFn: async () => {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return profiles;
+    },
+  });
+
+  // Create employee mutation
+  const createEmployee = useMutation({
+    mutationFn: async (data: EmployeeFormData) => {
+      // 1. Create the user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: data.email,
+        password: data.password,
+        email_confirm: true,
+        user_metadata: {
+          name: data.name,
+          employeeId: data.employeeId,
+          role: 'EMPLOYEE',
+        },
+      });
+
+      if (authError) throw authError;
+
+      return authData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      form.reset();
+      toast({
+        title: "Success",
+        description: "Employee added successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete employee mutation
+  const deleteEmployee = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      toast({
+        title: "Success",
+        description: "Employee deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: EmployeeFormData) => {
-    // Ensure all required fields are present before adding employee
-    if (!data.name || !data.email || !data.employeeId || !data.designation || !data.password) {
-      toast({
-        title: "Error",
-        description: "All fields are required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const existingEmployee = employees.find(
-      (emp) => emp.email === data.email || emp.employeeId === data.employeeId
-    );
-
-    if (existingEmployee) {
-      toast({
-        title: "Error",
-        description: "An employee with this email or ID already exists",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Now we know all required fields are present
-    const newEmployee = localStorageService.addEmployee({
-      name: data.name,
-      email: data.email,
-      employeeId: data.employeeId,
-      designation: data.designation,
-      password: data.password,
-    });
-    
-    setEmployees([...employees, newEmployee]);
-    form.reset();
-
-    toast({
-      title: "Success",
-      description: "Employee added successfully",
-    });
+    createEmployee.mutate(data);
   };
 
-  const handleDeleteEmployee = (employeeId: string) => {
-    localStorageService.deleteEmployee(employeeId);
-    setEmployees(localStorageService.getEmployees());
-    toast({
-      title: "Success",
-      description: "Employee deleted successfully",
-    });
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -183,9 +213,9 @@ const Employees = () => {
                   )}
                 />
               </div>
-              <Button type="submit">
+              <Button type="submit" disabled={createEmployee.isPending}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Employee
+                {createEmployee.isPending ? "Adding..." : "Add Employee"}
               </Button>
             </form>
           </Form>
@@ -217,19 +247,20 @@ const Employees = () => {
                     <TableRow key={employee.id}>
                       <TableCell>
                         <Avatar>
-                          <AvatarImage src={employee.profilePhoto} />
-                          <AvatarFallback>{employee.name.charAt(0)}</AvatarFallback>
+                          <AvatarImage src={employee.avatar_url} />
+                          <AvatarFallback>{employee.name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                       </TableCell>
                       <TableCell>{employee.name}</TableCell>
                       <TableCell>{employee.email}</TableCell>
-                      <TableCell>{employee.employeeId}</TableCell>
-                      <TableCell>{employee.designation}</TableCell>
+                      <TableCell>{employee.employee_id}</TableCell>
+                      <TableCell>{employee.position}</TableCell>
                       <TableCell>
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDeleteEmployee(employee.employeeId)}
+                          onClick={() => deleteEmployee.mutate(employee.id)}
+                          disabled={deleteEmployee.isPending}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
