@@ -11,7 +11,7 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   const sheetId = localStorage.getItem(SHEET_ID_STORAGE_KEY);
   
   if (!scriptUrl && !sheetId) {
-    console.log('No configuration found, returning sample data');
+    console.log('No configuration found, returning empty array');
     return [];
   }
 
@@ -28,13 +28,17 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       const text = await response.text();
       console.log('Raw response:', text);
       
-      return parseGoogleSheetJson(text);
+      const logs = parseGoogleSheetJson(text);
+      console.log('Parsed logs:', logs);
+      return logs;
     } else if (scriptUrl) {
       const response = await fetch(scriptUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch attendance data');
       }
-      return await response.json();
+      const logs = await response.json();
+      console.log('Fetched logs from script:', logs);
+      return logs;
     }
   } catch (error) {
     console.error('Error fetching attendance data:', error);
@@ -47,10 +51,20 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
 export const attendanceService = {
   getAttendanceLogs: async () => {
     const logs = await fetchCheckInLogs();
-    console.log('Fetched logs:', logs);
-    if (logs.length === 0) {
+    console.log('Total fetched logs:', logs.length);
+    
+    // Only use sample data if no configuration exists
+    if (!localStorage.getItem(SCRIPT_URL_STORAGE_KEY) && !localStorage.getItem(SHEET_ID_STORAGE_KEY)) {
+      console.log('Using sample data as no configuration exists');
       return getSampleData();
     }
+    
+    // If we have configuration but no logs, return empty array
+    if (logs.length === 0) {
+      console.log('No logs found in configured source');
+      return [];
+    }
+    
     const processedLogs = processAttendanceLogs(logs);
     console.log('Processed logs:', processedLogs);
     return processedLogs;
