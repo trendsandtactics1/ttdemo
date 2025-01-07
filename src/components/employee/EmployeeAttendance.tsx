@@ -1,98 +1,100 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
 import { attendanceService } from "@/services/attendanceService";
-import { localStorageService } from "@/services/localStorageService";
 import { AttendanceRecord } from "@/services/attendance/types";
-import AttendanceLoading from "./attendance/AttendanceLoading";
 import AttendanceTable from "./attendance/AttendanceTable";
+import AttendanceLoading from "./attendance/AttendanceLoading";
 import AttendanceDetailsModal from "./attendance/AttendanceDetailsModal";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const currentUser = localStorageService.getCurrentUser();
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchLogs = async () => {
-      if (!currentUser) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to view attendance records",
-          variant: "destructive",
-        });
-        navigate("/login");
-        return;
-      }
-
+      setIsLoading(true);
       try {
-        const allLogs = await attendanceService.getAttendanceLogs();
-        console.log('All logs:', allLogs);
-        console.log('Current user:', currentUser);
-        
-        const employeeLogs = allLogs
-          .filter(log => log.employeeId === currentUser.employeeId)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        console.log('Filtered logs:', employeeLogs);
-        setAttendanceLogs(employeeLogs);
-        
-        if (employeeLogs.length > 0) {
-          setSelectedLog(employeeLogs[0]);
-          setShowModal(true);
+        // Get current user from session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        if (!session?.user) {
+          navigate("/login");
+          return;
         }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching attendance logs:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch attendance records",
-          variant: "destructive",
-        });
-        setLoading(false);
+
+        const currentUser = session.user;
+
+        try {
+          const { data: userProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('employee_id')
+            .eq('id', currentUser.id)
+            .maybeSingle();
+
+          if (profileError) {
+            throw profileError;
+          }
+
+          if (!userProfile?.employee_id) {
+            toast({
+              title: "Profile Not Found",
+              description: "Your employee profile is not set up. Please contact HR.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const allLogs = await attendanceService.getAttendanceLogs();
+          console.log('All logs:', allLogs);
+          console.log('Current user profile:', userProfile);
+          
+          const employeeLogs = allLogs
+            .filter(log => log.employeeId === userProfile.employee_id)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          
+          console.log('Filtered logs:', employeeLogs);
+          setAttendanceLogs(employeeLogs);
+        } catch (error) {
+          console.error('Error:', error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch attendance logs. Please try again later.",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchLogs();
-  }, [currentUser, navigate, toast]);
+  }, [navigate, toast]);
 
-  const handleViewDetails = (log: AttendanceRecord) => {
-    setSelectedLog(log);
-    setShowModal(true);
-  };
-
-  if (!currentUser) {
-    return null;
-  }
-
-  if (loading) {
+  if (isLoading) {
     return <AttendanceLoading />;
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <h2 className="text-3xl font-bold tracking-tight">My Attendance</h2>
-      
-      {attendanceLogs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
-          <p className="text-lg text-gray-600">No attendance records found.</p>
-        </div>
-      ) : (
-        <AttendanceTable 
-          attendanceLogs={attendanceLogs} 
-          onViewDetails={handleViewDetails}
+    <div className="space-y-4">
+      <Card className="p-6">
+        <h2 className="text-2xl font-bold mb-4">My Attendance</h2>
+        <AttendanceTable
+          logs={attendanceLogs}
+          onRowClick={(log) => setSelectedLog(log)}
         />
-      )}
+      </Card>
 
       <AttendanceDetailsModal
         log={selectedLog}
-        open={showModal}
-        onOpenChange={setShowModal}
+        open={!!selectedLog}
+        onOpenChange={(open) => !open && setSelectedLog(null)}
       />
     </div>
   );
