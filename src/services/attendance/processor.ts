@@ -22,54 +22,58 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     groupedLogs[key].push(log);
   });
 
-  // Process and sort logs in descending order
-  return Object.entries(groupedLogs)
-    .map(([key, dayLogs]) => {
-      // Sort logs by timestamp for each day
-      const sortedLogs = dayLogs.sort((a, b) => 
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      );
+  // Process each group of logs and ensure single entry per date
+  const processedLogs = Object.entries(groupedLogs).map(([key, dayLogs]) => {
+    // Sort logs by timestamp for each day
+    const sortedLogs = dayLogs.sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
 
-      // First log is check-in, last log is check-out
-      const firstLog = sortedLogs[0];
-      const lastLog = sortedLogs[sortedLogs.length - 1];
+    // First log is check-in, last log is check-out
+    const firstLog = sortedLogs[0];
+    const lastLog = sortedLogs[sortedLogs.length - 1];
 
-      // Calculate breaks and total break hours
-      let totalBreakHours = 0;
-      const breaks: string[] = [];
+    // Calculate breaks and total break hours
+    let totalBreakHours = 0;
+    const breaks: string[] = [];
+    
+    // Process all logs between first and last as breaks
+    for (let i = 1; i < sortedLogs.length - 1; i++) {
+      const currentLog = sortedLogs[i];
+      breaks.push(currentLog.timestamp);
       
-      // Process all logs between first and last as breaks
-      for (let i = 1; i < sortedLogs.length - 1; i++) {
-        const currentLog = sortedLogs[i];
-        breaks.push(currentLog.timestamp);
-        
-        // If we have a pair of break logs (in/out)
-        if (i < sortedLogs.length - 2 && i % 2 === 1) {
-          const breakStart = new Date(currentLog.timestamp);
-          const breakEnd = new Date(sortedLogs[i + 1].timestamp);
-          const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
-          totalBreakHours += breakDuration;
-        }
+      // If we have a pair of break logs (in/out)
+      if (i < sortedLogs.length - 2 && i % 2 === 1) {
+        const breakStart = new Date(currentLog.timestamp);
+        const breakEnd = new Date(sortedLogs[i + 1].timestamp);
+        const breakDuration = (breakEnd.getTime() - breakStart.getTime()) / (1000 * 60 * 60);
+        totalBreakHours += breakDuration;
       }
+    }
 
-      // Calculate total and effective hours
-      const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
-      const effectiveHours = Math.max(0, totalHours - totalBreakHours);
+    // Calculate total and effective hours
+    const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
+    const effectiveHours = Math.max(0, totalHours - totalBreakHours);
 
-      // Ensure we're using the correct date from the timestamp
-      const logDate = new Date(firstLog.timestamp);
-      const formattedDate = logDate.toISOString().split('T')[0];
+    // Ensure we're using the correct date from the timestamp
+    const logDate = new Date(firstLog.timestamp);
+    const formattedDate = logDate.toISOString().split('T')[0];
 
-      return {
-        employeeId: firstLog.employeeId,
-        employeeName: firstLog.employeeName,
-        date: formattedDate,
-        checkIn: firstLog.timestamp,
-        checkOut: lastLog.timestamp,
-        breaks: breaks,
-        totalBreakHours: Math.round(totalBreakHours * 100) / 100,
-        effectiveHours: Math.round(effectiveHours * 100) / 100
-      };
-    })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort in descending order
+    // Return a single entry for this employee and date
+    return {
+      employeeId: firstLog.employeeId,
+      employeeName: firstLog.employeeName,
+      date: formattedDate,
+      checkIn: firstLog.timestamp,
+      checkOut: lastLog.timestamp,
+      breaks: breaks,
+      totalBreakHours: Math.round(totalBreakHours * 100) / 100,
+      effectiveHours: Math.round(effectiveHours * 100) / 100
+    };
+  });
+
+  // Sort all entries by date in descending order
+  return processedLogs.sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 };
