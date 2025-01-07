@@ -10,17 +10,23 @@ const Tasks = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     const sortedTasks = localStorageService.getTasks().sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      sortOrder === "desc" 
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
     setTasks(sortedTasks);
     setEmployees(localStorageService.getEmployees());
     
     const handleTasksUpdate = () => {
       const updatedTasks = localStorageService.getTasks().sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        sortOrder === "desc"
+          ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
       setTasks(updatedTasks);
     };
@@ -35,14 +41,15 @@ const Tasks = () => {
       window.removeEventListener('tasks-updated', handleTasksUpdate);
       window.removeEventListener('employees-updated', handleEmployeesUpdate);
     };
-  }, []);
+  }, [sortOrder]);
 
   const filteredTasks = tasks
     .filter((task) => {
       const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           task.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || task.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesAssignee = assigneeFilter === "all" || task.assignedTo === assigneeFilter;
+      return matchesSearch && matchesStatus && matchesAssignee;
     });
 
   return (
@@ -57,6 +64,11 @@ const Tasks = () => {
         setSearchTerm={setSearchTerm}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        assigneeFilter={assigneeFilter}
+        setAssigneeFilter={setAssigneeFilter}
+        employees={employees}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
       />
 
       <div className="grid gap-4">
