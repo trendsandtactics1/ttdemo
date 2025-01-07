@@ -38,33 +38,29 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     // Calculate total working hours (from first check-in to last check-out)
     const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
 
-    // Process breaks and calculate total break hours
-    let totalBreakHours = 0;
+    // Process intermediate punch-ins as breaks
     const breaks: string[] = [];
-    let lastCheckIn: Date | null = null;
+    let totalBreakHours = 0;
 
-    // Process all logs to identify breaks
-    sortedLogs.forEach((log) => {
-      const currentTime = new Date(log.timestamp);
+    // Skip first and last logs, process intermediate logs as breaks
+    const intermediateLogs = sortedLogs.slice(1, -1);
+    
+    // Process breaks in pairs
+    for (let i = 0; i < intermediateLogs.length - 1; i += 2) {
+      const breakStart = intermediateLogs[i];
+      const breakEnd = intermediateLogs[i + 1];
       
-      if (log.punchType === 'OUT' && lastCheckIn) {
-        // Calculate break duration when there's a check-out after a check-in
-        const breakDuration = (currentTime.getTime() - lastCheckIn.getTime()) / (1000 * 60 * 60);
-        if (breakDuration > 0) {
-          totalBreakHours += breakDuration;
-          breaks.push(lastCheckIn.toISOString());
-          breaks.push(currentTime.toISOString());
-        }
-        lastCheckIn = null;
-      } else if (log.punchType === 'IN') {
-        lastCheckIn = currentTime;
+      if (breakEnd) {
+        const breakDuration = calculateHours(breakStart.timestamp, breakEnd.timestamp);
+        totalBreakHours += breakDuration;
+        breaks.push(breakStart.timestamp);
+        breaks.push(breakEnd.timestamp);
       }
-    });
+    }
 
     // Calculate effective hours (total hours - break hours)
     const effectiveHours = Math.max(0, totalHours - totalBreakHours);
 
-    // Create single attendance record for this employee and date
     return {
       employeeId: firstLog.employeeId,
       employeeName: firstLog.employeeName,
