@@ -30,59 +30,65 @@ const Tasks = () => {
     });
   };
 
+  const getStatusColor = (status: Task['status']) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-500 hover:bg-green-600';
+      case 'in-progress':
+        return 'bg-yellow-500 hover:bg-yellow-600';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <h2 className="text-3xl font-bold tracking-tight">My Tasks</h2>
+      <h2 className="text-3xl font-bold tracking-tight text-gray-900">My Tasks</h2>
       <div className="grid gap-4">
         {tasks.length === 0 ? (
-          <Card>
+          <Card className="border-2 border-dashed">
             <CardContent className="pt-6">
               <p className="text-muted-foreground text-center">No tasks assigned.</p>
             </CardContent>
           </Card>
         ) : (
           tasks.map((task) => (
-            <Card key={task.id}>
-              <CardHeader>
+            <Card key={task.id} className="hover:shadow-lg transition-shadow duration-300 border-l-4 border-l-primary">
+              <CardHeader className="bg-gray-50 rounded-t-lg">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                  <CardTitle className="text-lg">{task.title}</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-gray-800">{task.title}</CardTitle>
                   <Badge 
-                    variant={
-                      task.status === 'completed' 
-                        ? 'default' 
-                        : task.status === 'in-progress' 
-                        ? 'secondary' 
-                        : 'outline'
-                    }
+                    className={`${getStatusColor(task.status)} text-white`}
                   >
                     {task.status}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">{task.description}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <CardContent className="space-y-4 pt-4">
+                <p className="text-gray-600">{task.description}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-md">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Due Date</p>
-                    <p>{new Date(task.dueDate).toLocaleDateString()}</p>
+                    <p className="text-sm font-medium text-gray-500">Due Date</p>
+                    <p className="text-gray-800">{new Date(task.dueDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Assigned Date</p>
-                    <p>{new Date(task.assignedDate).toLocaleDateString()}</p>
+                    <p className="text-sm font-medium text-gray-500">Assigned Date</p>
+                    <p className="text-gray-800">{new Date(task.assignedDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Created At</p>
-                    <p>{new Date(task.createdAt).toLocaleDateString()}</p>
+                    <p className="text-sm font-medium text-gray-500">Created At</p>
+                    <p className="text-gray-800">{new Date(task.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
-                    <p>{new Date(task.updatedAt).toLocaleDateString()}</p>
+                    <p className="text-sm font-medium text-gray-500">Last Updated</p>
+                    <p className="text-gray-800">{new Date(task.updatedAt).toLocaleDateString()}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-2">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="hover:bg-primary/10"
                     onClick={() => navigate(`/employee/tasks/${task.id}/chat`)}
                   >
                     <MessageSquare className="h-4 w-4 mr-2" />
