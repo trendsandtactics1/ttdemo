@@ -12,14 +12,13 @@ const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(true); // Changed to true by default
   const currentUser = localStorageService.getCurrentUser();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchLogs = async () => {
-      // If no user is logged in, redirect to login
       if (!currentUser) {
         toast({
           title: "Authentication required",
@@ -35,13 +34,18 @@ const EmployeeAttendance = () => {
         console.log('All logs:', allLogs);
         console.log('Current user:', currentUser);
         
-        // Filter logs for current employee and sort by date in descending order
         const employeeLogs = allLogs
           .filter(log => log.employeeId === currentUser.employeeId)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
         console.log('Filtered logs:', employeeLogs);
         setAttendanceLogs(employeeLogs);
+        
+        // Set the first log as selected by default if available
+        if (employeeLogs.length > 0) {
+          setSelectedLog(employeeLogs[0]);
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching attendance logs:', error);

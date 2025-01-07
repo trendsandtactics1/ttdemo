@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import AttendanceConfig from "./AttendanceConfig";
 import { Badge } from "@/components/ui/badge";
 import { formatHoursToHHMM } from "@/utils/timeFormat";
+import { Card } from "@/components/ui/card";
 
 interface AttendanceRecord {
   employeeId: string;
@@ -32,7 +33,11 @@ const AttendanceTable = () => {
     const fetchLogs = async () => {
       setLoading(true);
       const logs = await attendanceService.getAttendanceLogs();
-      setAttendanceLogs(logs);
+      // Sort logs by date in descending order
+      const sortedLogs = logs.sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+      setAttendanceLogs(sortedLogs);
       setLoading(false);
     };
 
@@ -69,43 +74,57 @@ const AttendanceTable = () => {
   };
 
   if (loading) {
-    return <div>Loading attendance logs...</div>;
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <AttendanceConfig />
       
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Employee ID</TableHead>
-              <TableHead>Check In</TableHead>
-              <TableHead>Check Out</TableHead>
-              <TableHead>Break Hours</TableHead>
-              <TableHead>Effective Hours</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {attendanceLogs.map((log, index) => (
-              <TableRow key={index}>
-                <TableCell>{formatDate(log.date)}</TableCell>
-                <TableCell>{log.employeeName}</TableCell>
-                <TableCell>{log.employeeId}</TableCell>
-                <TableCell>{formatTime(log.checkIn)}</TableCell>
-                <TableCell>{formatTime(log.checkOut)}</TableCell>
-                <TableCell>{formatHoursToHHMM(log.totalBreakHours)}</TableCell>
-                <TableCell>{formatHoursToHHMM(log.effectiveHours)}</TableCell>
-                <TableCell>{getAttendanceStatus(log.effectiveHours)}</TableCell>
+      <Card className="p-4">
+        <div className="rounded-md border overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="whitespace-nowrap">Date</TableHead>
+                <TableHead className="whitespace-nowrap">Name</TableHead>
+                <TableHead className="whitespace-nowrap">Employee ID</TableHead>
+                <TableHead className="whitespace-nowrap">Check In</TableHead>
+                <TableHead className="whitespace-nowrap">Check Out</TableHead>
+                <TableHead className="whitespace-nowrap">Break Hours</TableHead>
+                <TableHead className="whitespace-nowrap">Effective Hours</TableHead>
+                <TableHead className="whitespace-nowrap">Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {attendanceLogs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-4">
+                    No attendance records found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                attendanceLogs.map((log, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="whitespace-nowrap">{formatDate(log.date)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{log.employeeName}</TableCell>
+                    <TableCell className="whitespace-nowrap">{log.employeeId}</TableCell>
+                    <TableCell className="whitespace-nowrap">{formatTime(log.checkIn)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{formatTime(log.checkOut)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{formatHoursToHHMM(log.totalBreakHours)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{formatHoursToHHMM(log.effectiveHours)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{getAttendanceStatus(log.effectiveHours)}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
     </div>
   );
 };
