@@ -5,6 +5,8 @@ import { AttendanceRecord } from "@/services/attendance/types";
 import AttendanceLoading from "./attendance/AttendanceLoading";
 import AttendanceTable from "./attendance/AttendanceTable";
 import AttendanceDetailsModal from "./attendance/AttendanceDetailsModal";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
@@ -12,8 +14,21 @@ const EmployeeAttendance = () => {
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
   const [showModal, setShowModal] = useState(false);
   const currentUser = localStorageService.getCurrentUser();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
+    // If no user is logged in, redirect to login
+    if (!currentUser) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to view attendance records",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
     const fetchLogs = async () => {
       try {
         setLoading(true);
@@ -23,24 +38,25 @@ const EmployeeAttendance = () => {
         
         // Filter logs for current employee and sort by date in descending order
         const employeeLogs = allLogs
-          .filter(log => log.employeeId === currentUser?.employeeId)
+          .filter(log => log.employeeId === currentUser.employeeId)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
         console.log('Filtered logs:', employeeLogs);
         setAttendanceLogs(employeeLogs);
       } catch (error) {
         console.error('Error fetching attendance logs:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch attendance records",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    if (currentUser?.employeeId) {
-      fetchLogs();
-    } else {
-      setLoading(false);
-    }
-  }, [currentUser?.employeeId]);
+    fetchLogs();
+  }, [currentUser, navigate, toast]);
 
   const handleViewDetails = (log: AttendanceRecord) => {
     setSelectedLog(log);
@@ -51,12 +67,12 @@ const EmployeeAttendance = () => {
     return <AttendanceLoading />;
   }
 
-  if (!currentUser) {
-    return <div>Please log in to view attendance.</div>;
-  }
-
   if (attendanceLogs.length === 0) {
-    return <div>No attendance records found.</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+        <p className="text-lg text-gray-600">No attendance records found.</p>
+      </div>
+    );
   }
 
   return (
