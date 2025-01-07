@@ -1,10 +1,11 @@
-import { Task, Employee, localStorageService } from "@/services/localStorageService";
+import { Task, Employee } from "@/services/localStorageService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -22,28 +23,73 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleStatusUpdate = (taskId: string, newStatus: Task['status']) => {
-    localStorageService.updateTask(taskId, { status: newStatus });
-    toast({
-      title: "Task Updated",
-      description: "Task status has been successfully updated.",
-    });
+  const handleStatusUpdate = async (taskId: string, newStatus: Task['status']) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Task Updated",
+        description: "Task status has been successfully updated.",
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleReassign = (taskId: string, newAssigneeId: string) => {
-    localStorageService.updateTask(taskId, { assignedTo: newAssigneeId });
-    toast({
-      title: "Task Reassigned",
-      description: "Task has been successfully reassigned.",
-    });
+  const handleReassign = async (taskId: string, newAssigneeId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ assigned_to: newAssigneeId })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Task Reassigned",
+        description: "Task has been successfully reassigned.",
+      });
+    } catch (error) {
+      console.error('Error reassigning task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reassign task.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    localStorageService.deleteTask(taskId);
-    toast({
-      title: "Task Deleted",
-      description: "Task has been successfully deleted.",
-    });
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Task Deleted",
+        description: "Task has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: Task['status']) => {

@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
-import { Task, localStorageService } from "@/services/localStorageService";
+import { supabase } from "@/integrations/supabase/client";
+import { Task } from "@/services/localStorageService";
 
 interface Message {
   id: string;
@@ -21,17 +22,54 @@ const TaskChat = () => {
   const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
-    if (taskId) {
-      const tasks = localStorageService.getTasks();
-      const foundTask = tasks.find(t => t.id === taskId);
-      if (foundTask) setTask(foundTask);
+    const fetchTask = async () => {
+      if (!taskId) return;
 
-      // Load messages from localStorage
-      const storedMessages = localStorage.getItem(`task_messages_${taskId}`);
-      if (storedMessages) {
-        setMessages(JSON.parse(storedMessages));
+      try {
+        const { data: taskData, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('id', taskId)
+          .single();
+
+        if (error) throw error;
+        if (taskData) setTask(taskData as Task);
+
+        // Load messages from localStorage for now
+        // TODO: Create messages table in Supabase
+        const storedMessages = localStorage.getItem(`task_messages_${taskId}`);
+        if (storedMessages) {
+          setMessages(JSON.parse(storedMessages));
+        }
+      } catch (error) {
+        console.error('Error fetching task:', error);
       }
-    }
+    };
+
+    fetchTask();
+
+    // Subscribe to real-time task updates
+    const channel = supabase
+      .channel('task-chat')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks',
+          filter: `id=eq.${taskId}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            setTask(payload.new as Task);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [taskId]);
 
   const handleSendMessage = (e: React.FormEvent) => {
