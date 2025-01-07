@@ -37,21 +37,26 @@ const parseGoogleSheetJson = (text: string): CheckInLog[] => {
       // Get the employee ID from the first column
       const employeeId = row.c[0]?.v?.toString() || '';
       
-      // Get the timestamp from the second column and convert it to ISO string
-      let timestamp;
+      // Get the timestamp from the second column
       const dateValue = row.c[1]?.v;
+      let timestamp;
       
-      if (typeof dateValue === 'number') {
-        // Convert Excel/Sheets date number to JavaScript date
-        // Excel dates are number of days since December 30, 1899
-        const date = new Date((dateValue - 25569) * 86400 * 1000);
-        timestamp = date.toISOString();
-      } else if (typeof dateValue === 'string') {
-        // If it's already a string, try to parse it
-        const date = new Date(dateValue);
-        timestamp = date.toISOString();
-      } else {
-        console.error('Invalid date format:', dateValue);
+      try {
+        if (typeof dateValue === 'number') {
+          // Convert Excel/Sheets date number to JavaScript date
+          // Excel dates are number of days since December 30, 1899
+          const date = new Date((dateValue - 25569) * 86400 * 1000);
+          timestamp = date.toISOString();
+        } else if (typeof dateValue === 'string') {
+          // If it's already a string, try to parse it
+          const date = new Date(dateValue);
+          timestamp = date.toISOString();
+        } else {
+          console.error('Invalid date format:', dateValue);
+          return null;
+        }
+      } catch (error) {
+        console.error('Error parsing date:', dateValue, error);
         return null;
       }
 
@@ -81,14 +86,18 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
     if (sheetId) {
       // Direct Google Sheets approach
       const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+      console.log('Fetching from URL:', url);
+      
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch attendance data: ${response.status} ${response.statusText}`);
       }
+      
       const text = await response.text();
+      console.log('Raw response:', text);
+      
       return parseGoogleSheetJson(text);
     } else if (scriptUrl) {
-      // Apps Script approach
       const response = await fetch(scriptUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch attendance data');
@@ -141,9 +150,8 @@ const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] => {
     return getSampleData();
   }
 
-  const groupedLogs: { [key: string]: CheckInLog[] } = {};
-  
   // Group logs by employeeId and date
+  const groupedLogs: { [key: string]: CheckInLog[] } = {};
   logs.forEach(log => {
     const date = log.timestamp.split('T')[0];
     const key = `${log.employeeId}-${date}`;
@@ -186,7 +194,10 @@ const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] => {
 export const attendanceService = {
   getAttendanceLogs: async () => {
     const logs = await fetchCheckInLogs();
-    return processAttendanceLogs(logs);
+    console.log('Fetched logs:', logs);
+    const processedLogs = processAttendanceLogs(logs);
+    console.log('Processed logs:', processedLogs);
+    return processedLogs;
   },
   
   setScriptUrl: (url: string) => {
