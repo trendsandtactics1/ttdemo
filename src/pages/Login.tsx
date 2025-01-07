@@ -1,56 +1,97 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    let employeeId;
-    if (email === "karthikjungleemara@gmail.com") {
-      employeeId = "TT012";
-    } else if (email.includes("admin")) {
-      employeeId = "ADMIN001";
-    } else if (email.includes("manager")) {
-      employeeId = "MGR001";
-    } else {
-      employeeId = `TT${Math.floor(Math.random() * 100)}`;
-    }
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Get user role
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
 
-    let userData = {
-      id: crypto.randomUUID(),
-      name: email.split('@')[0],
-      email: email,
-      employeeId: employeeId,
-      designation: "Employee",
-      password: password
+        if (roleData) {
+          switch (roleData.role) {
+            case 'HR':
+              navigate('/admin');
+              break;
+            case 'MANAGER':
+              navigate('/manager');
+              break;
+            default:
+              navigate('/employee');
+          }
+        }
+      }
     };
 
-    if (email.includes("admin")) {
-      userData.designation = "Admin";
-      navigate("/admin");
-    } else if (email.includes("manager")) {
-      userData.designation = "Manager";
-      navigate("/manager");
-    } else {
-      userData.designation = "Employee";
-      navigate("/employee");
-    }
+    checkUser();
 
-    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
-    
-    toast({
-      title: "Logged in successfully",
-      description: `Welcome back, ${userData.name}!`,
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // Get user role
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
+
+        if (roleError) {
+          toast({
+            title: "Error",
+            description: "Could not fetch user role. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (roleData) {
+          // Store user data in localStorage for backward compatibility
+          const userData = {
+            id: session.user.id,
+            name: session.user.user_metadata.name || session.user.email?.split('@')[0],
+            email: session.user.email,
+            employeeId: session.user.user_metadata.employeeId || `TT${Math.floor(Math.random() * 100)}`,
+            designation: roleData.role === 'HR' ? 'Admin' : roleData.role === 'MANAGER' ? 'Manager' : 'Employee',
+          };
+          localStorage.setItem('workstream_current_user', JSON.stringify(userData));
+
+          // Navigate based on role
+          switch (roleData.role) {
+            case 'HR':
+              navigate('/admin');
+              break;
+            case 'MANAGER':
+              navigate('/manager');
+              break;
+            default:
+              navigate('/employee');
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('workstream_current_user');
+        navigate('/login');
+      }
     });
-  };
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 px-4">
@@ -62,45 +103,26 @@ const Login = () => {
         />
         <h1 className="text-2xl font-bold text-gray-900">Trends & Tactics</h1>
       </div>
-      <Card className="w-full max-w-[350px]">
+      <Card className="w-full max-w-[400px]">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">Login</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
-            >
-              Sign In
-            </button>
-          </form>
+          <Auth
+            supabaseClient={supabase}
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: '#000000',
+                    brandAccent: '#333333',
+                  },
+                },
+              },
+            }}
+            providers={[]}
+          />
         </CardContent>
       </Card>
     </div>
