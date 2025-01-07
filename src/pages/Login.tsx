@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { localStorageService } from "@/services/localStorageService";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,11 +13,23 @@ const Login = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Map email to specific employee IDs for testing
+    let employeeId;
+    if (email === "karthikjungleemara@gmail.com") {
+      employeeId = "TT012";  // This matches the attendance log
+    } else if (email.includes("admin")) {
+      employeeId = "ADMIN001";
+    } else if (email.includes("manager")) {
+      employeeId = "MGR001";
+    } else {
+      employeeId = `TT${Math.floor(Math.random() * 100)}`;  // Fallback format matching attendance logs
+    }
+
     let userData = {
       id: crypto.randomUUID(),
       name: email.split('@')[0],
       email: email,
-      employeeId: `EMP${Math.floor(Math.random() * 1000)}`,
+      employeeId: employeeId,
       designation: "Employee",
       password: password
     };
@@ -41,43 +51,48 @@ const Login = () => {
     
     toast({
       title: "Logged in successfully",
-      description: "Welcome back!",
+      description: `Welcome back, ${userData.name}!`,
     });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-[400px]">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <Card className="w-[350px]">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">HR Management System</CardTitle>
+          <CardTitle>Login</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">Email</label>
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">Password</label>
+              <label htmlFor="password" className="text-sm font-medium">
+                Password
+              </label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
-              Login
-            </Button>
+            <button
+              type="submit"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md"
+            >
+              Sign In
+            </button>
           </form>
         </CardContent>
       </Card>
