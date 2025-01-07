@@ -14,16 +14,46 @@ const Login = () => {
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        toast({
+          title: "Error",
+          description: "Failed to check authentication status. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (session) {
         // Get user role
-        const { data: roleData } = await supabase
+        const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
           .single();
 
+        if (roleError) {
+          toast({
+            title: "Error",
+            description: "Could not fetch user role. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         if (roleData) {
+          // Store user data in localStorage for backward compatibility
+          const userData = {
+            id: session.user.id,
+            name: session.user.user_metadata.name || session.user.email?.split('@')[0],
+            email: session.user.email,
+            employeeId: session.user.user_metadata.employeeId || `TT${Math.floor(Math.random() * 100)}`,
+            designation: roleData.role === 'HR' ? 'Admin' : roleData.role === 'MANAGER' ? 'Manager' : 'Employee',
+          };
+          localStorage.setItem('workstream_current_user', JSON.stringify(userData));
+
+          // Navigate based on role
           switch (roleData.role) {
             case 'HR':
               navigate('/admin');
@@ -85,6 +115,9 @@ const Login = () => {
       } else if (event === 'SIGNED_OUT') {
         localStorage.removeItem('workstream_current_user');
         navigate('/login');
+      } else if (event === 'USER_UPDATED') {
+        // Handle user updates
+        checkUser();
       }
     });
 
@@ -122,6 +155,13 @@ const Login = () => {
               },
             }}
             providers={[]}
+            onError={(error) => {
+              toast({
+                title: "Authentication Error",
+                description: error.message,
+                variant: "destructive",
+              });
+            }}
           />
         </CardContent>
       </Card>
