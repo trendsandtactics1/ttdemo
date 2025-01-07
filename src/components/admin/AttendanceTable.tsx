@@ -11,6 +11,7 @@ import { attendanceService } from "@/services/attendanceService";
 import { useEffect, useState } from "react";
 import AttendanceConfig from "./AttendanceConfig";
 import { Badge } from "@/components/ui/badge";
+import { formatHoursToHHMM } from "@/utils/timeFormat";
 
 interface AttendanceRecord {
   employeeId: string;
@@ -97,8 +98,8 @@ const AttendanceTable = () => {
                 <TableCell>{log.employeeId}</TableCell>
                 <TableCell>{formatTime(log.checkIn)}</TableCell>
                 <TableCell>{formatTime(log.checkOut)}</TableCell>
-                <TableCell>{log.totalBreakHours.toFixed(2)} hrs</TableCell>
-                <TableCell>{log.effectiveHours.toFixed(2)} hrs</TableCell>
+                <TableCell>{formatHoursToHHMM(log.totalBreakHours)}</TableCell>
+                <TableCell>{formatHoursToHHMM(log.effectiveHours)}</TableCell>
                 <TableCell>{getAttendanceStatus(log.effectiveHours)}</TableCell>
               </TableRow>
             ))}
