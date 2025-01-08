@@ -1,3 +1,5 @@
+import type { Database } from './database'
+
 export interface AnnouncementsTable {
   Row: {
     content: string
@@ -81,7 +83,7 @@ export interface ProfilesTable {
     designation?: string | null
     email?: string | null
     employee_id?: string | null
-    id?: string
+    id: string
     name?: string | null
     password?: string | null
     profile_photo?: string | null

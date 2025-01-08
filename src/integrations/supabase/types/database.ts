@@ -1,10 +1,13 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+import { Json } from './helpers'
+import type {
+  AnnouncementsTable,
+  AttendanceTable,
+  LeaveRequestsTable,
+  ProfilesTable,
+  TaskMessagesTable,
+  TasksTable,
+  UserRolesTable
+} from './tables'
 
 export interface Database {
   public: {
