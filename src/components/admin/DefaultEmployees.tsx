@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -88,8 +89,13 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
           }
         });
 
-        if (signUpError) throw signUpError;
-        if (!authData.user) throw new Error('No user data returned');
+        if (signUpError) {
+          throw signUpError;
+        }
+
+        if (!authData?.user?.id) {
+          throw new Error('No user data returned');
+        }
 
         // Create profile
         const { error: profileError } = await supabase
@@ -105,7 +111,9 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
             }
           ]);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          throw profileError;
+        }
 
         toast({
           title: "Success",
