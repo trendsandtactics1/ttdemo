@@ -30,7 +30,6 @@ const CreateTaskModal = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate all required fields including dueDate
     if (!title || !description || !assignedTo || !dueDate || !assignedDate) {
       toast({
         title: "Error",
@@ -55,7 +54,6 @@ const CreateTaskModal = () => {
         description: "Task created successfully",
       });
 
-      // Reset form
       setTitle("");
       setDescription("");
       setAssignedTo("");
@@ -68,6 +66,16 @@ const CreateTaskModal = () => {
         description: "Failed to create task",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDateSelect = (date: Date | undefined, type: 'due' | 'assigned') => {
+    if (date) {
+      if (type === 'due') {
+        setDueDate(date);
+      } else {
+        setAssignedDate(date);
+      }
     }
   };
 
@@ -138,7 +146,7 @@ const CreateTaskModal = () => {
                 <Calendar
                   mode="single"
                   selected={assignedDate}
-                  onSelect={setAssignedDate}
+                  onSelect={(date) => handleDateSelect(date, 'assigned')}
                   initialFocus
                 />
               </PopoverContent>
@@ -163,7 +171,7 @@ const CreateTaskModal = () => {
                 <Calendar
                   mode="single"
                   selected={dueDate}
-                  onSelect={setDueDate}
+                  onSelect={(date) => handleDateSelect(date, 'due')}
                   initialFocus
                 />
               </PopoverContent>
