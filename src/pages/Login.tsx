@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -14,7 +13,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +40,15 @@ const Login = () => {
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
 
         if (profileError) {
           setError("Error fetching user profile. Please try again.");
+          return;
+        }
+
+        if (!profileData) {
+          setError("Profile not found. Please contact your administrator.");
           return;
         }
 
@@ -54,10 +57,15 @@ const Login = () => {
           .from('user_roles')
           .select('role')
           .eq('user_id', data.user.id)
-          .single();
+          .maybeSingle();
 
         if (roleError) {
           setError("Error fetching user role. Please try again.");
+          return;
+        }
+
+        if (!roleData) {
+          setError("User role not found. Please contact your administrator.");
           return;
         }
 
@@ -81,11 +89,6 @@ const Login = () => {
         } else {
           navigate("/employee");
         }
-
-        toast({
-          title: "Logged in successfully",
-          description: `Welcome back, ${profileData.name}!`,
-        });
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -96,17 +99,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 px-4">
-      <div className="mb-8 flex flex-col items-center">
-        <img 
-          src="/logo.png" 
-          alt="Trends & Tactics Logo" 
-          className="w-32 h-32 object-contain mb-4"
-        />
-        <h1 className="text-2xl font-bold text-gray-900">Trends & Tactics</h1>
-      </div>
-      <Card className="w-full max-w-[350px]">
-        <CardHeader className="space-y-1">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
           <CardTitle className="text-2xl text-center">Login</CardTitle>
         </CardHeader>
         <CardContent>
@@ -154,10 +149,10 @@ const Login = () => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  Logging in...
                 </>
               ) : (
-                'Sign In'
+                "Login"
               )}
             </Button>
           </form>
