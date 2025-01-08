@@ -7,6 +7,7 @@ import {
   DollarSign,
   Bell,
   LogOut,
+  UserPlus,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,6 +30,7 @@ const AdminSidebar = () => {
     { title: "Leave Requests", path: "/admin/leave-requests", icon: ClipboardList },
     { title: "Tasks", path: "/admin/tasks", icon: ClipboardList },
     { title: "Employees", path: "/admin/employees", icon: Users },
+    { title: "User Management", path: "/admin/users", icon: UserPlus },
     { title: "Payroll", path: "/admin/payroll", icon: DollarSign, disabled: true },
     { title: "Announcements", path: "/admin/announcements", icon: Bell },
   ];

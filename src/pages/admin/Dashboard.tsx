@@ -6,6 +6,7 @@ import LeaveRequests from "@/components/admin/LeaveRequests";
 import Tasks from "@/components/admin/Tasks";
 import TaskChat from "@/components/admin/TaskChat";
 import Employees from "@/components/admin/Employees";
+import UserManagement from "@/components/admin/UserManagement";
 import Announcements from "@/components/admin/Announcements";
 import AttendanceTable from "@/components/admin/AttendanceTable";
 
@@ -22,6 +23,7 @@ const AdminDashboard = () => {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/tasks/:taskId/chat" element={<TaskChat />} />
             <Route path="/employees" element={<Employees />} />
+            <Route path="/users" element={<UserManagement />} />
             <Route path="/announcements" element={<Announcements />} />
           </Routes>
         </main>
