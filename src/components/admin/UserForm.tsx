@@ -23,7 +23,10 @@ import { UserFormData } from "@/types/user";
 
 const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Invalid email address").refine((email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }, "Invalid email format"),
   employeeId: z.string().min(1, "Employee ID is required"),
   designation: z.string().min(1, "Designation is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -53,7 +56,7 @@ const UserForm = ({ onSubmit }: UserFormProps) => {
         throw new Error("Form data is required");
       }
       await onSubmit(data);
-      form.reset(); // Reset form after successful submission
+      form.reset();
     } catch (error) {
       console.error("Error submitting form:", error);
     }
