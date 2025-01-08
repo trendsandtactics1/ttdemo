@@ -9,7 +9,10 @@ import type { z } from "zod";
 type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 const Employees = () => {
-  const [employees, setEmployees] = useState(localStorageService.getEmployees());
+  const [employees, setEmployees] = useState(() => {
+    const storedEmployees = localStorageService.getEmployees();
+    return Array.isArray(storedEmployees) ? storedEmployees : [];
+  });
   const { toast } = useToast();
 
   const handleSubmit = (data: EmployeeFormData) => {
@@ -48,7 +51,7 @@ const Employees = () => {
         throw new Error("Failed to add employee");
       }
       
-      setEmployees([...employees, newEmployee]);
+      setEmployees((prevEmployees) => [...prevEmployees, newEmployee]);
       toast({
         title: "Success",
         description: "Employee added successfully",
@@ -74,7 +77,9 @@ const Employees = () => {
 
     try {
       localStorageService.deleteEmployee(employeeId);
-      setEmployees(localStorageService.getEmployees());
+      setEmployees((prevEmployees) => 
+        prevEmployees.filter(emp => emp.employeeId !== employeeId)
+      );
       toast({
         title: "Success",
         description: "Employee deleted successfully",
@@ -93,7 +98,7 @@ const Employees = () => {
       <h2 className="text-3xl font-bold tracking-tight">Employees</h2>
       <EmployeeForm onSubmit={handleSubmit} />
       <EmployeeTable 
-        employees={employees || []} 
+        employees={employees} 
         onDelete={handleDeleteEmployee} 
       />
     </div>
