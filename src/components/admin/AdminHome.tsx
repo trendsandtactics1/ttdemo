@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CheckCircle, XCircle, ClipboardList } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { localStorageService } from "@/services/localStorageService";
+import { leaveRequestService } from "@/services/leaveRequestService";
 import AttendanceTable from "./AttendanceTable";
 
 const AdminHome = () => {
@@ -33,78 +34,68 @@ const AdminHome = () => {
   ]);
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        // Get total employees
-        const { data: employees } = await supabase
-          .from('profiles')
-          .select('id');
-        
-        const totalEmployees = employees?.length || 0;
+    const updateStats = () => {
+      const employees = localStorageService.getEmployees();
+      const tasks = localStorageService.getTasks();
+      const leaveRequests = leaveRequestService.getAllRequests();
+      const pendingTasks = tasks.filter(task => task.status === 'pending').length;
+      const totalEmployees = employees.length;
 
-        // Get today's date in YYYY-MM-DD format
-        const today = new Date().toISOString().split('T')[0];
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Count approved leave requests for today
+      const approvedLeavesToday = leaveRequests.filter(request => {
+        const startDate = new Date(request.startDate).toISOString().split('T')[0];
+        const endDate = new Date(request.endDate).toISOString().split('T')[0];
+        return (
+          request.status === 'approved' &&
+          today >= startDate &&
+          today <= endDate
+        );
+      }).length;
 
-        // Get attendance records for today
-        const { data: attendanceRecords } = await supabase
-          .from('attendance_records')
-          .select('*')
-          .eq('date', today);
-
-        const presentToday = attendanceRecords?.length || 0;
-        const absentToday = totalEmployees - presentToday;
-
-        // Get pending tasks
-        const { data: tasks } = await supabase
-          .from('tasks')
-          .select('*')
-          .eq('status', 'pending');
-
-        const pendingTasks = tasks?.length || 0;
-
-        setStats([
-          {
-            title: "Total Employees",
-            value: totalEmployees.toString(),
-            icon: Users,
-            description: "Active employees",
-          },
-          {
-            title: "Present Today",
-            value: presentToday.toString(),
-            icon: CheckCircle,
-            description: `${Math.round((presentToday/totalEmployees || 0) * 100)}% attendance`,
-          },
-          {
-            title: "Absent Today",
-            value: absentToday.toString(),
-            icon: XCircle,
-            description: `${Math.round((absentToday/totalEmployees || 0) * 100)}% absence rate`,
-          },
-          {
-            title: "Pending Tasks",
-            value: pendingTasks.toString(),
-            icon: ClipboardList,
-            description: "Due this week",
-          },
-        ]);
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      }
+      // Calculate present and absent counts
+      const absentToday = approvedLeavesToday;
+      const presentToday = totalEmployees - absentToday;
+      
+      setStats([
+        {
+          title: "Total Employees",
+          value: totalEmployees.toString(),
+          icon: Users,
+          description: "Active employees",
+        },
+        {
+          title: "Present Today",
+          value: presentToday.toString(),
+          icon: CheckCircle,
+          description: `${Math.round((presentToday/totalEmployees || 0) * 100)}% attendance`,
+        },
+        {
+          title: "Absent Today",
+          value: absentToday.toString(),
+          icon: XCircle,
+          description: `${Math.round((absentToday/totalEmployees || 0) * 100)}% absence rate`,
+        },
+        {
+          title: "Pending Tasks",
+          value: pendingTasks.toString(),
+          icon: ClipboardList,
+          description: "Due this week",
+        },
+      ]);
     };
 
-    fetchStats();
-
-    // Subscribe to real-time changes
-    const channel = supabase
-      .channel('admin-dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchStats)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, fetchStats)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_records' }, fetchStats)
-      .subscribe();
-
+    updateStats();
+    window.addEventListener('employees-updated', updateStats);
+    window.addEventListener('tasks-updated', updateStats);
+    window.addEventListener('leave-requests-updated', updateStats);
+    
     return () => {
-      supabase.removeChannel(channel);
+      window.removeEventListener('employees-updated', updateStats);
+      window.removeEventListener('tasks-updated', updateStats);
+      window.removeEventListener('leave-requests-updated', updateStats);
     };
   }, []);
 

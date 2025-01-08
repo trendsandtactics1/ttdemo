@@ -1,100 +1,98 @@
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 import { attendanceService } from "@/services/attendanceService";
+import { localStorageService } from "@/services/localStorageService";
 import { AttendanceRecord } from "@/services/attendance/types";
-import AttendanceTable from "./attendance/AttendanceTable";
 import AttendanceLoading from "./attendance/AttendanceLoading";
+import AttendanceTable from "./attendance/AttendanceTable";
 import AttendanceDetailsModal from "./attendance/AttendanceDetailsModal";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(true); // Changed to true by default
+  const currentUser = localStorageService.getCurrentUser();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchLogs = async () => {
+      if (!currentUser) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to view attendance records",
+          variant: "destructive",
+        });
+        navigate("/login");
+        return;
+      }
+
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-
-        if (!session?.user) {
-          navigate("/login");
-          return;
-        }
-
-        const { data: userProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('employee_id')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        if (profileError) {
-          console.error('Profile error:', profileError);
-          toast({
-            title: "Error",
-            description: "Failed to fetch user profile. Please try again later.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        if (!userProfile?.employee_id) {
-          toast({
-            title: "Profile Not Found",
-            description: "Your employee profile is not set up. Please contact HR.",
-            variant: "destructive",
-          });
-          return;
-        }
-
         const allLogs = await attendanceService.getAttendanceLogs();
         console.log('All logs:', allLogs);
-        console.log('Current user profile:', userProfile);
+        console.log('Current user:', currentUser);
         
         const employeeLogs = allLogs
-          .filter(log => log.employeeId === userProfile.employee_id)
+          .filter(log => log.employeeId === currentUser.employeeId)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
         console.log('Filtered logs:', employeeLogs);
         setAttendanceLogs(employeeLogs);
+        
+        // Set the first log as selected by default if available
+        if (employeeLogs.length > 0) {
+          setSelectedLog(employeeLogs[0]);
+        }
+        
+        setLoading(false);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error fetching attendance logs:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch attendance logs. Please try again later.",
+          description: "Failed to fetch attendance records",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     fetchLogs();
-  }, [navigate, toast]);
+  }, [currentUser, navigate, toast]);
 
-  if (isLoading) {
+  const handleViewDetails = (log: AttendanceRecord) => {
+    setSelectedLog(log);
+    setShowModal(true);
+  };
+
+  if (!currentUser) {
+    return null;
+  }
+
+  if (loading) {
     return <AttendanceLoading />;
   }
 
   return (
-    <div className="space-y-4">
-      <Card className="p-6">
-        <h2 className="text-2xl font-bold mb-4">My Attendance</h2>
-        <AttendanceTable
-          attendanceLogs={attendanceLogs}
-          onViewDetails={(log) => setSelectedLog(log)}
+    <div className="space-y-6 p-4 md:p-6">
+      <h2 className="text-3xl font-bold tracking-tight">My Attendance</h2>
+      
+      {attendanceLogs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+          <p className="text-lg text-gray-600">No attendance records found.</p>
+        </div>
+      ) : (
+        <AttendanceTable 
+          attendanceLogs={attendanceLogs} 
+          onViewDetails={handleViewDetails}
         />
-      </Card>
+      )}
 
       <AttendanceDetailsModal
         log={selectedLog}
-        open={!!selectedLog}
-        onOpenChange={(open) => !open && setSelectedLog(null)}
+        open={showModal}
+        onOpenChange={setShowModal}
       />
     </div>
   );

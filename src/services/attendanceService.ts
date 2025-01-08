@@ -1,5 +1,6 @@
 import { CheckInLog, AttendanceRecord } from './attendance/types';
 import { parseGoogleSheetJson } from './attendance/utils';
+import { getSampleData } from './attendance/sampleData';
 import { processAttendanceLogs } from './attendance/processor';
 
 const SCRIPT_URL_STORAGE_KEY = 'apps_script_url';
@@ -24,9 +25,7 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
         throw new Error(`Failed to fetch attendance data: ${response.status} ${response.statusText}`);
       }
       
-      // Clone the response before reading it
-      const responseClone = response.clone();
-      const text = await responseClone.text();
+      const text = await response.text();
       console.log('Raw response:', text);
       
       const logs = parseGoogleSheetJson(text);
@@ -54,6 +53,7 @@ export const attendanceService = {
     const logs = await fetchCheckInLogs();
     console.log('Total fetched logs:', logs.length);
     
+    // If we have configuration but no logs, return empty array
     if (logs.length === 0) {
       console.log('No logs found in configured source');
       return [];
