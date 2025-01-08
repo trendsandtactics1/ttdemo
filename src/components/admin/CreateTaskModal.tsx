@@ -29,6 +29,8 @@ const CreateTaskModal = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate all required fields including dueDate
     if (!title || !description || !assignedTo || !dueDate || !assignedDate) {
       toast({
         title: "Error",
@@ -38,26 +40,35 @@ const CreateTaskModal = () => {
       return;
     }
 
-    localStorageService.addTask({
-      title,
-      description,
-      assignedTo,
-      status: "pending",
-      dueDate: dueDate.toISOString(),
-      assignedDate: assignedDate.toISOString(),
-    });
+    try {
+      localStorageService.addTask({
+        title,
+        description,
+        assignedTo,
+        status: "pending",
+        dueDate: dueDate.toISOString(),
+        assignedDate: assignedDate.toISOString(),
+      });
 
-    toast({
-      title: "Success",
-      description: "Task created successfully",
-    });
+      toast({
+        title: "Success",
+        description: "Task created successfully",
+      });
 
-    setTitle("");
-    setDescription("");
-    setAssignedTo("");
-    setDueDate(undefined);
-    setAssignedDate(new Date());
-    setOpen(false);
+      // Reset form
+      setTitle("");
+      setDescription("");
+      setAssignedTo("");
+      setDueDate(undefined);
+      setAssignedDate(new Date());
+      setOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create task",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -129,7 +140,6 @@ const CreateTaskModal = () => {
                   selected={assignedDate}
                   onSelect={(date) => date && setAssignedDate(date)}
                   initialFocus
-                  disabled={(date) => date < new Date()}
                 />
               </PopoverContent>
             </Popover>
@@ -155,7 +165,6 @@ const CreateTaskModal = () => {
                   selected={dueDate}
                   onSelect={(date) => date && setDueDate(date)}
                   initialFocus
-                  disabled={(date) => date < new Date()}
                 />
               </PopoverContent>
             </Popover>
