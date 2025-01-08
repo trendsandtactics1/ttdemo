@@ -6,25 +6,35 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
       });
 
-      if (error) throw error;
+      if (signInError) {
+        if (signInError.message === "Invalid login credentials") {
+          setError("Invalid email or password. Please check your credentials and try again.");
+        } else {
+          setError(signInError.message);
+        }
+        return;
+      }
 
       if (data.user) {
         // Fetch user profile
@@ -34,7 +44,22 @@ const Login = () => {
           .eq('id', data.user.id)
           .single();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          setError("Error fetching user profile. Please try again.");
+          return;
+        }
+
+        // Fetch user role
+        const { data: roleData, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (roleError) {
+          setError("Error fetching user role. Please try again.");
+          return;
+        }
 
         const userData = {
           id: data.user.id,
@@ -42,14 +67,16 @@ const Login = () => {
           email: profileData.email,
           employeeId: profileData.employee_id,
           designation: profileData.designation,
+          role: roleData.role,
         };
 
         localStorage.setItem('workstream_current_user', JSON.stringify(userData));
 
-        // Route based on designation
-        if (profileData.designation.toLowerCase().includes('admin')) {
+        // Route based on role
+        const role = roleData.role;
+        if (role === 'admin') {
           navigate("/admin");
-        } else if (profileData.designation.toLowerCase().includes('manager')) {
+        } else if (role === 'manager') {
           navigate("/manager");
         } else {
           navigate("/employee");
@@ -62,11 +89,7 @@ const Login = () => {
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      toast({
-        title: "Login failed",
-        description: error.message || "Please check your credentials and try again",
-        variant: "destructive",
-      });
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -87,6 +110,11 @@ const Login = () => {
           <CardTitle className="text-2xl text-center">Login</CardTitle>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -100,6 +128,7 @@ const Login = () => {
                 required
                 className="w-full"
                 disabled={loading}
+                placeholder="Enter your email"
               />
             </div>
             <div className="space-y-2">
@@ -114,6 +143,7 @@ const Login = () => {
                 required
                 className="w-full"
                 disabled={loading}
+                placeholder="Enter your password"
               />
             </div>
             <Button
