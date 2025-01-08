@@ -17,7 +17,8 @@ interface AttendanceDetailsModalProps {
 }
 
 const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsModalProps) => {
-  const formatTime = (dateTimeString: string) => {
+  const formatTime = (dateTimeString: string | null) => {
+    if (!dateTimeString) return "N/A";
     try {
       const date = parseISO(dateTimeString);
       return format(date, "hh:mm a");
@@ -27,7 +28,8 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "N/A";
     try {
       const date = parseISO(dateString);
       return format(date, "MMM dd, yyyy");
@@ -37,7 +39,8 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
     }
   };
 
-  const getAttendanceStatus = (effectiveHours: number) => {
+  const getAttendanceStatus = (effectiveHours: number | null) => {
+    if (effectiveHours === null) return <Badge className="bg-gray-500">Unknown</Badge>;
     if (effectiveHours >= 8) {
       return <Badge className="bg-green-500">Full Day</Badge>;
     } else if (effectiveHours > 0) {
@@ -52,7 +55,7 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
         <DialogHeader>
           <DialogTitle>Attendance Details</DialogTitle>
         </DialogHeader>
-        {log && (
+        {log ? (
           <ScrollArea className="max-h-[80vh]">
             <div className="space-y-4 p-4">
               <div className="grid grid-cols-2 gap-4">
@@ -62,7 +65,7 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
                 </div>
                 <div>
                   <h4 className="font-semibold">Employee Name</h4>
-                  <p>{log.employeeName}</p>
+                  <p>{log.employeeName || 'N/A'}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold">Check In</h4>
@@ -74,11 +77,11 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
                 </div>
                 <div>
                   <h4 className="font-semibold">Total Break Hours</h4>
-                  <p>{formatHoursToHHMM(log.totalBreakHours)}</p>
+                  <p>{formatHoursToHHMM(log.totalBreakHours || 0)}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold">Effective Hours</h4>
-                  <p>{formatHoursToHHMM(log.effectiveHours)}</p>
+                  <p>{formatHoursToHHMM(log.effectiveHours || 0)}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold">Status</h4>
@@ -90,7 +93,7 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
 
               <div className="mt-4">
                 <h4 className="font-semibold mb-2">Break Details</h4>
-                {log.breaks.length > 0 ? (
+                {log.breaks && log.breaks.length > 0 ? (
                   <div className="space-y-2">
                     {log.breaks.reduce((acc: JSX.Element[], break1, index, array) => {
                       if (index % 2 === 0) {
@@ -113,6 +116,10 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
               </div>
             </div>
           </ScrollArea>
+        ) : (
+          <div className="p-4 text-center text-muted-foreground">
+            No attendance data available
+          </div>
         )}
       </DialogContent>
     </Dialog>
