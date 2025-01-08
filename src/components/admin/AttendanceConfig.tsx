@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { attendanceService } from "@/services/attendanceService";
 import { useToast } from "@/components/ui/use-toast";
 import { Card } from "@/components/ui/card";
+import { useState } from "react";
 
 const AttendanceConfig = () => {
   const [sheetId, setSheetId] = useState(attendanceService.getSheetId() || '');
