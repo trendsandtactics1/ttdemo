@@ -34,7 +34,7 @@ const CreateTaskModal = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
-  const [assignedDate, setAssignedDate] = useState<Date>();
+  const [assignedDate, setAssignedDate] = useState<Date>(new Date());
   const [dueDate, setDueDate] = useState<Date>();
   const { toast } = useToast();
 
@@ -71,7 +71,7 @@ const CreateTaskModal = ({
       setTitle("");
       setDescription("");
       setAssignedTo("");
-      setAssignedDate(undefined);
+      setAssignedDate(new Date());
       setDueDate(undefined);
 
       // Close modal
@@ -95,7 +95,7 @@ const CreateTaskModal = ({
   };
 
   const handleAssignedDateChange = (date: Date | undefined) => {
-    setAssignedDate(date);
+    setAssignedDate(date || new Date());
   };
 
   return (
