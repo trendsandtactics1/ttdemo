@@ -76,6 +76,9 @@ export const localStorageService = {
   },
 
   addEmployee: (employee: Omit<Employee, 'id'>) => {
+    if (!employee.name || !employee.email || !employee.employeeId || !employee.designation || !employee.password) {
+      return null;
+    }
     const employees = localStorageService.getEmployees();
     const newEmployee: Employee = {
       ...employee,

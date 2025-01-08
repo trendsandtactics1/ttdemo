@@ -36,7 +36,14 @@ const Employees = () => {
         return;
       }
 
-      const newEmployee = localStorageService.addEmployee(data);
+      const newEmployee = localStorageService.addEmployee({
+        name: data.name,
+        email: data.email,
+        employeeId: data.employeeId,
+        designation: data.designation,
+        password: data.password,
+      });
+      
       if (!newEmployee) {
         throw new Error("Failed to add employee");
       }
