@@ -143,6 +143,7 @@ export type Database = {
           employee_id: string | null
           id: string
           name: string | null
+          password: string | null
           profile_photo: string | null
           updated_at: string
         }
@@ -153,6 +154,7 @@ export type Database = {
           employee_id?: string | null
           id: string
           name?: string | null
+          password?: string | null
           profile_photo?: string | null
           updated_at?: string
         }
@@ -163,6 +165,7 @@ export type Database = {
           employee_id?: string | null
           id?: string
           name?: string | null
+          password?: string | null
           profile_photo?: string | null
           updated_at?: string
         }

@@ -6,17 +6,10 @@ import EmployeeTable from "./EmployeeTable";
 import { employeeSchema } from "./EmployeeForm";
 import type { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Database } from "@/integrations/supabase/types";
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
-
-interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  employee_id: string;
-  designation: string;
-  profile_photo?: string;
-}
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 const Employees = () => {
   const { toast } = useToast();
@@ -35,22 +28,20 @@ const Employees = () => {
         throw error;
       }
       
-      return data as Employee[];
+      return data as Profile[];
     },
   });
 
   // Create employee mutation
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
-      // Insert into profiles table with password
-      // This will trigger the create_employee_with_profile() function
       const { data: newProfile, error } = await supabase
         .from('profiles')
         .insert({
           name: data.name,
           email: data.email,
           designation: data.designation,
-          password: data.password // This will be used by the trigger function
+          password: data.password
         })
         .select()
         .single();
