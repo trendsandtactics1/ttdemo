@@ -15,9 +15,23 @@ import { Employee } from "@/services/localStorageService";
 interface EmployeeTableProps {
   employees: Employee[];
   onDelete: (employeeId: string) => void;
+  isLoading?: boolean;
 }
 
-const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
+const EmployeeTable = ({ employees, onDelete, isLoading }: EmployeeTableProps) => {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>All Employees</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Loading employees...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -50,13 +64,13 @@ const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
                     </TableCell>
                     <TableCell>{employee.name}</TableCell>
                     <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.employeeId}</TableCell>
+                    <TableCell>{employee.employee_id}</TableCell>
                     <TableCell>{employee.designation}</TableCell>
                     <TableCell>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => onDelete(employee.employeeId)}
+                        onClick={() => onDelete(employee.employee_id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

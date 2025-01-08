@@ -1,95 +1,103 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { localStorageService } from "@/services/localStorageService";
+import { supabase } from "@/integrations/supabase/client";
 import EmployeeForm from "./EmployeeForm";
 import EmployeeTable from "./EmployeeTable";
 import { employeeSchema } from "./EmployeeForm";
 import type { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
 
 const Employees = () => {
-  const [employees, setEmployees] = useState(() => {
-    const storedEmployees = localStorageService.getEmployees();
-    return Array.isArray(storedEmployees) ? storedEmployees : [];
-  });
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleSubmit = (data: EmployeeFormData) => {
-    if (!data) {
-      toast({
-        title: "Error",
-        description: "Invalid form data",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const existingEmployee = employees.find(
-        (emp) => emp?.email === data.email || emp?.employeeId === data.employeeId
-      );
-
-      if (existingEmployee) {
-        toast({
-          title: "Error",
-          description: "An employee with this email or ID already exists",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const newEmployee = localStorageService.addEmployee({
-        name: data.name,
-        email: data.email,
-        employeeId: data.employeeId,
-        designation: data.designation,
-        password: data.password,
-      });
+  // Fetch employees
+  const { data: employees = [], isLoading } = useQuery({
+    queryKey: ['employees'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
       
-      if (!newEmployee) {
-        throw new Error("Failed to add employee");
-      }
-      
-      setEmployees((prevEmployees) => [...prevEmployees, newEmployee]);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Create employee mutation
+  const createEmployeeMutation = useMutation({
+    mutationFn: async (data: EmployeeFormData) => {
+      const { error } = await supabase
+        .from('profiles')
+        .insert([{
+          name: data.name,
+          email: data.email,
+          employee_id: data.employeeId,
+          designation: data.designation,
+          password: data.password,
+        }]);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast({
         title: "Success",
         description: "Employee added successfully",
       });
-    } catch (error) {
+    },
+    onError: (error) => {
+      console.error("Error creating employee:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add employee",
+        description: "Failed to add employee",
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
-  const handleDeleteEmployee = (employeeId: string) => {
-    if (!employeeId) {
-      toast({
-        title: "Error",
-        description: "Invalid employee ID",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Delete employee mutation
+  const deleteEmployeeMutation = useMutation({
+    mutationFn: async (employeeId: string) => {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('employee_id', employeeId);
 
-    try {
-      localStorageService.deleteEmployee(employeeId);
-      setEmployees((prevEmployees) => 
-        prevEmployees.filter(emp => emp.employeeId !== employeeId)
-      );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast({
         title: "Success",
         description: "Employee deleted successfully",
       });
-    } catch (error) {
+    },
+    onError: (error) => {
+      console.error("Error deleting employee:", error);
       toast({
         title: "Error",
         description: "Failed to delete employee",
         variant: "destructive",
       });
+    },
+  });
+
+  const handleSubmit = async (data: EmployeeFormData) => {
+    try {
+      await createEmployeeMutation.mutateAsync(data);
+    } catch (error) {
+      console.error("Error in form submission:", error);
+    }
+  };
+
+  const handleDeleteEmployee = async (employeeId: string) => {
+    try {
+      await deleteEmployeeMutation.mutateAsync(employeeId);
+    } catch (error) {
+      console.error("Error deleting employee:", error);
     }
   };
 
@@ -99,7 +107,8 @@ const Employees = () => {
       <EmployeeForm onSubmit={handleSubmit} />
       <EmployeeTable 
         employees={employees} 
-        onDelete={handleDeleteEmployee} 
+        onDelete={handleDeleteEmployee}
+        isLoading={isLoading} 
       />
     </div>
   );
