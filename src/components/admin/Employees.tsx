@@ -15,8 +15,8 @@ const Employees = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch employees using React Query
-  const { data: employees = [], isLoading } = useQuery({
+  // Fetch employees using React Query with proper error handling
+  const { data: employees = [], isLoading, error: queryError } = useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -28,13 +28,17 @@ const Employees = () => {
         throw error;
       }
       
-      return data as Profile[];
+      return data as Profile[] || [];
     },
   });
 
-  // Create employee mutation
+  // Create employee mutation with proper error handling
   const createEmployee = useMutation({
     mutationFn: async (data: EmployeeFormData) => {
+      if (!data) {
+        throw new Error("Employee data is required");
+      }
+
       const { data: newProfile, error } = await supabase
         .from('profiles')
         .insert([{
@@ -73,6 +77,15 @@ const Employees = () => {
   });
 
   const handleSubmit = async (data: EmployeeFormData) => {
+    if (!data) {
+      toast({
+        title: "Error",
+        description: "Please provide employee data",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await createEmployee.mutateAsync(data);
     } catch (error) {
@@ -81,6 +94,15 @@ const Employees = () => {
   };
 
   const handleDeleteEmployee = async (employeeId: string) => {
+    if (!employeeId) {
+      toast({
+        title: "Error",
+        description: "Employee ID is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('profiles')
@@ -103,8 +125,16 @@ const Employees = () => {
     }
   };
 
+  if (queryError) {
+    return (
+      <div className="p-4 text-red-500">
+        Error loading employees: {queryError.message}
+      </div>
+    );
+  }
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="p-4">Loading...</div>;
   }
 
   return (
