@@ -17,6 +17,10 @@ interface AttendanceDetailsModalProps {
 }
 
 const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsModalProps) => {
+  if (!log) {
+    return null;
+  }
+
   const formatTime = (dateTimeString: string) => {
     try {
       const date = parseISO(dateTimeString);
@@ -52,68 +56,66 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
         <DialogHeader>
           <DialogTitle>Attendance Details</DialogTitle>
         </DialogHeader>
-        {log && (
-          <ScrollArea className="max-h-[80vh]">
-            <div className="space-y-4 p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold">Date</h4>
-                  <p>{formatDate(log.date)}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Employee Name</h4>
-                  <p>{log.employeeName}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Check In</h4>
-                  <p>{formatTime(log.checkIn)}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Check Out</h4>
-                  <p>{formatTime(log.checkOut)}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Total Break Hours</h4>
-                  <p>{formatHoursToHHMM(log.totalBreakHours)}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Effective Hours</h4>
-                  <p>{formatHoursToHHMM(log.effectiveHours)}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold">Status</h4>
-                  <div className="mt-1">
-                    {getAttendanceStatus(log.effectiveHours)}
-                  </div>
-                </div>
+        <ScrollArea className="max-h-[80vh]">
+          <div className="space-y-4 p-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-semibold">Date</h4>
+                <p>{formatDate(log.date)}</p>
               </div>
-
-              <div className="mt-4">
-                <h4 className="font-semibold mb-2">Break Details</h4>
-                {log.breaks.length > 0 ? (
-                  <div className="space-y-2">
-                    {log.breaks.reduce((acc: JSX.Element[], break1, index, array) => {
-                      if (index % 2 === 0) {
-                        const break2 = array[index + 1];
-                        if (break2) {
-                          acc.push(
-                            <div key={index} className="flex gap-4 text-sm">
-                              <span>Start: {formatTime(break1)}</span>
-                              <span>End: {formatTime(break2)}</span>
-                            </div>
-                          );
-                        }
-                      }
-                      return acc;
-                    }, [])}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No breaks recorded</p>
-                )}
+              <div>
+                <h4 className="font-semibold">Employee Name</h4>
+                <p>{log.employeeName}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Check In</h4>
+                <p>{formatTime(log.checkIn)}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Check Out</h4>
+                <p>{formatTime(log.checkOut)}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Total Break Hours</h4>
+                <p>{formatHoursToHHMM(log.totalBreakHours)}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Effective Hours</h4>
+                <p>{formatHoursToHHMM(log.effectiveHours)}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold">Status</h4>
+                <div className="mt-1">
+                  {getAttendanceStatus(log.effectiveHours)}
+                </div>
               </div>
             </div>
-          </ScrollArea>
-        )}
+
+            <div className="mt-4">
+              <h4 className="font-semibold mb-2">Break Details</h4>
+              {log.breaks && log.breaks.length > 0 ? (
+                <div className="space-y-2">
+                  {log.breaks.reduce((acc: JSX.Element[], break1, index, array) => {
+                    if (index % 2 === 0) {
+                      const break2 = array[index + 1];
+                      if (break2) {
+                        acc.push(
+                          <div key={index} className="flex gap-4 text-sm">
+                            <span>Start: {formatTime(break1)}</span>
+                            <span>End: {formatTime(break2)}</span>
+                          </div>
+                        );
+                      }
+                    }
+                    return acc;
+                  }, [])}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No breaks recorded</p>
+              )}
+            </div>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

@@ -12,7 +12,7 @@ const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
-  const [showModal, setShowModal] = useState(true); // Changed to true by default
+  const [showModal, setShowModal] = useState(false); // Changed to false by default
   const currentUser = localStorageService.getCurrentUser();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -41,9 +41,10 @@ const EmployeeAttendance = () => {
         console.log('Filtered logs:', employeeLogs);
         setAttendanceLogs(employeeLogs);
         
-        // Set the first log as selected by default if available
+        // Only set the first log and show modal if there are logs
         if (employeeLogs.length > 0) {
           setSelectedLog(employeeLogs[0]);
+          setShowModal(true);
         }
         
         setLoading(false);
@@ -89,11 +90,13 @@ const EmployeeAttendance = () => {
         />
       )}
 
-      <AttendanceDetailsModal
-        log={selectedLog}
-        open={showModal}
-        onOpenChange={setShowModal}
-      />
+      {selectedLog && (
+        <AttendanceDetailsModal
+          log={selectedLog}
+          open={showModal}
+          onOpenChange={setShowModal}
+        />
+      )}
     </div>
   );
 };
