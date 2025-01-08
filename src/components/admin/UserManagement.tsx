@@ -17,8 +17,10 @@ const UserManagement = () => {
   const loadUsers = async () => {
     try {
       const fetchedUsers = await fetchUsers();
-      setUsers(fetchedUsers);
+      setUsers(fetchedUsers || []); // Ensure we set an empty array if fetchedUsers is null
     } catch (error: any) {
+      console.error("Error fetching users:", error);
+      setUsers([]); // Set empty array on error
       toast({
         title: "Error",
         description: "Failed to fetch users",
@@ -36,15 +38,25 @@ const UserManagement = () => {
       });
       loadUsers();
     } catch (error: any) {
+      console.error("Error creating user:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create user",
         variant: "destructive",
       });
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Invalid user ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await deleteUser(userId);
       toast({
@@ -53,9 +65,10 @@ const UserManagement = () => {
       });
       loadUsers();
     } catch (error: any) {
+      console.error("Error deleting user:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to delete user",
         variant: "destructive",
       });
     }

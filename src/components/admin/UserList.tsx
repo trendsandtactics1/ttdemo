@@ -13,13 +13,19 @@ const UserList = ({ users, onDeleteUser }: UserListProps) => {
   const { toast } = useToast();
 
   const handleDelete = async (userId: string) => {
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Invalid user ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await onDeleteUser(userId);
-      toast({
-        title: "Success",
-        description: "User deleted successfully",
-      });
     } catch (error) {
+      console.error("Error deleting user:", error);
       toast({
         title: "Error",
         description: "Failed to delete user",
@@ -28,7 +34,7 @@ const UserList = ({ users, onDeleteUser }: UserListProps) => {
     }
   };
 
-  if (!users || users.length === 0) {
+  if (!Array.isArray(users) || users.length === 0) {
     return <p className="text-muted-foreground">No users found.</p>;
   }
 
@@ -46,19 +52,20 @@ const UserList = ({ users, onDeleteUser }: UserListProps) => {
       </TableHeader>
       <TableBody>
         {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell>{user.name}</TableCell>
-            <TableCell>{user.email}</TableCell>
-            <TableCell>{user.employee_id}</TableCell>
-            <TableCell>{user.designation}</TableCell>
+          <TableRow key={user?.id}>
+            <TableCell>{user?.name || 'N/A'}</TableCell>
+            <TableCell>{user?.email || 'N/A'}</TableCell>
+            <TableCell>{user?.employee_id || 'N/A'}</TableCell>
+            <TableCell>{user?.designation || 'N/A'}</TableCell>
             <TableCell>
-              {user.user_roles && user.user_roles[0]?.role ? user.user_roles[0].role : 'N/A'}
+              {user?.user_roles && user.user_roles[0]?.role ? user.user_roles[0].role : 'N/A'}
             </TableCell>
             <TableCell>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleDelete(user.id)}
+                onClick={() => user?.id && handleDelete(user.id)}
+                disabled={!user?.id}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
