@@ -12,11 +12,9 @@ interface AnnouncementCardProps {
     image?: string;
     created_at: string;
   };
-  onEdit: (announcement: any) => void;
-  onDelete: () => void;
 }
 
-const AnnouncementCard = ({ announcement, onEdit, onDelete }: AnnouncementCardProps) => {
+const AnnouncementCard = ({ announcement }: AnnouncementCardProps) => {
   const handleDelete = async () => {
     try {
       const { error } = await supabase
@@ -25,7 +23,6 @@ const AnnouncementCard = ({ announcement, onEdit, onDelete }: AnnouncementCardPr
         .eq('id', announcement.id);
       
       if (error) throw error;
-      onDelete();
       toast.success("Announcement deleted successfully");
     } catch (error: any) {
       toast.error(error.message);
@@ -41,7 +38,12 @@ const AnnouncementCard = ({ announcement, onEdit, onDelete }: AnnouncementCardPr
             <Button
               variant="outline"
               size="icon"
-              onClick={() => onEdit(announcement)}
+              onClick={() => {
+                // This will be handled by the parent component
+                window.dispatchEvent(new CustomEvent('edit-announcement', { 
+                  detail: announcement 
+                }));
+              }}
             >
               <Pencil className="h-4 w-4" />
             </Button>

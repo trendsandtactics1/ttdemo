@@ -16,10 +16,9 @@ interface AnnouncementFormProps {
     content: string;
     image?: string;
   };
-  onSuccess: () => void;
 }
 
-const AnnouncementForm = ({ isOpen, setIsOpen, editingAnnouncement, onSuccess }: AnnouncementFormProps) => {
+const AnnouncementForm = ({ isOpen, setIsOpen, editingAnnouncement }: AnnouncementFormProps) => {
   const [title, setTitle] = useState(editingAnnouncement?.title || "");
   const [content, setContent] = useState(editingAnnouncement?.content || "");
   const [image, setImage] = useState<string>(editingAnnouncement?.image || "");
@@ -76,7 +75,6 @@ const AnnouncementForm = ({ isOpen, setIsOpen, editingAnnouncement, onSuccess }:
       setContent("");
       setImage("");
       setIsOpen(false);
-      onSuccess();
     } catch (error: any) {
       toast.error(error.message);
     } finally {

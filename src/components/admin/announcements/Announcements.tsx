@@ -1,28 +1,15 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AnnouncementForm from "./AnnouncementForm";
-import AnnouncementCard from "./AnnouncementCard";
-import { useQuery } from "@tanstack/react-query";
+import AnnouncementList from "./AnnouncementList";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Announcements = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<any>(null);
-
-  const { data: announcements = [], refetch } = useQuery({
-    queryKey: ['announcements'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('announcements')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    }
-  });
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const channel = supabase
@@ -35,20 +22,23 @@ const Announcements = () => {
           table: 'announcements'
         },
         () => {
-          refetch();
+          queryClient.invalidateQueries({ queryKey: ['announcements'] });
         }
       )
       .subscribe();
 
+    const handleEdit = (e: CustomEvent) => {
+      setEditingAnnouncement(e.detail);
+      setIsOpen(true);
+    };
+
+    window.addEventListener('edit-announcement', handleEdit as EventListener);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('edit-announcement', handleEdit as EventListener);
     };
-  }, [refetch]);
-
-  const handleEdit = (announcement: any) => {
-    setEditingAnnouncement(announcement);
-    setIsOpen(true);
-  };
+  }, [queryClient]);
 
   return (
     <div className="space-y-6">
@@ -67,30 +57,9 @@ const Announcements = () => {
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         editingAnnouncement={editingAnnouncement}
-        onSuccess={() => {
-          refetch();
-          setEditingAnnouncement(null);
-        }}
       />
 
-      <div className="grid gap-4">
-        {announcements.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-muted-foreground text-center">No announcements found.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          announcements.map((announcement) => (
-            <AnnouncementCard
-              key={announcement.id}
-              announcement={announcement}
-              onEdit={handleEdit}
-              onDelete={refetch}
-            />
-          ))
-        )}
-      </div>
+      <AnnouncementList />
     </div>
   );
 };
