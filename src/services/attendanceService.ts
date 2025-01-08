@@ -6,15 +6,21 @@ import { processAttendanceLogs } from './attendance/processor';
 const SCRIPT_URL_STORAGE_KEY = 'apps_script_url';
 const SHEET_ID_STORAGE_KEY = 'sheet_id';
 
+const convertToCheckInLog = (record: AttendanceRecord): CheckInLog => {
+  return {
+    employeeId: record.employeeId,
+    employeeName: record.employeeName,
+    timestamp: record.checkIn, // Use checkIn as timestamp
+    emailId: '', // Default value as it's not in AttendanceRecord
+    position: '', // Default value as it's not in AttendanceRecord
+    punchType: 'IN' // Default value as it's not in AttendanceRecord
+  };
+};
+
 const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
   const sheetId = localStorage.getItem(SHEET_ID_STORAGE_KEY);
   
-  if (!scriptUrl && !sheetId) {
-    console.log('No configuration found, using sample data');
-    return getSampleData();
-  }
-
   try {
     if (sheetId) {
       const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
@@ -23,7 +29,8 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       const response = await fetch(url);
       if (!response.ok) {
         console.error(`Failed to fetch attendance data: ${response.status} ${response.statusText}`);
-        return getSampleData();
+        const sampleData = await getSampleData();
+        return sampleData;
       }
       
       const text = await response.text();
@@ -32,7 +39,8 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       const logs = parseGoogleSheetJson(text);
       if (!logs || logs.length === 0) {
         console.error('No valid logs parsed from Google Sheet');
-        return getSampleData();
+        const sampleData = await getSampleData();
+        return sampleData;
       }
       
       console.log('Parsed logs:', logs);
@@ -41,13 +49,15 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       const response = await fetch(scriptUrl);
       if (!response.ok) {
         console.error('Failed to fetch attendance data from script');
-        return getSampleData();
+        const sampleData = await getSampleData();
+        return sampleData;
       }
       
       const data = await response.json();
       if (!Array.isArray(data)) {
         console.error('Invalid data format from script');
-        return getSampleData();
+        const sampleData = await getSampleData();
+        return sampleData;
       }
       
       // Convert the response to CheckInLog format
@@ -66,10 +76,12 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   } catch (error) {
     console.error('Error fetching attendance data:', error);
     console.log('Falling back to sample data');
-    return getSampleData();
+    const sampleData = await getSampleData();
+    return sampleData;
   }
   
-  return getSampleData();
+  const sampleData = await getSampleData();
+  return sampleData;
 };
 
 export const attendanceService = {
