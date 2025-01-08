@@ -14,9 +14,9 @@ const ProfileUpdateModal = () => {
   const [profile, setProfile] = useState<Partial<Employee>>({
     name: "",
     email: "",
-    employeeId: "",
+    employee_id: "",
     designation: "",
-    profilePhoto: "",
+    profile_photo: "",
   });
   const { toast } = useToast();
 
@@ -35,24 +35,21 @@ const ProfileUpdateModal = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        setProfile(prev => ({ ...prev, profilePhoto: base64String }));
+        setProfile(prev => ({ ...prev, profile_photo: base64String }));
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleUpdateProfile = () => {
-    if (!profile.employeeId) return;
+    if (!profile.employee_id) return;
     
-    localStorageService.updateEmployee(profile.employeeId, profile as Employee);
+    localStorageService.updateEmployee(profile.employee_id, profile as Employee);
     toast({
       title: "Success",
       description: "Profile updated successfully",
     });
     setOpen(false);
-    
-    // Dispatch an event to notify other components of the update
-    window.dispatchEvent(new Event('profile-updated'));
   };
 
   return (
@@ -71,7 +68,7 @@ const ProfileUpdateModal = () => {
           <div className="flex justify-center">
             <div className="relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={profile.profilePhoto} />
+                <AvatarImage src={profile.profile_photo} />
                 <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <label
@@ -118,10 +115,10 @@ const ProfileUpdateModal = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="employeeId">Employee ID</Label>
+            <Label htmlFor="employee_id">Employee ID</Label>
             <Input
-              id="employeeId"
-              value={profile.employeeId || ""}
+              id="employee_id"
+              value={profile.employee_id || ""}
               disabled
               placeholder="Employee ID"
             />

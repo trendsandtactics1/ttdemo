@@ -12,9 +12,9 @@ const EmployeeProfile = () => {
   const [profile, setProfile] = useState<Partial<Employee>>({
     name: "",
     email: "",
-    employeeId: "",
+    employee_id: "",
     designation: "",
-    profilePhoto: "",
+    profile_photo: "",
   });
   const { toast } = useToast();
 
@@ -25,7 +25,7 @@ const EmployeeProfile = () => {
     if (currentEmployee) {
       setProfile({
         ...currentEmployee,
-        profilePhoto: currentEmployee.profilePhoto || "",
+        profile_photo: currentEmployee.profile_photo || "",
       });
     }
   }, []);
@@ -36,17 +36,17 @@ const EmployeeProfile = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
-        handleUpdateProfile({ profilePhoto: base64String });
+        handleUpdateProfile({ profile_photo: base64String });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleUpdateProfile = (updates: Partial<Employee>) => {
-    if (!profile.employeeId) return;
+    if (!profile.employee_id) return;
     
     const updatedProfile = { ...profile, ...updates };
-    localStorageService.updateEmployee(profile.employeeId, updatedProfile as Employee);
+    localStorageService.updateEmployee(profile.employee_id, updatedProfile as Employee);
     setProfile(updatedProfile);
     toast({
       title: "Success",
@@ -65,7 +65,7 @@ const EmployeeProfile = () => {
           <div className="flex justify-center mb-6">
             <div className="relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={profile.profilePhoto} />
+                <AvatarImage src={profile.profile_photo} />
                 <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <label
@@ -109,7 +109,7 @@ const EmployeeProfile = () => {
               />
             </div>
             <div>
-              <Input value={profile.employeeId || ""} disabled placeholder="Employee ID" />
+              <Input value={profile.employee_id || ""} disabled placeholder="Employee ID" />
             </div>
           </div>
         </CardContent>

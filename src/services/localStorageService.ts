@@ -4,12 +4,24 @@ export interface Employee {
   id: string;
   name: string | null;
   email: string | null;
-  employee_id: string | null;  // Changed from employeeId to match Supabase schema
+  employee_id: string | null;
   designation: string | null;
-  password?: string; // Made optional since it's not stored in profiles table
+  password?: string;
   profile_photo?: string | null;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string;
+  assigned_to: string;
+  status: TaskStatus;
+  created_at: string;
+  updated_at: string;
+  due_date: string;
+  assigned_date: string;
 }
 
 const TASKS_KEY = 'workstream_tasks';
@@ -27,13 +39,13 @@ export const localStorageService = {
     window.dispatchEvent(new Event('tasks-updated'));
   },
 
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+  addTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
     const tasks = localStorageService.getTasks();
     const newTask: Task = {
       ...task,
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     localStorageService.setTasks([...tasks, newTask]);
     return newTask;
@@ -43,7 +55,7 @@ export const localStorageService = {
     const tasks = localStorageService.getTasks();
     const updatedTasks = tasks.map(task => 
       task.id === taskId 
-        ? { ...task, ...updates, updatedAt: new Date().toISOString() }
+        ? { ...task, ...updates, updated_at: new Date().toISOString() }
         : task
     );
     localStorageService.setTasks(updatedTasks);
