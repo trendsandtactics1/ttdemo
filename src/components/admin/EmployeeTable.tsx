@@ -10,7 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Employee } from "@/services/localStorageService";
+
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  employee_id: string;
+  designation: string;
+  profile_photo?: string;
+}
 
 interface EmployeeTableProps {
   employees: Employee[];
@@ -44,19 +52,19 @@ const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
                   <TableRow key={employee.id}>
                     <TableCell>
                       <Avatar>
-                        <AvatarImage src={employee.profilePhoto} />
+                        <AvatarImage src={employee.profile_photo} />
                         <AvatarFallback>{employee.name?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                     </TableCell>
                     <TableCell>{employee.name}</TableCell>
                     <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.employeeId}</TableCell>
+                    <TableCell>{employee.employee_id}</TableCell>
                     <TableCell>{employee.designation}</TableCell>
                     <TableCell>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => onDelete(employee.employeeId)}
+                        onClick={() => onDelete(employee.employee_id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

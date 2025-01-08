@@ -1,85 +1,97 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { localStorageService } from "@/services/localStorageService";
+import { supabase } from "@/integrations/supabase/client";
 import EmployeeForm from "./EmployeeForm";
 import EmployeeTable from "./EmployeeTable";
 import { employeeSchema } from "./EmployeeForm";
 import type { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
 
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  employee_id: string;
+  designation: string;
+  profile_photo?: string;
+}
+
 const Employees = () => {
-  const [employees, setEmployees] = useState(() => {
-    const storedEmployees = localStorageService.getEmployees();
-    return Array.isArray(storedEmployees) ? storedEmployees : [];
-  });
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleSubmit = (data: EmployeeFormData) => {
-    if (!data) {
-      toast({
-        title: "Error",
-        description: "Invalid form data",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const existingEmployee = employees.find(
-        (emp) => emp?.email === data.email || emp?.employeeId === data.employeeId
-      );
-
-      if (existingEmployee) {
-        toast({
-          title: "Error",
-          description: "An employee with this email or ID already exists",
-          variant: "destructive",
-        });
-        return;
+  // Fetch employees using React Query
+  const { data: employees = [], isLoading } = useQuery({
+    queryKey: ['employees'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching employees:', error);
+        throw error;
       }
+      
+      return data as Employee[];
+    },
+  });
 
-      const newEmployee = localStorageService.addEmployee({
-        name: data.name,
+  // Create employee mutation
+  const createEmployee = useMutation({
+    mutationFn: async (data: EmployeeFormData) => {
+      const { error } = await supabase.auth.admin.createUser({
         email: data.email,
-        employeeId: data.employeeId,
-        designation: data.designation,
         password: data.password,
+        email_confirm: true,
+        user_metadata: {
+          name: data.name,
+          employee_id: data.employeeId,
+          designation: data.designation,
+        },
       });
-      
-      if (!newEmployee) {
-        throw new Error("Failed to add employee");
-      }
-      
-      setEmployees((prevEmployees) => [...prevEmployees, newEmployee]);
+
+      if (error) throw error;
+
+      // Profile will be created automatically through the database trigger
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast({
         title: "Success",
         description: "Employee added successfully",
       });
-    } catch (error) {
+    },
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add employee",
+        description: error.message,
         variant: "destructive",
       });
+    },
+  });
+
+  const handleSubmit = async (data: EmployeeFormData) => {
+    try {
+      await createEmployee.mutateAsync(data);
+    } catch (error) {
+      console.error('Error creating employee:', error);
     }
   };
 
-  const handleDeleteEmployee = (employeeId: string) => {
-    if (!employeeId) {
-      toast({
-        title: "Error",
-        description: "Invalid employee ID",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleDeleteEmployee = async (employeeId: string) => {
     try {
-      localStorageService.deleteEmployee(employeeId);
-      setEmployees((prevEmployees) => 
-        prevEmployees.filter(emp => emp.employeeId !== employeeId)
-      );
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('employee_id', employeeId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
       toast({
         title: "Success",
         description: "Employee deleted successfully",
@@ -92,6 +104,10 @@ const Employees = () => {
       });
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
