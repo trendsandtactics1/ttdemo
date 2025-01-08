@@ -17,9 +17,9 @@ const CreateTaskModal = () => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [assignedTo, setAssignedTo] = useState("");
-  const [dueDate, setDueDate] = useState<Date>();
-  const [assignedDate, setAssignedDate] = useState<Date>(new Date());
+  const [assigned_to, setAssignedTo] = useState("");
+  const [due_date, setDueDate] = useState<Date>();
+  const [assigned_date, setAssignedDate] = useState<Date>(new Date());
   const [employees, setEmployees] = useState<Array<{ id: string; name: string }>>([]);
   const { toast } = useToast();
 
@@ -29,7 +29,7 @@ const CreateTaskModal = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description || !assignedTo || !dueDate || !assignedDate) {
+    if (!title || !description || !assigned_to || !due_date || !assigned_date) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -41,10 +41,10 @@ const CreateTaskModal = () => {
     localStorageService.addTask({
       title,
       description,
-      assignedTo,
+      assigned_to,
       status: "pending",
-      dueDate: dueDate.toISOString(),
-      assignedDate: assignedDate.toISOString(),
+      due_date: due_date.toISOString(),
+      assigned_date: assigned_date.toISOString(),
     });
 
     toast({
@@ -94,8 +94,8 @@ const CreateTaskModal = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="assignedTo">Assign To</Label>
-            <Select onValueChange={setAssignedTo} value={assignedTo}>
+            <Label htmlFor="assigned_to">Assign To</Label>
+            <Select onValueChange={setAssignedTo} value={assigned_to}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
@@ -116,17 +116,17 @@ const CreateTaskModal = () => {
                   variant={"outline"}
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !assignedDate && "text-muted-foreground"
+                    !assigned_date && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {assignedDate ? format(assignedDate, "PPP") : <span>Pick a date</span>}
+                  {assigned_date ? format(assigned_date, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={assignedDate}
+                  selected={assigned_date}
                   onSelect={(date) => date && setAssignedDate(date)}
                   initialFocus
                   disabled={(date) => date < new Date()}
@@ -142,17 +142,17 @@ const CreateTaskModal = () => {
                   variant={"outline"}
                   className={cn(
                     "w-full justify-start text-left font-normal",
-                    !dueDate && "text-muted-foreground"
+                    !due_date && "text-muted-foreground"
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+                  {due_date ? format(due_date, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={dueDate}
+                  selected={due_date}
                   onSelect={(date) => date && setDueDate(date)}
                   initialFocus
                   disabled={(date) => date < new Date()}

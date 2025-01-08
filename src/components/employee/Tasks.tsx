@@ -69,19 +69,19 @@ const Tasks = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-md">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Due Date</p>
-                    <p className="text-gray-800">{new Date(task.dueDate).toLocaleDateString()}</p>
+                    <p className="text-gray-800">{new Date(task.due_date).toLocaleDateString()}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Assigned Date</p>
-                    <p className="text-gray-800">{new Date(task.assignedDate).toLocaleDateString()}</p>
+                    <p className="text-gray-800">{new Date(task.assigned_date).toLocaleDateString()}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Created At</p>
-                    <p className="text-gray-800">{new Date(task.createdAt).toLocaleDateString()}</p>
+                    <p className="text-gray-800">{new Date(task.created_at).toLocaleDateString()}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Last Updated</p>
-                    <p className="text-gray-800">{new Date(task.updatedAt).toLocaleDateString()}</p>
+                    <p className="text-gray-800">{new Date(task.updated_at).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pt-2">

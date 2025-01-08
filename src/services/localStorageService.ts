@@ -6,7 +6,6 @@ export interface Employee {
   email: string | null;
   employee_id: string | null;
   designation: string | null;
-  password?: string;
   profile_photo?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -78,7 +77,7 @@ export const localStorageService = {
   },
 
   addEmployee: (employee: Omit<Employee, 'id'>) => {
-    if (!employee.name || !employee.email || !employee.employee_id || !employee.designation || !employee.password) {
+    if (!employee.name || !employee.email || !employee.employee_id || !employee.designation) {
       return null;
     }
     const employees = localStorageService.getEmployees();
