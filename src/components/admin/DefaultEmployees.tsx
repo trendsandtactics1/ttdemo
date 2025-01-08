@@ -75,7 +75,7 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
     
     for (const employee of defaultEmployees) {
       try {
-        // Sign up the user
+        // Sign up the user with null checks
         const { data: authData, error: signUpError } = await supabase.auth.signUp({
           email: employee.email,
           password: employee.password,
@@ -90,14 +90,24 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
         });
 
         if (signUpError) {
+          console.error('SignUp Error:', signUpError);
           throw signUpError;
         }
 
-        if (!authData?.user?.id) {
+        // Verify authData and user existence
+        if (!authData) {
+          throw new Error('No authentication data returned');
+        }
+
+        if (!authData.user) {
           throw new Error('No user data returned');
         }
 
-        // Create profile
+        if (!authData.user.id) {
+          throw new Error('No user ID returned');
+        }
+
+        // Create profile with verified user ID
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -112,6 +122,7 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
           ]);
 
         if (profileError) {
+          console.error('Profile Creation Error:', profileError);
           throw profileError;
         }
 
