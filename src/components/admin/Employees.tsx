@@ -37,17 +37,22 @@ const Employees = () => {
     mutationFn: async (data: EmployeeFormData) => {
       const { data: newProfile, error } = await supabase
         .from('profiles')
-        .insert({
-          id: crypto.randomUUID(), // Generate a UUID for the new profile
+        .insert([{
+          id: crypto.randomUUID(),
           name: data.name,
           email: data.email,
           designation: data.designation,
-          password: data.password
-        })
+          password: data.password,
+          employee_id: data.employeeId
+        }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error in createEmployee:', error);
+        throw error;
+      }
+
       return newProfile;
     },
     onSuccess: () => {
@@ -57,11 +62,11 @@ const Employees = () => {
         description: "Employee added successfully",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       console.error('Error creating employee:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create employee",
         variant: "destructive",
       });
     },
