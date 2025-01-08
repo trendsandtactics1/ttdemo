@@ -1,26 +1,25 @@
-import { Database } from "@/integrations/supabase/types";
+export type TaskStatus = 'pending' | 'in-progress' | 'completed';
 
 export interface Employee {
   id: string;
-  name: string | null;
-  email: string | null;
-  employee_id: string | null;
-  designation: string | null;
-  profile_photo: string | null;
-  created_at: string;
-  updated_at: string;
+  name: string;
+  email: string;
+  employeeId: string;
+  designation: string;
+  password: string;
+  profilePhoto?: string;
 }
 
 export interface Task {
   id: string;
   title: string;
-  description: string | null;
-  assigned_to: string | null;
-  status: string | null;
-  due_date: string | null;
-  assigned_date: string | null;
-  created_at: string;
-  updated_at: string;
+  description: string;
+  assignedTo: string;
+  status: TaskStatus;
+  createdAt: string;
+  updatedAt: string;
+  dueDate: string;
+  assignedDate: string;
 }
 
 const TASKS_KEY = 'workstream_tasks';
@@ -38,13 +37,13 @@ export const localStorageService = {
     window.dispatchEvent(new Event('tasks-updated'));
   },
 
-  addTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     const tasks = localStorageService.getTasks();
     const newTask: Task = {
       ...task,
       id: crypto.randomUUID(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     localStorageService.setTasks([...tasks, newTask]);
     return newTask;
@@ -54,7 +53,7 @@ export const localStorageService = {
     const tasks = localStorageService.getTasks();
     const updatedTasks = tasks.map(task => 
       task.id === taskId 
-        ? { ...task, ...updates, updated_at: new Date().toISOString() }
+        ? { ...task, ...updates, updatedAt: new Date().toISOString() }
         : task
     );
     localStorageService.setTasks(updatedTasks);
@@ -77,7 +76,7 @@ export const localStorageService = {
   },
 
   addEmployee: (employee: Omit<Employee, 'id'>) => {
-    if (!employee.name || !employee.email || !employee.employee_id || !employee.designation) {
+    if (!employee.name || !employee.email || !employee.employeeId || !employee.designation || !employee.password) {
       return null;
     }
     const employees = localStorageService.getEmployees();
@@ -92,7 +91,7 @@ export const localStorageService = {
   updateEmployee: (employeeId: string, updates: Partial<Employee>) => {
     const employees = localStorageService.getEmployees();
     const updatedEmployees = employees.map(emp => 
-      emp.employee_id === employeeId ? { ...emp, ...updates } : emp
+      emp.employeeId === employeeId ? { ...emp, ...updates } : emp
     );
     localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(updatedEmployees));
     window.dispatchEvent(new Event('employees-updated'));
@@ -100,7 +99,7 @@ export const localStorageService = {
 
   deleteEmployee: (employeeId: string) => {
     const employees = localStorageService.getEmployees();
-    const updatedEmployees = employees.filter(emp => emp.employee_id !== employeeId);
+    const updatedEmployees = employees.filter(emp => emp.employeeId !== employeeId);
     localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(updatedEmployees));
     window.dispatchEvent(new Event('employees-updated'));
   },

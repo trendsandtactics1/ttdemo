@@ -15,23 +15,9 @@ import { Employee } from "@/services/localStorageService";
 interface EmployeeTableProps {
   employees: Employee[];
   onDelete: (employeeId: string) => void;
-  isLoading?: boolean;
 }
 
-const EmployeeTable = ({ employees, onDelete, isLoading }: EmployeeTableProps) => {
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>All Employees</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">Loading employees...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
+const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
   return (
     <Card>
       <CardHeader>
@@ -58,19 +44,19 @@ const EmployeeTable = ({ employees, onDelete, isLoading }: EmployeeTableProps) =
                   <TableRow key={employee.id}>
                     <TableCell>
                       <Avatar>
-                        <AvatarImage src={employee.profile_photo || undefined} />
+                        <AvatarImage src={employee.profilePhoto} />
                         <AvatarFallback>{employee.name?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                     </TableCell>
                     <TableCell>{employee.name}</TableCell>
                     <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.employee_id}</TableCell>
+                    <TableCell>{employee.employeeId}</TableCell>
                     <TableCell>{employee.designation}</TableCell>
                     <TableCell>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => employee.employee_id && onDelete(employee.employee_id)}
+                        onClick={() => onDelete(employee.employeeId)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
