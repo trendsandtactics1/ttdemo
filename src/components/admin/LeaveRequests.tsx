@@ -28,6 +28,10 @@ const LeaveRequests = () => {
     subscribeToLeaveRequests();
   }, []);
 
+  const isValidStatus = (status: string): status is LeaveRequest['status'] => {
+    return ['pending', 'approved', 'rejected'].includes(status);
+  };
+
   const fetchLeaveRequests = async () => {
     try {
       const { data, error } = await supabase
@@ -45,7 +49,16 @@ const LeaveRequests = () => {
 
       if (error) throw error;
       
-      setRequests(data || []);
+      // Validate and transform the data to match our interface
+      const validatedData = (data || []).map(item => {
+        if (!isValidStatus(item.status)) {
+          console.warn(`Invalid status value found: ${item.status}, defaulting to 'pending'`);
+          return { ...item, status: 'pending' as const };
+        }
+        return item;
+      }) as LeaveRequest[];
+      
+      setRequests(validatedData);
     } catch (error: any) {
       console.error('Error fetching leave requests:', error);
       toast.error('Failed to fetch leave requests');
@@ -75,7 +88,7 @@ const LeaveRequests = () => {
     };
   };
 
-  const handleStatusUpdate = async (id: string, newStatus: 'approved' | 'rejected') => {
+  const handleStatusUpdate = async (id: string, newStatus: LeaveRequest['status']) => {
     try {
       const { error } = await supabase
         .from('leave_requests')
