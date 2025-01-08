@@ -70,23 +70,43 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
   const { toast } = useToast();
 
   const createDefaultEmployees = () => {
+    if (loading) return; // Prevent multiple clicks while loading
     setLoading(true);
     
     try {
-      // Initialize employees array from localStorage or create empty array if null
-      const existingEmployeesStr = localStorage.getItem('employees');
-      const existingEmployees = existingEmployeesStr ? JSON.parse(existingEmployeesStr) : [];
+      // Safely get and parse existing employees
+      let existingEmployees = [];
+      const storedEmployees = localStorage.getItem('employees');
+      
+      if (storedEmployees) {
+        try {
+          existingEmployees = JSON.parse(storedEmployees);
+          // Ensure existingEmployees is an array
+          if (!Array.isArray(existingEmployees)) {
+            existingEmployees = [];
+          }
+        } catch (parseError) {
+          console.error('Error parsing stored employees:', parseError);
+          existingEmployees = [];
+        }
+      }
       
       // Create new employees array with default employees
-      const newEmployees = defaultEmployees.map(employee => ({
-        id: crypto.randomUUID(),
-        email: employee.email,
-        name: employee.name,
-        employeeId: employee.employeeId,
-        designation: employee.designation,
-        role: 'EMPLOYEE',
-        password: employee.password
-      }));
+      const newEmployees = defaultEmployees.map(employee => {
+        if (!employee || typeof employee !== 'object') {
+          throw new Error('Invalid employee data');
+        }
+        
+        return {
+          id: crypto.randomUUID(),
+          email: employee.email || '',
+          name: employee.name || '',
+          employeeId: employee.employeeId || '',
+          designation: employee.designation || '',
+          role: 'EMPLOYEE',
+          password: employee.password || ''
+        };
+      });
 
       // Combine existing and new employees
       const updatedEmployees = [...existingEmployees, ...newEmployees];
@@ -94,19 +114,20 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
       // Save to localStorage
       localStorage.setItem('employees', JSON.stringify(updatedEmployees));
 
-      // Show success toast
       toast({
         title: "Success",
         description: "Default employees created successfully",
       });
 
-      // Call the callback
-      onEmployeesCreated();
+      // Only call callback if it exists
+      if (typeof onEmployeesCreated === 'function') {
+        onEmployeesCreated();
+      }
     } catch (error) {
       console.error('Error creating default employees:', error);
       toast({
         title: "Error",
-        description: "Failed to create default employees",
+        description: error instanceof Error ? error.message : "Failed to create default employees",
         variant: "destructive",
       });
     } finally {
