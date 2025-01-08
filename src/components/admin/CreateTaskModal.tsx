@@ -4,14 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Calendar as CalendarIcon } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Plus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { localStorageService } from "@/services/localStorageService";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import TaskDatePicker from "./TaskDatePicker";
 
 const CreateTaskModal = () => {
   const [open, setOpen] = useState(false);
@@ -71,14 +68,14 @@ const CreateTaskModal = () => {
     }
   };
 
-  const handleAssignedDateSelect = (date: Date | undefined) => {
+  const handleAssignedDateChange = (date: Date | undefined) => {
     if (date) {
       setAssignedDate(date);
       setAssignedDateOpen(false);
     }
   };
 
-  const handleDueDateSelect = (date: Date | undefined) => {
+  const handleDueDateChange = (date: Date | undefined) => {
     setDueDate(date);
     setDueDateOpen(false);
   };
@@ -133,55 +130,23 @@ const CreateTaskModal = () => {
           </div>
           <div className="space-y-2">
             <Label>Assigned Date</Label>
-            <Popover open={assignedDateOpen} onOpenChange={setAssignedDateOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !assignedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {assignedDate ? format(assignedDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={assignedDate}
-                  onSelect={handleAssignedDateSelect}
-                  defaultMonth={assignedDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <TaskDatePicker
+              date={assignedDate}
+              onDateChange={handleAssignedDateChange}
+              isOpen={assignedDateOpen}
+              onOpenChange={setAssignedDateOpen}
+              label="Assigned Date"
+            />
           </div>
           <div className="space-y-2">
             <Label>Due Date</Label>
-            <Popover open={dueDateOpen} onOpenChange={setDueDateOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dueDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={handleDueDateSelect}
-                  defaultMonth={dueDate || new Date()}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <TaskDatePicker
+              date={dueDate}
+              onDateChange={handleDueDateChange}
+              isOpen={dueDateOpen}
+              onOpenChange={setDueDateOpen}
+              label="Due Date"
+            />
           </div>
           <Button type="submit" className="w-full">Create Task</Button>
         </form>
