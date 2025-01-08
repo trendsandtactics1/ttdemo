@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 // Export the schema so it can be used in other components
 export const employeeSchema = z.object({
@@ -30,6 +31,8 @@ interface EmployeeFormProps {
 }
 
 const EmployeeForm = ({ onSubmit }: EmployeeFormProps) => {
+  const { toast } = useToast();
+  
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
@@ -39,16 +42,28 @@ const EmployeeForm = ({ onSubmit }: EmployeeFormProps) => {
       designation: "",
       password: "",
     },
-    mode: "onBlur", // This helps prevent the null type error
+    mode: "onBlur",
   });
 
   const handleSubmit = (data: EmployeeFormData) => {
     try {
-      if (!data || !form) return;
-      
+      if (!data) {
+        toast({
+          title: "Error",
+          description: "Form data is missing",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Validate all required fields are present
       const { name, email, employeeId, designation, password } = data;
       if (!name || !email || !employeeId || !designation || !password) {
+        toast({
+          title: "Error",
+          description: "All fields are required",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -56,10 +71,13 @@ const EmployeeForm = ({ onSubmit }: EmployeeFormProps) => {
       form.reset();
     } catch (error) {
       console.error("Error in form submission:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit form",
+        variant: "destructive",
+      });
     }
   };
-
-  if (!form) return null;
 
   return (
     <Card>
