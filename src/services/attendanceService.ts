@@ -11,8 +11,8 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   const sheetId = localStorage.getItem(SHEET_ID_STORAGE_KEY);
   
   if (!scriptUrl && !sheetId) {
-    console.log('No configuration found, returning empty array');
-    return [];
+    console.log('No configuration found, using sample data');
+    return getSampleData();
   }
 
   try {
@@ -42,10 +42,11 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
     }
   } catch (error) {
     console.error('Error fetching attendance data:', error);
-    return [];
+    console.log('Falling back to sample data');
+    return getSampleData();
   }
   
-  return [];
+  return getSampleData();
 };
 
 export const attendanceService = {
@@ -53,10 +54,9 @@ export const attendanceService = {
     const logs = await fetchCheckInLogs();
     console.log('Total fetched logs:', logs.length);
     
-    // If we have configuration but no logs, return empty array
     if (logs.length === 0) {
-      console.log('No logs found in configured source');
-      return [];
+      console.log('No logs found, using sample data');
+      return getSampleData();
     }
     
     const processedLogs = processAttendanceLogs(logs);

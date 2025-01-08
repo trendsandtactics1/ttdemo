@@ -12,6 +12,7 @@ const Tasks = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     const sortedTasks = localStorageService.getTasks().sort((a, b) => 
@@ -56,7 +57,10 @@ const Tasks = () => {
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-3xl font-bold tracking-tight">Tasks</h2>
-        <CreateTaskModal />
+        <CreateTaskModal 
+          open={isCreateModalOpen} 
+          onOpenChange={setIsCreateModalOpen} 
+        />
       </div>
 
       <TaskFilters
