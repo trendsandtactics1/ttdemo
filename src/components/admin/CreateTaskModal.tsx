@@ -20,6 +20,8 @@ const CreateTaskModal = () => {
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState<Date>();
   const [assignedDate, setAssignedDate] = useState<Date>(new Date());
+  const [dueDateOpen, setDueDateOpen] = useState(false);
+  const [assignedDateOpen, setAssignedDateOpen] = useState(false);
   const [employees, setEmployees] = useState<Array<{ id: string; name: string }>>([]);
   const { toast } = useToast();
 
@@ -64,25 +66,6 @@ const CreateTaskModal = () => {
       toast({
         title: "Error",
         description: "Failed to create task",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDateSelect = (date: Date | undefined, type: 'due' | 'assigned') => {
-    if (!date) return;
-    
-    try {
-      if (type === 'due') {
-        setDueDate(date);
-      } else {
-        setAssignedDate(date);
-      }
-    } catch (error) {
-      console.error('Error handling date selection:', error);
-      toast({
-        title: "Error",
-        description: "Failed to set date",
         variant: "destructive",
       });
     }
@@ -138,7 +121,7 @@ const CreateTaskModal = () => {
           </div>
           <div className="space-y-2">
             <Label>Assigned Date</Label>
-            <Popover>
+            <Popover open={assignedDateOpen} onOpenChange={setAssignedDateOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
@@ -155,7 +138,10 @@ const CreateTaskModal = () => {
                 <Calendar
                   mode="single"
                   selected={assignedDate}
-                  onSelect={(date) => handleDateSelect(date, 'assigned')}
+                  onSelect={(date) => {
+                    setAssignedDate(date || new Date());
+                    setAssignedDateOpen(false);
+                  }}
                   initialFocus
                 />
               </PopoverContent>
@@ -163,7 +149,7 @@ const CreateTaskModal = () => {
           </div>
           <div className="space-y-2">
             <Label>Due Date</Label>
-            <Popover>
+            <Popover open={dueDateOpen} onOpenChange={setDueDateOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
@@ -180,7 +166,10 @@ const CreateTaskModal = () => {
                 <Calendar
                   mode="single"
                   selected={dueDate}
-                  onSelect={(date) => handleDateSelect(date, 'due')}
+                  onSelect={(date) => {
+                    setDueDate(date || undefined);
+                    setDueDateOpen(false);
+                  }}
                   initialFocus
                 />
               </PopoverContent>
