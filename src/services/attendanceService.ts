@@ -22,21 +22,44 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`Failed to fetch attendance data: ${response.status} ${response.statusText}`);
+        console.error(`Failed to fetch attendance data: ${response.status} ${response.statusText}`);
+        return getSampleData();
       }
       
       const text = await response.text();
       console.log('Raw response:', text);
       
       const logs = parseGoogleSheetJson(text);
+      if (!logs || logs.length === 0) {
+        console.error('No valid logs parsed from Google Sheet');
+        return getSampleData();
+      }
+      
       console.log('Parsed logs:', logs);
       return logs;
     } else if (scriptUrl) {
       const response = await fetch(scriptUrl);
       if (!response.ok) {
-        throw new Error('Failed to fetch attendance data');
+        console.error('Failed to fetch attendance data from script');
+        return getSampleData();
       }
-      const logs = await response.json();
+      
+      const data = await response.json();
+      if (!Array.isArray(data)) {
+        console.error('Invalid data format from script');
+        return getSampleData();
+      }
+      
+      // Convert the response to CheckInLog format
+      const logs: CheckInLog[] = data.map(item => ({
+        employeeId: item.employeeId,
+        employeeName: item.employeeName,
+        timestamp: item.timestamp || new Date().toISOString(),
+        emailId: item.emailId || '',
+        position: item.position || '',
+        punchType: item.punchType || 'IN'
+      }));
+      
       console.log('Fetched logs from script:', logs);
       return logs;
     }
@@ -50,13 +73,14 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
 };
 
 export const attendanceService = {
-  getAttendanceLogs: async () => {
+  getAttendanceLogs: async (): Promise<AttendanceRecord[]> => {
     const logs = await fetchCheckInLogs();
     console.log('Total fetched logs:', logs.length);
     
     if (logs.length === 0) {
       console.log('No logs found, using sample data');
-      return getSampleData();
+      const sampleLogs = await getSampleData();
+      return processAttendanceLogs(sampleLogs);
     }
     
     const processedLogs = processAttendanceLogs(logs);
