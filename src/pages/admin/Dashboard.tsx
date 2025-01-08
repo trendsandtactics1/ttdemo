@@ -6,7 +6,7 @@ import LeaveRequests from "@/components/admin/LeaveRequests";
 import Tasks from "@/components/admin/Tasks";
 import TaskChat from "@/components/admin/TaskChat";
 import Employees from "@/components/admin/Employees";
-import Announcements from "@/components/admin/Announcements";
+import Announcements from "@/components/admin/announcements/Announcements";
 import AttendanceTable from "@/components/admin/AttendanceTable";
 
 const AdminDashboard = () => {
