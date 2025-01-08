@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import EmployeeForm from "./EmployeeForm";
 import EmployeeTable from "./EmployeeTable";
@@ -20,14 +19,8 @@ const Employees = () => {
 
   const fetchEmployees = async () => {
     try {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setEmployees(profiles || []);
+      const storedEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
+      setEmployees(storedEmployees);
     } catch (error: any) {
       console.error('Error fetching employees:', error);
       toast({

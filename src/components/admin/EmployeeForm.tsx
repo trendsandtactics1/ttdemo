@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 
 interface EmployeeFormProps {
   onEmployeeCreated: () => void;
@@ -22,38 +21,20 @@ const EmployeeForm = ({ onEmployeeCreated }: EmployeeFormProps) => {
     setLoading(true);
 
     try {
-      // Sign up the user
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      const existingEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
+      
+      const newEmployee = {
+        id: crypto.randomUUID(),
         email,
+        name,
+        employeeId,
+        designation,
         password,
-        options: {
-          data: {
-            name,
-            employeeId,
-            designation,
-            role: 'EMPLOYEE'
-          }
-        }
-      });
+        role: 'EMPLOYEE'
+      };
 
-      if (signUpError) throw signUpError;
-      if (!authData.user) throw new Error('No user data returned');
-
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            email,
-            name,
-            employeeId,
-            designation,
-            role: 'EMPLOYEE'
-          }
-        ]);
-
-      if (profileError) throw profileError;
+      existingEmployees.push(newEmployee);
+      localStorage.setItem('employees', JSON.stringify(existingEmployees));
 
       toast({
         title: "Success",

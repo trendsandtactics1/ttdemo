@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
 
 interface DefaultEmployeesProps {
   onEmployeesCreated: () => void;
@@ -73,58 +72,21 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
   const createDefaultEmployees = async () => {
     setLoading(true);
     
+    const existingEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
+    
     for (const employee of defaultEmployees) {
       try {
-        // Sign up the user with null checks
-        const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        const newEmployee = {
+          id: crypto.randomUUID(),
           email: employee.email,
-          password: employee.password,
-          options: {
-            data: {
-              name: employee.name,
-              employeeId: employee.employeeId,
-              designation: employee.designation,
-              role: 'EMPLOYEE'
-            }
-          }
-        });
+          name: employee.name,
+          employeeId: employee.employeeId,
+          designation: employee.designation,
+          role: 'EMPLOYEE',
+          password: employee.password
+        };
 
-        if (signUpError) {
-          console.error('SignUp Error:', signUpError);
-          throw signUpError;
-        }
-
-        // Verify authData and user existence
-        if (!authData) {
-          throw new Error('No authentication data returned');
-        }
-
-        if (!authData.user) {
-          throw new Error('No user data returned');
-        }
-
-        if (!authData.user.id) {
-          throw new Error('No user ID returned');
-        }
-
-        // Create profile with verified user ID
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: authData.user.id,
-              email: employee.email,
-              name: employee.name,
-              employeeId: employee.employeeId,
-              designation: employee.designation,
-              role: 'EMPLOYEE'
-            }
-          ]);
-
-        if (profileError) {
-          console.error('Profile Creation Error:', profileError);
-          throw profileError;
-        }
+        existingEmployees.push(newEmployee);
 
         toast({
           title: "Success",
@@ -140,6 +102,7 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
       }
     }
 
+    localStorage.setItem('employees', JSON.stringify(existingEmployees));
     onEmployeesCreated();
     setLoading(false);
   };
