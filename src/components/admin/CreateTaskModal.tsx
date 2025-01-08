@@ -138,7 +138,7 @@ const CreateTaskModal = () => {
                 <Calendar
                   mode="single"
                   selected={assignedDate}
-                  onSelect={(date) => date && setAssignedDate(date)}
+                  onSelect={setAssignedDate}
                   initialFocus
                 />
               </PopoverContent>
@@ -163,7 +163,7 @@ const CreateTaskModal = () => {
                 <Calendar
                   mode="single"
                   selected={dueDate}
-                  onSelect={(date) => date && setDueDate(date)}
+                  onSelect={setDueDate}
                   initialFocus
                 />
               </PopoverContent>
