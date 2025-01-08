@@ -2,24 +2,14 @@ export type TaskStatus = 'pending' | 'in-progress' | 'completed';
 
 export interface Employee {
   id: string;
-  name: string;
-  email: string;
-  employeeId: string;
-  designation: string;
-  password: string;
-  profilePhoto?: string;
-}
-
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  assignedTo: string;
-  status: TaskStatus;
-  createdAt: string;
-  updatedAt: string;
-  dueDate: string;
-  assignedDate: string;
+  name: string | null;
+  email: string | null;
+  employee_id: string | null;  // Changed from employeeId to match Supabase schema
+  designation: string | null;
+  password?: string; // Made optional since it's not stored in profiles table
+  profile_photo?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const TASKS_KEY = 'workstream_tasks';
@@ -76,7 +66,7 @@ export const localStorageService = {
   },
 
   addEmployee: (employee: Omit<Employee, 'id'>) => {
-    if (!employee.name || !employee.email || !employee.employeeId || !employee.designation || !employee.password) {
+    if (!employee.name || !employee.email || !employee.employee_id || !employee.designation || !employee.password) {
       return null;
     }
     const employees = localStorageService.getEmployees();
@@ -91,7 +81,7 @@ export const localStorageService = {
   updateEmployee: (employeeId: string, updates: Partial<Employee>) => {
     const employees = localStorageService.getEmployees();
     const updatedEmployees = employees.map(emp => 
-      emp.employeeId === employeeId ? { ...emp, ...updates } : emp
+      emp.employee_id === employeeId ? { ...emp, ...updates } : emp
     );
     localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(updatedEmployees));
     window.dispatchEvent(new Event('employees-updated'));
@@ -99,7 +89,7 @@ export const localStorageService = {
 
   deleteEmployee: (employeeId: string) => {
     const employees = localStorageService.getEmployees();
-    const updatedEmployees = employees.filter(emp => emp.employeeId !== employeeId);
+    const updatedEmployees = employees.filter(emp => emp.employee_id !== employeeId);
     localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(updatedEmployees));
     window.dispatchEvent(new Event('employees-updated'));
   },

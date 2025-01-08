@@ -31,13 +31,13 @@ const Employees = () => {
     mutationFn: async (data: EmployeeFormData) => {
       const { error } = await supabase
         .from('profiles')
-        .insert([{
+        .insert({
           name: data.name,
           email: data.email,
           employee_id: data.employeeId,
           designation: data.designation,
-          password: data.password,
-        }]);
+          // password is handled by the database trigger
+        });
 
       if (error) throw error;
     },

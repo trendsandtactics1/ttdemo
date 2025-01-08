@@ -58,7 +58,7 @@ const EmployeeTable = ({ employees, onDelete, isLoading }: EmployeeTableProps) =
                   <TableRow key={employee.id}>
                     <TableCell>
                       <Avatar>
-                        <AvatarImage src={employee.profilePhoto} />
+                        <AvatarImage src={employee.profile_photo || undefined} />
                         <AvatarFallback>{employee.name?.charAt(0) || 'U'}</AvatarFallback>
                       </Avatar>
                     </TableCell>
@@ -70,7 +70,7 @@ const EmployeeTable = ({ employees, onDelete, isLoading }: EmployeeTableProps) =
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => onDelete(employee.employee_id)}
+                        onClick={() => employee.employee_id && onDelete(employee.employee_id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
