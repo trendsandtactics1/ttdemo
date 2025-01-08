@@ -39,13 +39,27 @@ const EmployeeForm = ({ onSubmit }: EmployeeFormProps) => {
       designation: "",
       password: "",
     },
+    mode: "onBlur", // This helps prevent the null type error
   });
 
   const handleSubmit = (data: EmployeeFormData) => {
-    if (!data) return;
-    onSubmit(data);
-    form.reset();
+    try {
+      if (!data || !form) return;
+      
+      // Validate all required fields are present
+      const { name, email, employeeId, designation, password } = data;
+      if (!name || !email || !employeeId || !designation || !password) {
+        return;
+      }
+
+      onSubmit(data);
+      form.reset();
+    } catch (error) {
+      console.error("Error in form submission:", error);
+    }
   };
+
+  if (!form) return null;
 
   return (
     <Card>
