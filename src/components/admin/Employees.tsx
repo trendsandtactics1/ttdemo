@@ -38,6 +38,7 @@ const Employees = () => {
       const { data: newProfile, error } = await supabase
         .from('profiles')
         .insert({
+          id: crypto.randomUUID(), // Generate a UUID for the new profile
           name: data.name,
           email: data.email,
           designation: data.designation,
