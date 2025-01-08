@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,15 +69,15 @@ const CreateTaskModal = () => {
   };
 
   const handleAssignedDateChange = (date: Date | undefined) => {
-    if (date) {
-      setAssignedDate(date);
-      setAssignedDateOpen(false);
-    }
+    setAssignedDate(date || new Date());
+    setAssignedDateOpen(false);
   };
 
   const handleDueDateChange = (date: Date | undefined) => {
-    setDueDate(date);
-    setDueDateOpen(false);
+    if (date) {
+      setDueDate(date);
+      setDueDateOpen(false);
+    }
   };
 
   return (
@@ -91,6 +91,9 @@ const CreateTaskModal = () => {
       <DialogContent className="sm:max-w-[425px] w-[95%] mx-auto">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
+          <DialogDescription>
+            Fill in the details below to create a new task.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 px-1">
           <div className="space-y-2">
