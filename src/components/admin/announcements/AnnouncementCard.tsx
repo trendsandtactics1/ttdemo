@@ -9,7 +9,7 @@ interface AnnouncementCardProps {
     id: string;
     title: string;
     content: string;
-    image?: string;
+    image?: string | null;
     created_at: string;
   };
 }
@@ -39,7 +39,6 @@ const AnnouncementCard = ({ announcement }: AnnouncementCardProps) => {
               variant="outline"
               size="icon"
               onClick={() => {
-                // This will be handled by the parent component
                 window.dispatchEvent(new CustomEvent('edit-announcement', { 
                   detail: announcement 
                 }));
