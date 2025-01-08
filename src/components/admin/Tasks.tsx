@@ -4,6 +4,8 @@ import { Task, Employee, localStorageService } from "@/services/localStorageServ
 import CreateTaskModal from "./CreateTaskModal";
 import TaskCard from "./TaskCard";
 import TaskFilters from "./TaskFilters";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -57,6 +59,10 @@ const Tasks = () => {
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-3xl font-bold tracking-tight">Tasks</h2>
+        <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Task
+        </Button>
         <CreateTaskModal 
           open={isCreateModalOpen} 
           onOpenChange={setIsCreateModalOpen} 
