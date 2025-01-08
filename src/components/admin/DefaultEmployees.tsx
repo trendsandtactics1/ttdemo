@@ -69,42 +69,49 @@ const DefaultEmployees = ({ onEmployeesCreated }: DefaultEmployeesProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const createDefaultEmployees = async () => {
+  const createDefaultEmployees = () => {
     setLoading(true);
     
-    const existingEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
-    
-    for (const employee of defaultEmployees) {
-      try {
-        const newEmployee = {
-          id: crypto.randomUUID(),
-          email: employee.email,
-          name: employee.name,
-          employeeId: employee.employeeId,
-          designation: employee.designation,
-          role: 'EMPLOYEE',
-          password: employee.password
-        };
+    try {
+      // Initialize employees array from localStorage or create empty array if null
+      const existingEmployeesStr = localStorage.getItem('employees');
+      const existingEmployees = existingEmployeesStr ? JSON.parse(existingEmployeesStr) : [];
+      
+      // Create new employees array with default employees
+      const newEmployees = defaultEmployees.map(employee => ({
+        id: crypto.randomUUID(),
+        email: employee.email,
+        name: employee.name,
+        employeeId: employee.employeeId,
+        designation: employee.designation,
+        role: 'EMPLOYEE',
+        password: employee.password
+      }));
 
-        existingEmployees.push(newEmployee);
+      // Combine existing and new employees
+      const updatedEmployees = [...existingEmployees, ...newEmployees];
+      
+      // Save to localStorage
+      localStorage.setItem('employees', JSON.stringify(updatedEmployees));
 
-        toast({
-          title: "Success",
-          description: `Created employee: ${employee.name}`,
-        });
-      } catch (error: any) {
-        console.error('Error creating default employee:', error);
-        toast({
-          title: "Error",
-          description: `Failed to create ${employee.name}: ${error.message}`,
-          variant: "destructive",
-        });
-      }
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Default employees created successfully",
+      });
+
+      // Call the callback
+      onEmployeesCreated();
+    } catch (error) {
+      console.error('Error creating default employees:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create default employees",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    localStorage.setItem('employees', JSON.stringify(existingEmployees));
-    onEmployeesCreated();
-    setLoading(false);
   };
 
   return (
