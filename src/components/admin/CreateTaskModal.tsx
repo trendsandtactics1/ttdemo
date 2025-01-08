@@ -1,38 +1,52 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { localStorageService } from "@/services/localStorageService";
+import { useState } from "react";
 import TaskDatePicker from "./TaskDatePicker";
 
-const CreateTaskModal = () => {
-  const [open, setOpen] = useState(false);
+interface CreateTaskModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onTaskCreated?: () => void;
+}
+
+const CreateTaskModal = ({
+  open,
+  onOpenChange,
+  onTaskCreated,
+}: CreateTaskModalProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
+  const [assignedDate, setAssignedDate] = useState<Date>();
   const [dueDate, setDueDate] = useState<Date>();
-  const [assignedDate, setAssignedDate] = useState<Date>(new Date());
-  const [dueDateOpen, setDueDateOpen] = useState(false);
-  const [assignedDateOpen, setAssignedDateOpen] = useState(false);
-  const [employees, setEmployees] = useState<Array<{ id: string; name: string }>>([]);
   const { toast } = useToast();
 
-  useEffect(() => {
-    setEmployees(localStorageService.getEmployees());
-  }, []);
+  const employees = localStorageService.getEmployees();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!title || !description || !assignedTo || !dueDate || !assignedDate) {
+
+    if (!title || !description || !assignedTo || !assignedDate || !dueDate) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: "Missing Fields",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
@@ -53,12 +67,20 @@ const CreateTaskModal = () => {
         description: "Task created successfully",
       });
 
+      // Reset form
       setTitle("");
       setDescription("");
       setAssignedTo("");
+      setAssignedDate(undefined);
       setDueDate(undefined);
-      setAssignedDate(new Date());
-      setOpen(false);
+
+      // Close modal
+      onOpenChange(false);
+
+      // Notify parent component
+      if (onTaskCreated) {
+        onTaskCreated();
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -68,56 +90,56 @@ const CreateTaskModal = () => {
     }
   };
 
-  const handleAssignedDateChange = (date: Date | undefined) => {
-    setAssignedDate(date || new Date());
-    setAssignedDateOpen(false);
+  const handleDueDateChange = (date: Date | undefined) => {
+    if (date) {
+      setDueDate(date);
+    }
   };
 
-  const handleDueDateChange = (date: Date | undefined) => {
-    setDueDate(date);
-    setDueDateOpen(false);
+  const handleAssignedDateChange = (date: Date | undefined) => {
+    if (date) {
+      setAssignedDate(date);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Task
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] w-[95%] mx-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
           <DialogDescription>
             Fill in the details below to create a new task.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 px-1">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Title
+            </label>
             <Input
-              id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter task title"
-              className="w-full"
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Description
+            </label>
             <Textarea
-              id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter task description"
-              className="min-h-[100px]"
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="assignedTo">Assign To</Label>
-            <Select onValueChange={setAssignedTo} value={assignedTo}>
-              <SelectTrigger className="w-full">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              Assign To
+            </label>
+            <Select value={assignedTo} onValueChange={setAssignedTo}>
+              <SelectTrigger>
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
               <SelectContent>
@@ -129,27 +151,29 @@ const CreateTaskModal = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Assigned Date</Label>
-            <TaskDatePicker
-              date={assignedDate}
-              onDateChange={handleAssignedDateChange}
-              isOpen={assignedDateOpen}
-              onOpenChange={setAssignedDateOpen}
-              label="Assigned Date"
-            />
+
+          <TaskDatePicker
+            date={assignedDate}
+            onDateChange={handleAssignedDateChange}
+            label="Assigned Date"
+          />
+
+          <TaskDatePicker
+            date={dueDate}
+            onDateChange={handleDueDateChange}
+            label="Due Date"
+          />
+
+          <div className="flex justify-end space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Create Task</Button>
           </div>
-          <div className="space-y-2">
-            <Label>Due Date</Label>
-            <TaskDatePicker
-              date={dueDate}
-              onDateChange={handleDueDateChange}
-              isOpen={dueDateOpen}
-              onOpenChange={setDueDateOpen}
-              label="Due Date"
-            />
-          </div>
-          <Button type="submit" className="w-full">Create Task</Button>
         </form>
       </DialogContent>
     </Dialog>
