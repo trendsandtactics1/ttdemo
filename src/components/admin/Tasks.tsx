@@ -16,8 +16,8 @@ const Tasks = () => {
   useEffect(() => {
     const sortedTasks = localStorageService.getTasks().sort((a, b) => 
       sortOrder === "desc" 
-        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        ? new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        : new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
     setTasks(sortedTasks);
     setEmployees(localStorageService.getEmployees());
@@ -25,8 +25,8 @@ const Tasks = () => {
     const handleTasksUpdate = () => {
       const updatedTasks = localStorageService.getTasks().sort((a, b) => 
         sortOrder === "desc"
-          ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          ? new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          : new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
       setTasks(updatedTasks);
     };
@@ -46,9 +46,9 @@ const Tasks = () => {
   const filteredTasks = tasks
     .filter((task) => {
       const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          task.description.toLowerCase().includes(searchTerm.toLowerCase());
+                          task.description?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || task.status === statusFilter;
-      const matchesAssignee = assigneeFilter === "all" || task.assignedTo === assigneeFilter;
+      const matchesAssignee = assigneeFilter === "all" || task.assigned_to === assigneeFilter;
       return matchesSearch && matchesStatus && matchesAssignee;
     });
 

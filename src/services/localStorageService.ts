@@ -1,4 +1,4 @@
-export type TaskStatus = 'pending' | 'in-progress' | 'completed';
+import { Database } from "@/integrations/supabase/types";
 
 export interface Employee {
   id: string;
@@ -6,21 +6,21 @@ export interface Employee {
   email: string | null;
   employee_id: string | null;
   designation: string | null;
-  profile_photo?: string | null;
-  created_at?: string;
-  updated_at?: string;
+  profile_photo: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Task {
   id: string;
   title: string;
-  description: string;
-  assigned_to: string;
-  status: TaskStatus;
+  description: string | null;
+  assigned_to: string | null;
+  status: string | null;
+  due_date: string | null;
+  assigned_date: string | null;
   created_at: string;
   updated_at: string;
-  due_date: string;
-  assigned_date: string;
 }
 
 const TASKS_KEY = 'workstream_tasks';

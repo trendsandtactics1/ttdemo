@@ -36,7 +36,7 @@ const Employees = () => {
           email: data.email,
           employee_id: data.employeeId,
           designation: data.designation,
-          // password is handled by the database trigger
+          id: data.employeeId, // Added required id field
         });
 
       if (error) throw error;
@@ -53,33 +53,6 @@ const Employees = () => {
       toast({
         title: "Error",
         description: "Failed to add employee",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Delete employee mutation
-  const deleteEmployeeMutation = useMutation({
-    mutationFn: async (employeeId: string) => {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('employee_id', employeeId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      toast({
-        title: "Success",
-        description: "Employee deleted successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Error deleting employee:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete employee",
         variant: "destructive",
       });
     },

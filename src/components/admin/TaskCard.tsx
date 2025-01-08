@@ -31,7 +31,7 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
   };
 
   const handleReassign = (taskId: string, newAssigneeId: string) => {
-    localStorageService.updateTask(taskId, { assignedTo: newAssigneeId });
+    localStorageService.updateTask(taskId, { assigned_to: newAssigneeId });
     toast({
       title: "Task Reassigned",
       description: "Task has been successfully reassigned.",
@@ -62,9 +62,7 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
       <CardHeader className="bg-gray-50 rounded-t-lg">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <CardTitle className="text-lg font-semibold text-gray-800">{task.title}</CardTitle>
-          <Badge 
-            className={`${getStatusColor(task.status)} text-white`}
-          >
+          <Badge className={`${getStatusColor(task.status)} text-white`}>
             {task.status}
           </Badge>
         </div>
@@ -74,19 +72,19 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-md">
           <div>
             <p className="text-sm font-medium text-gray-500">Due Date</p>
-            <p className="text-gray-800">{new Date(task.dueDate).toLocaleDateString()}</p>
+            <p className="text-gray-800">{new Date(task.due_date || '').toLocaleDateString()}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Assigned Date</p>
-            <p className="text-gray-800">{new Date(task.assignedDate).toLocaleDateString()}</p>
+            <p className="text-gray-800">{new Date(task.assigned_date || '').toLocaleDateString()}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Created At</p>
-            <p className="text-gray-800">{new Date(task.createdAt).toLocaleDateString()}</p>
+            <p className="text-gray-800">{new Date(task.created_at).toLocaleDateString()}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Last Updated</p>
-            <p className="text-gray-800">{new Date(task.updatedAt).toLocaleDateString()}</p>
+            <p className="text-gray-800">{new Date(task.updated_at).toLocaleDateString()}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 pt-2">
@@ -114,7 +112,7 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
           </Select>
           <Select
             onValueChange={(value) => handleReassign(task.id, value)}
-            defaultValue={task.assignedTo}
+            defaultValue={task.assigned_to || undefined}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Reassign to..." />
