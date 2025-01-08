@@ -74,10 +74,8 @@ const CreateTaskModal = () => {
   };
 
   const handleDueDateChange = (date: Date | undefined) => {
-    if (date) {
-      setDueDate(date);
-      setDueDateOpen(false);
-    }
+    setDueDate(date);
+    setDueDateOpen(false);
   };
 
   return (

@@ -38,9 +38,7 @@ const TaskDatePicker = ({
         <Calendar
           mode="single"
           selected={date}
-          onSelect={(selectedDate) => {
-            onDateChange(selectedDate || undefined);
-          }}
+          onSelect={onDateChange}
           defaultMonth={date || new Date()}
           initialFocus
         />
