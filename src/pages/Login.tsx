@@ -3,53 +3,73 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    let employeeId;
-    if (email === "karthikjungleemara@gmail.com") {
-      employeeId = "TT012";
-    } else if (email.includes("admin")) {
-      employeeId = "ADMIN001";
-    } else if (email.includes("manager")) {
-      employeeId = "MGR001";
-    } else {
-      employeeId = `TT${Math.floor(Math.random() * 100)}`;
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        // Fetch user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        const userData = {
+          id: data.user.id,
+          name: profileData.name,
+          email: profileData.email,
+          employeeId: profileData.employee_id,
+          designation: profileData.designation,
+        };
+
+        localStorage.setItem('workstream_current_user', JSON.stringify(userData));
+
+        // Route based on designation
+        if (profileData.designation.toLowerCase().includes('admin')) {
+          navigate("/admin");
+        } else if (profileData.designation.toLowerCase().includes('manager')) {
+          navigate("/manager");
+        } else {
+          navigate("/employee");
+        }
+
+        toast({
+          title: "Logged in successfully",
+          description: `Welcome back, ${profileData.name}!`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    let userData = {
-      id: crypto.randomUUID(),
-      name: email.split('@')[0],
-      email: email,
-      employeeId: employeeId,
-      designation: "Employee",
-      password: password
-    };
-
-    if (email.includes("admin")) {
-      userData.designation = "Admin";
-      navigate("/admin");
-    } else if (email.includes("manager")) {
-      userData.designation = "Manager";
-      navigate("/manager");
-    } else {
-      userData.designation = "Employee";
-      navigate("/employee");
-    }
-
-    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
-    
-    toast({
-      title: "Logged in successfully",
-      description: `Welcome back, ${userData.name}!`,
-    });
   };
 
   return (
@@ -79,6 +99,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
@@ -92,14 +113,23 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
+                disabled={loading}
               />
             </div>
-            <button
+            <Button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
+              className="w-full"
+              disabled={loading}
             >
-              Sign In
-            </button>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </Button>
           </form>
         </CardContent>
       </Card>
