@@ -19,6 +19,7 @@ const EmployeeAttendance = () => {
 
   useEffect(() => {
     const fetchLogs = async () => {
+      // If no user is logged in, redirect to login
       if (!currentUser) {
         toast({
           title: "Authentication required",
@@ -34,6 +35,7 @@ const EmployeeAttendance = () => {
         console.log('All logs:', allLogs);
         console.log('Current user:', currentUser);
         
+        // Filter logs for current employee and sort by date in descending order
         const employeeLogs = allLogs
           .filter(log => log.employeeId === currentUser.employeeId)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -83,13 +85,11 @@ const EmployeeAttendance = () => {
         />
       )}
 
-      {selectedLog && (
-        <AttendanceDetailsModal
-          log={selectedLog}
-          open={showModal}
-          onOpenChange={setShowModal}
-        />
-      )}
+      <AttendanceDetailsModal
+        log={selectedLog}
+        open={showModal}
+        onOpenChange={setShowModal}
+      />
     </div>
   );
 };
