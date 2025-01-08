@@ -91,15 +91,11 @@ const CreateTaskModal = ({
   };
 
   const handleDueDateChange = (date: Date | undefined) => {
-    if (date) {
-      setDueDate(date);
-    }
+    setDueDate(date);
   };
 
   const handleAssignedDateChange = (date: Date | undefined) => {
-    if (date) {
-      setAssignedDate(date);
-    }
+    setAssignedDate(date);
   };
 
   return (

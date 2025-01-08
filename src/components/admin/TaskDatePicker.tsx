@@ -16,6 +16,14 @@ interface TaskDatePickerProps {
 }
 
 const TaskDatePicker = ({ date, onDateChange, label }: TaskDatePickerProps) => {
+  const handleSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      // Ensure we're working with a valid Date object
+      const newDate = new Date(selectedDate);
+      onDateChange(newDate);
+    }
+  };
+
   return (
     <div className="flex flex-col space-y-2">
       <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
@@ -38,12 +46,7 @@ const TaskDatePicker = ({ date, onDateChange, label }: TaskDatePickerProps) => {
           <Calendar
             mode="single"
             selected={date}
-            onSelect={(selectedDate) => {
-              if (selectedDate) {
-                onDateChange(selectedDate);
-              }
-            }}
-            defaultMonth={date || new Date()}
+            onSelect={handleSelect}
             initialFocus
           />
         </PopoverContent>
