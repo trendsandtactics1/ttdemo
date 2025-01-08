@@ -71,6 +71,18 @@ const CreateTaskModal = () => {
     }
   };
 
+  const handleAssignedDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setAssignedDate(date);
+      setAssignedDateOpen(false);
+    }
+  };
+
+  const handleDueDateSelect = (date: Date | undefined) => {
+    setDueDate(date);
+    setDueDateOpen(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -138,10 +150,8 @@ const CreateTaskModal = () => {
                 <Calendar
                   mode="single"
                   selected={assignedDate}
-                  onSelect={(date) => {
-                    setAssignedDate(date || new Date());
-                    setAssignedDateOpen(false);
-                  }}
+                  onSelect={handleAssignedDateSelect}
+                  defaultMonth={assignedDate}
                   initialFocus
                 />
               </PopoverContent>
@@ -166,10 +176,8 @@ const CreateTaskModal = () => {
                 <Calendar
                   mode="single"
                   selected={dueDate}
-                  onSelect={(date) => {
-                    setDueDate(date || undefined);
-                    setDueDateOpen(false);
-                  }}
+                  onSelect={handleDueDateSelect}
+                  defaultMonth={dueDate || new Date()}
                   initialFocus
                 />
               </PopoverContent>
