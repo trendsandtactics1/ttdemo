@@ -7,46 +7,89 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
-import { leaveRequestService } from "@/services/leaveRequestService";
-import { localStorageService } from "@/services/localStorageService";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+interface LeaveRequest {
+  id: string;
+  type: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  employee_id: string;
+}
 
 interface LeaveRequestFormData {
   type: string;
-  startDate: string;
-  endDate: string;
+  start_date: string;
+  end_date: string;
   reason: string;
 }
 
 const initialFormData: LeaveRequestFormData = {
   type: "",
-  startDate: "",
-  endDate: "",
+  start_date: "",
+  end_date: "",
   reason: ""
 };
 
 const LeaveRequest = () => {
-  const [requests, setRequests] = useState<any[]>([]);
   const [formData, setFormData] = useState<LeaveRequestFormData>(initialFormData);
-  const currentUser = localStorageService.getCurrentUser();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (currentUser?.employeeId) {
-      const employeeRequests = leaveRequestService.getAllRequests();
-      setRequests(employeeRequests);
+  // Fetch current user's leave requests
+  const { data: requests = [], isLoading } = useQuery({
+    queryKey: ['leaveRequests'],
+    queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session?.user.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select('*')
+        .eq('employee_id', session.session.user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as LeaveRequest[];
     }
-  }, [currentUser?.employeeId]);
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Create new leave request
+  const createLeaveRequest = useMutation({
+    mutationFn: async (formData: LeaveRequestFormData) => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session?.user.id) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .insert([
+          {
+            ...formData,
+            employee_id: session.session.user.id,
+            status: 'pending'
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
+      setFormData(initialFormData);
+      toast.success("Leave request submitted successfully");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to submit leave request");
+    }
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser?.employeeId) {
-      toast.error("User information not found");
-      return;
-    }
-
-    const newRequest = leaveRequestService.addRequest(formData);
-    setRequests(prev => [...prev, newRequest]);
-    setFormData(initialFormData);
-    toast.success("Leave request submitted successfully");
+    createLeaveRequest.mutate(formData);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -54,19 +97,19 @@ const LeaveRequest = () => {
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: LeaveRequest['status']) => {
     const styles = {
       pending: "bg-yellow-100 text-yellow-800",
       approved: "bg-green-100 text-green-800",
       rejected: "bg-red-100 text-red-800"
     };
-    return <Badge className={styles[status as keyof typeof styles]}>{status}</Badge>;
+    return <Badge className={styles[status]}>{status}</Badge>;
   };
 
-  if (!currentUser) {
+  if (isLoading) {
     return (
       <div className="p-4">
-        <p className="text-center text-gray-600">Please log in to submit leave requests.</p>
+        <p className="text-center text-gray-600">Loading leave requests...</p>
       </div>
     );
   }
@@ -93,22 +136,22 @@ const LeaveRequest = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
+                <Label htmlFor="start_date">Start Date</Label>
                 <Input 
-                  id="startDate" 
+                  id="start_date" 
                   type="date" 
                   required 
-                  value={formData.startDate}
+                  value={formData.start_date}
                   onChange={handleInputChange}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
+                <Label htmlFor="end_date">End Date</Label>
                 <Input 
-                  id="endDate" 
+                  id="end_date" 
                   type="date" 
                   required 
-                  value={formData.endDate}
+                  value={formData.end_date}
                   onChange={handleInputChange}
                 />
               </div>
@@ -123,7 +166,12 @@ const LeaveRequest = () => {
                 onChange={handleInputChange}
               />
             </div>
-            <Button type="submit">Submit Request</Button>
+            <Button 
+              type="submit" 
+              disabled={createLeaveRequest.isPending}
+            >
+              {createLeaveRequest.isPending ? "Submitting..." : "Submit Request"}
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -150,8 +198,8 @@ const LeaveRequest = () => {
                 {requests.map((request) => (
                   <TableRow key={request.id}>
                     <TableCell>{request.type}</TableCell>
-                    <TableCell>{request.startDate}</TableCell>
-                    <TableCell>{request.endDate}</TableCell>
+                    <TableCell>{new Date(request.start_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(request.end_date).toLocaleDateString()}</TableCell>
                     <TableCell>{request.reason}</TableCell>
                     <TableCell>{getStatusBadge(request.status)}</TableCell>
                   </TableRow>
