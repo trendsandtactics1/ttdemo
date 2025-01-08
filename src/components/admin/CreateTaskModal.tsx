@@ -70,12 +70,21 @@ const CreateTaskModal = () => {
   };
 
   const handleDateSelect = (date: Date | undefined, type: 'due' | 'assigned') => {
-    if (date) {
+    if (!date) return;
+    
+    try {
       if (type === 'due') {
         setDueDate(date);
       } else {
         setAssignedDate(date);
       }
+    } catch (error) {
+      console.error('Error handling date selection:', error);
+      toast({
+        title: "Error",
+        description: "Failed to set date",
+        variant: "destructive",
+      });
     }
   };
 
