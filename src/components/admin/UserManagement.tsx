@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +31,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { Database } from "@/integrations/supabase/types";
+
+type UserRole = "admin" | "manager" | "employee";
 
 const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -38,13 +41,13 @@ const userSchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required"),
   designation: z.string().min(1, "Designation is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["admin", "manager", "employee"]),
+  role: z.enum(["admin", "manager", "employee"] as const),
 });
 
 type UserFormData = z.infer<typeof userSchema>;
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<Array<Database['public']['Tables']['users']['Row'] & { user_roles: Array<Database['public']['Tables']['user_roles']['Row']> }>>([]);
   const { toast } = useToast();
   const form = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
@@ -61,7 +64,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     const { data: users, error } = await supabase
       .from("users")
-      .select(`*, user_roles (role)`);
+      .select("*, user_roles (*)");
 
     if (error) {
       toast({
@@ -85,21 +88,25 @@ const UserManagement = () => {
 
       if (authError) throw authError;
 
+      if (!authData.user?.id) {
+        throw new Error("Failed to create user");
+      }
+
       // Create user profile
       const { error: profileError } = await supabase.from("users").insert({
-        id: authData.user?.id,
+        id: authData.user.id,
         email: data.email,
         name: data.name,
         employee_id: data.employeeId,
         designation: data.designation,
-        password: data.password, // Note: In production, implement proper password hashing
+        password: data.password,
       });
 
       if (profileError) throw profileError;
 
       // Assign user role
       const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: authData.user?.id,
+        user_id: authData.user.id,
         role: data.role,
       });
 
