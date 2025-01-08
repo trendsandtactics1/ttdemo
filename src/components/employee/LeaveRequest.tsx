@@ -8,27 +8,44 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { leaveRequestService } from "@/services/leaveRequestService";
+import { localStorageService } from "@/services/localStorageService";
+
+interface LeaveRequestFormData {
+  type: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+}
+
+const initialFormData: LeaveRequestFormData = {
+  type: "",
+  startDate: "",
+  endDate: "",
+  reason: ""
+};
 
 const LeaveRequest = () => {
   const [requests, setRequests] = useState<any[]>([]);
-  const [formData, setFormData] = useState({
-    type: "",
-    startDate: "",
-    endDate: "",
-    reason: ""
-  });
+  const [formData, setFormData] = useState<LeaveRequestFormData>(initialFormData);
+  const currentUser = localStorageService.getCurrentUser();
 
   useEffect(() => {
-    // In a real app, we'd get the employee ID from auth
-    const employeeRequests = leaveRequestService.getAllRequests();
-    setRequests(employeeRequests);
-  }, []);
+    if (currentUser?.employeeId) {
+      const employeeRequests = leaveRequestService.getAllRequests();
+      setRequests(employeeRequests);
+    }
+  }, [currentUser?.employeeId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser?.employeeId) {
+      toast.error("User information not found");
+      return;
+    }
+
     const newRequest = leaveRequestService.addRequest(formData);
     setRequests(prev => [...prev, newRequest]);
-    setFormData({ type: "", startDate: "", endDate: "", reason: "" });
+    setFormData(initialFormData);
     toast.success("Leave request submitted successfully");
   };
 
@@ -45,6 +62,14 @@ const LeaveRequest = () => {
     };
     return <Badge className={styles[status as keyof typeof styles]}>{status}</Badge>;
   };
+
+  if (!currentUser) {
+    return (
+      <div className="p-4">
+        <p className="text-center text-gray-600">Please log in to submit leave requests.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
