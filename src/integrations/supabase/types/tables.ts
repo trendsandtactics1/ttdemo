@@ -66,6 +66,42 @@ export interface AttendanceTable {
   }
 }
 
+export interface LeaveRequestsTable {
+  Row: {
+    created_at: string
+    employee_id: string | null
+    end_date: string
+    id: string
+    reason: string | null
+    start_date: string
+    status: string | null
+    type: string
+    updated_at: string
+  }
+  Insert: {
+    created_at?: string
+    employee_id?: string | null
+    end_date: string
+    id?: string
+    reason?: string | null
+    start_date: string
+    status?: string | null
+    type: string
+    updated_at?: string
+  }
+  Update: {
+    created_at?: string
+    employee_id?: string | null
+    end_date?: string
+    id?: string
+    reason?: string | null
+    start_date?: string
+    status?: string | null
+    type?: string
+    updated_at?: string
+  }
+}
+
 export interface ProfilesTable {
   Row: {
     created_at: string
