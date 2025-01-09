@@ -17,13 +17,13 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
 
   try {
     if (sheetId) {
-      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+      // Using JSONP format to avoid CORS issues
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
       console.log('Fetching from URL:', url);
       
       const response = await fetch(url, {
-        mode: 'no-cors', // Add no-cors mode to handle CORS issues
         headers: {
-          'Accept': 'application/json',
+          'Accept': '*/*',
         }
       });
 
@@ -35,15 +35,20 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       const text = await response.text();
       console.log('Raw response:', text);
       
-      const logs = parseGoogleSheetJson(text);
-      console.log('Parsed logs:', logs);
-      
-      if (!logs || logs.length === 0) {
-        console.log('No logs found in sheet, using sample data');
+      try {
+        const logs = parseGoogleSheetJson(text);
+        console.log('Parsed logs:', logs);
+        
+        if (!logs || logs.length === 0) {
+          console.log('No logs found in sheet, using sample data');
+          return getSampleData();
+        }
+        
+        return logs;
+      } catch (parseError) {
+        console.error('Error parsing sheet data:', parseError);
         return getSampleData();
       }
-      
-      return logs;
     } else if (scriptUrl) {
       try {
         const response = await fetch(scriptUrl);
@@ -70,17 +75,22 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
 
 export const attendanceService = {
   getAttendanceLogs: async (): Promise<AttendanceRecord[]> => {
-    const logs = await fetchCheckInLogs();
-    console.log('Total fetched logs:', logs.length);
-    
-    if (logs.length === 0) {
-      console.log('No logs found, using sample data');
+    try {
+      const logs = await fetchCheckInLogs();
+      console.log('Total fetched logs:', logs.length);
+      
+      if (logs.length === 0) {
+        console.log('No logs found, using sample data');
+        return processAttendanceLogs(getSampleData());
+      }
+      
+      const processedLogs = processAttendanceLogs(logs);
+      console.log('Processed logs:', processedLogs);
+      return processedLogs;
+    } catch (error) {
+      console.error('Error in getAttendanceLogs:', error);
       return processAttendanceLogs(getSampleData());
     }
-    
-    const processedLogs = processAttendanceLogs(logs);
-    console.log('Processed logs:', processedLogs);
-    return processedLogs;
   },
   
   setScriptUrl: (url: string) => {
