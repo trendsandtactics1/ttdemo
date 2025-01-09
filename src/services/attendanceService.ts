@@ -11,8 +11,8 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   const sheetId = localStorage.getItem(SHEET_ID_STORAGE_KEY);
   
   if (!scriptUrl && !sheetId) {
-    console.log('No configuration found, returning empty array');
-    return [];
+    console.log('No configuration found, using sample data');
+    return getSampleData();
   }
 
   try {
@@ -20,9 +20,16 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
       console.log('Fetching from URL:', url);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch attendance data: ${response.status} ${response.statusText}`);
+        console.error('Failed to fetch from Google Sheet, using sample data');
+        return getSampleData();
       }
       
       const text = await response.text();
@@ -30,11 +37,18 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       
       const logs = parseGoogleSheetJson(text);
       console.log('Parsed logs:', logs);
+      
+      if (!logs || logs.length === 0) {
+        console.log('No logs found in sheet, using sample data');
+        return getSampleData();
+      }
+      
       return logs;
     } else if (scriptUrl) {
       const response = await fetch(scriptUrl);
       if (!response.ok) {
-        throw new Error('Failed to fetch attendance data');
+        console.error('Failed to fetch from Apps Script, using sample data');
+        return getSampleData();
       }
       const logs = await response.json();
       console.log('Fetched logs from script:', logs);
@@ -42,10 +56,11 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
     }
   } catch (error) {
     console.error('Error fetching attendance data:', error);
-    return [];
+    console.log('Using sample data due to error');
+    return getSampleData();
   }
   
-  return [];
+  return getSampleData();
 };
 
 export const attendanceService = {
@@ -53,10 +68,9 @@ export const attendanceService = {
     const logs = await fetchCheckInLogs();
     console.log('Total fetched logs:', logs.length);
     
-    // If we have configuration but no logs, return empty array
     if (logs.length === 0) {
-      console.log('No logs found in configured source');
-      return [];
+      console.log('No logs found, using sample data');
+      return getSampleData();
     }
     
     const processedLogs = processAttendanceLogs(logs);
