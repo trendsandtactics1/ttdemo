@@ -1,14 +1,21 @@
+import { supabase } from "@/integrations/supabase/client";
 import { CheckInLog, AttendanceRecord } from './attendance/types';
 import { parseGoogleSheetJson } from './attendance/utils';
-import { getSampleData } from './attendance/sampleData';
 import { processAttendanceLogs } from './attendance/processor';
 
-const SCRIPT_URL_STORAGE_KEY = 'apps_script_url';
-const SHEET_ID_STORAGE_KEY = 'sheet_id';
+const fetchCheckInLogs = async () => {
+  const { data: config, error: configError } = await supabase
+    .from('attendance_config')
+    .select('script_url, sheet_id')
+    .maybeSingle();
 
-const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
-  const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
-  const sheetId = localStorage.getItem(SHEET_ID_STORAGE_KEY);
+  if (configError) {
+    console.error('Error fetching attendance config:', configError);
+    return [];
+  }
+
+  const scriptUrl = config?.script_url;
+  const sheetId = config?.sheet_id;
   
   if (!scriptUrl && !sheetId) {
     console.log('No configuration found, returning empty array');
@@ -53,7 +60,6 @@ export const attendanceService = {
     const logs = await fetchCheckInLogs();
     console.log('Total fetched logs:', logs.length);
     
-    // If we have configuration but no logs, return empty array
     if (logs.length === 0) {
       console.log('No logs found in configured source');
       return [];
@@ -64,21 +70,65 @@ export const attendanceService = {
     return processedLogs;
   },
   
-  setScriptUrl: (url: string) => {
-    localStorage.setItem(SCRIPT_URL_STORAGE_KEY, url);
-    localStorage.removeItem(SHEET_ID_STORAGE_KEY);
+  setScriptUrl: async (url: string) => {
+    const { error } = await supabase
+      .from('attendance_config')
+      .upsert({ 
+        id: '00000000-0000-0000-0000-000000000000',
+        script_url: url, 
+        sheet_id: null 
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error setting script URL:', error);
+      throw error;
+    }
   },
 
-  getScriptUrl: () => {
-    return localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
+  getScriptUrl: async () => {
+    const { data, error } = await supabase
+      .from('attendance_config')
+      .select('script_url')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error getting script URL:', error);
+      return null;
+    }
+
+    return data?.script_url || null;
   },
 
-  setSheetId: (id: string) => {
-    localStorage.setItem(SHEET_ID_STORAGE_KEY, id);
-    localStorage.removeItem(SCRIPT_URL_STORAGE_KEY);
+  setSheetId: async (id: string) => {
+    const { error } = await supabase
+      .from('attendance_config')
+      .upsert({ 
+        id: '00000000-0000-0000-0000-000000000000',
+        sheet_id: id, 
+        script_url: null 
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error setting sheet ID:', error);
+      throw error;
+    }
   },
 
-  getSheetId: () => {
-    return localStorage.getItem(SHEET_ID_STORAGE_KEY);
+  getSheetId: async () => {
+    const { data, error } = await supabase
+      .from('attendance_config')
+      .select('sheet_id')
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error getting sheet ID:', error);
+      return null;
+    }
+
+    return data?.sheet_id || null;
   }
 };

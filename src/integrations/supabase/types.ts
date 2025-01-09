@@ -36,6 +36,27 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_config: {
+        Row: {
+          created_at: string
+          id: string
+          script_url: string | null
+          sheet_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          script_url?: string | null
+          sheet_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          script_url?: string | null
+          sheet_id?: string | null
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           created_at: string
