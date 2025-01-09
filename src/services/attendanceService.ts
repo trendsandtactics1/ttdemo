@@ -40,14 +40,19 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
         try {
           // Parse CSV data
           const rows = text.split('\n').map(row => row.split(','));
-          const logs: CheckInLog[] = rows.slice(1).map(row => ({
-            employeeId: row[0] || '',
-            employeeName: row[1] || '',
-            timestamp: new Date(row[2] || '').toISOString(),
-            emailId: row[3] || '',
-            position: row[4] || '',
-            punchType: row[5]?.toUpperCase().includes('OUT') ? 'OUT' : 'IN'
-          })).filter(log => log.employeeId && log.timestamp);
+          const logs: CheckInLog[] = rows.slice(1).map(row => {
+            const punchTypeStr = row[5]?.toUpperCase() || '';
+            const punchType: "IN" | "OUT" = punchTypeStr.includes('OUT') ? "OUT" : "IN";
+            
+            return {
+              employeeId: row[0] || '',
+              employeeName: row[1] || '',
+              timestamp: new Date(row[2] || '').toISOString(),
+              emailId: row[3] || '',
+              position: row[4] || '',
+              punchType
+            };
+          }).filter(log => log.employeeId && log.timestamp);
 
           if (logs.length === 0) {
             console.log('No valid logs found in sheet, using sample data');
