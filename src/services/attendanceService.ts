@@ -7,7 +7,7 @@ const fetchCheckInLogs = async () => {
   const { data: config, error: configError } = await supabase
     .from('attendance_config')
     .select('script_url, sheet_id')
-    .single();
+    .maybeSingle();
 
   if (configError) {
     console.error('Error fetching attendance config:', configError);
@@ -73,9 +73,13 @@ export const attendanceService = {
   setScriptUrl: async (url: string) => {
     const { error } = await supabase
       .from('attendance_config')
-      .upsert({ script_url: url, sheet_id: null })
+      .upsert({ 
+        id: '00000000-0000-0000-0000-000000000000',
+        script_url: url, 
+        sheet_id: null 
+      })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error setting script URL:', error);
@@ -87,7 +91,7 @@ export const attendanceService = {
     const { data, error } = await supabase
       .from('attendance_config')
       .select('script_url')
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error getting script URL:', error);
@@ -100,9 +104,13 @@ export const attendanceService = {
   setSheetId: async (id: string) => {
     const { error } = await supabase
       .from('attendance_config')
-      .upsert({ sheet_id: id, script_url: null })
+      .upsert({ 
+        id: '00000000-0000-0000-0000-000000000000',
+        sheet_id: id, 
+        script_url: null 
+      })
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error setting sheet ID:', error);
@@ -114,7 +122,7 @@ export const attendanceService = {
     const { data, error } = await supabase
       .from('attendance_config')
       .select('sheet_id')
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error getting sheet ID:', error);
@@ -123,9 +131,4 @@ export const attendanceService = {
 
     return data?.sheet_id || null;
   }
-};
-
-// Helper function to parse Google Sheet JSON response
-const parseGoogleSheetJson = (jsonString: string) => {
-  // Implementation of parsing logic goes here
 };
