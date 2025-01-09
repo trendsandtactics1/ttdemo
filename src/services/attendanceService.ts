@@ -21,7 +21,7 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       console.log('Fetching from URL:', url);
       
       const response = await fetch(url, {
-        mode: 'cors',
+        mode: 'no-cors', // Add no-cors mode to handle CORS issues
         headers: {
           'Accept': 'application/json',
         }
@@ -45,14 +45,19 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       
       return logs;
     } else if (scriptUrl) {
-      const response = await fetch(scriptUrl);
-      if (!response.ok) {
-        console.error('Failed to fetch from Apps Script, using sample data');
+      try {
+        const response = await fetch(scriptUrl);
+        if (!response.ok) {
+          console.error('Failed to fetch from Apps Script, using sample data');
+          return getSampleData();
+        }
+        const logs = await response.json();
+        console.log('Fetched logs from script:', logs);
+        return logs;
+      } catch (error) {
+        console.error('Error fetching from Apps Script:', error);
         return getSampleData();
       }
-      const logs = await response.json();
-      console.log('Fetched logs from script:', logs);
-      return logs;
     }
   } catch (error) {
     console.error('Error fetching attendance data:', error);
