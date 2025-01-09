@@ -122,8 +122,8 @@ const AdminHome = () => {
       </div>
       
       <div className="space-y-4">
-        <h3 className="text-2xl font-bold tracking-tight">Attendance Logs</h3>
-        <AttendanceTable />
+        <h3 className="text-2xl font-bold tracking-tight">Today's Attendance</h3>
+        <AttendanceTable showTodayOnly={true} />
       </div>
     </div>
   );
