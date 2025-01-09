@@ -5,9 +5,11 @@ import { useState } from "react";
 import { attendanceService } from "@/services/attendanceService";
 import { useToast } from "@/components/ui/use-toast";
 
+const DEFAULT_SHEET_ID = "1_s2NILKubSewIlRgLPXypfGw7p5BwxZtrUjRURA4NdA";
+
 const AttendanceConfig = () => {
   const [scriptUrl, setScriptUrl] = useState(attendanceService.getScriptUrl() || '');
-  const [sheetId, setSheetId] = useState(attendanceService.getSheetId() || '');
+  const [sheetId, setSheetId] = useState(attendanceService.getSheetId() || DEFAULT_SHEET_ID);
   const { toast } = useToast();
 
   const handleSaveScript = () => {
