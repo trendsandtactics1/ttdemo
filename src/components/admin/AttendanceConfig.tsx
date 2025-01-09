@@ -1,29 +1,55 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { attendanceService } from "@/services/attendanceService";
 import { useToast } from "@/components/ui/use-toast";
 
 const AttendanceConfig = () => {
-  const [scriptUrl, setScriptUrl] = useState(attendanceService.getScriptUrl() || '');
-  const [sheetId, setSheetId] = useState(attendanceService.getSheetId() || '');
+  const [scriptUrl, setScriptUrl] = useState('');
+  const [sheetId, setSheetId] = useState('');
   const { toast } = useToast();
 
-  const handleSaveScript = () => {
-    attendanceService.setScriptUrl(scriptUrl);
-    toast({
-      title: "Settings saved",
-      description: "Google Apps Script configuration has been updated.",
-    });
+  useEffect(() => {
+    const loadConfig = async () => {
+      const storedScriptUrl = await attendanceService.getScriptUrl();
+      const storedSheetId = await attendanceService.getSheetId();
+      if (storedScriptUrl) setScriptUrl(storedScriptUrl);
+      if (storedSheetId) setSheetId(storedSheetId);
+    };
+    loadConfig();
+  }, []);
+
+  const handleSaveScript = async () => {
+    try {
+      await attendanceService.setScriptUrl(scriptUrl);
+      toast({
+        title: "Settings saved",
+        description: "Google Apps Script configuration has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save Google Apps Script configuration.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleSaveSheet = () => {
-    attendanceService.setSheetId(sheetId);
-    toast({
-      title: "Settings saved",
-      description: "Google Sheet ID has been updated.",
-    });
+  const handleSaveSheet = async () => {
+    try {
+      await attendanceService.setSheetId(sheetId);
+      toast({
+        title: "Settings saved",
+        description: "Google Sheet ID has been updated.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save Google Sheet ID.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
