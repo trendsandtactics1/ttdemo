@@ -6,18 +6,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  employee_id: string;
-  designation: string;
-  profile_photo?: string;
-}
+import { DatabaseUser } from "@/types/database";
 
 const EmployeeProfile = () => {
-  const [profile, setProfile] = useState<Partial<UserProfile>>({});
+  const [profile, setProfile] = useState<Partial<DatabaseUser>>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -26,14 +18,12 @@ const EmployeeProfile = () => {
 
   const loadProfile = async () => {
     try {
-      // Get current user from localStorage (temporary solution)
       const currentUser = JSON.parse(localStorage.getItem('workstream_current_user') || '{}');
       
       if (!currentUser.email) {
         throw new Error('No user found');
       }
 
-      // Fetch user data from Supabase
       const { data: userData, error } = await supabase
         .from('users')
         .select('*')
@@ -86,7 +76,7 @@ const EmployeeProfile = () => {
     }
   };
 
-  const handleUpdateProfile = async (updates: Partial<UserProfile>) => {
+  const handleUpdateProfile = async (updates: Partial<DatabaseUser>) => {
     if (!profile.id) return;
     
     try {
