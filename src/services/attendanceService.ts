@@ -64,13 +64,13 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
 };
 
 export const attendanceService = {
-  getAttendanceLogs: async () => {
+  getAttendanceLogs: async (): Promise<AttendanceRecord[]> => {
     const logs = await fetchCheckInLogs();
     console.log('Total fetched logs:', logs.length);
     
     if (logs.length === 0) {
       console.log('No logs found, using sample data');
-      return getSampleData();
+      return processAttendanceLogs(getSampleData());
     }
     
     const processedLogs = processAttendanceLogs(logs);
