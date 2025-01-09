@@ -16,24 +16,28 @@ const Login = () => {
     
     try {
       // First check if user exists in users table
-      const { data: users, error: userError } = await supabase
+      const { data: user, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
         .eq('password', password)
-        .single();
+        .maybeSingle();
 
-      if (userError || !users) {
+      if (userError) {
+        throw new Error('Database error occurred');
+      }
+
+      if (!user) {
         throw new Error('Invalid credentials');
       }
 
       // Store user data in localStorage for now (we'll update this to use Supabase auth later)
-      localStorage.setItem('workstream_current_user', JSON.stringify(users));
+      localStorage.setItem('workstream_current_user', JSON.stringify(user));
       
       // Navigate based on role
-      if (users.designation.toLowerCase().includes('admin')) {
+      if (user.designation.toLowerCase().includes('admin')) {
         navigate("/admin");
-      } else if (users.designation.toLowerCase().includes('manager')) {
+      } else if (user.designation.toLowerCase().includes('manager')) {
         navigate("/manager");
       } else {
         navigate("/employee");
@@ -41,7 +45,7 @@ const Login = () => {
 
       toast({
         title: "Logged in successfully",
-        description: `Welcome back, ${users.name}!`,
+        description: `Welcome back, ${user.name}!`,
       });
     } catch (error) {
       console.error('Login error:', error);
