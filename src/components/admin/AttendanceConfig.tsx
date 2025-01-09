@@ -4,20 +4,61 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect } from "react";
 import { attendanceService } from "@/services/attendanceService";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const AttendanceConfig = () => {
   const [scriptUrl, setScriptUrl] = useState('');
   const [sheetId, setSheetId] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const loadConfig = async () => {
-      const storedScriptUrl = await attendanceService.getScriptUrl();
-      const storedSheetId = await attendanceService.getSheetId();
-      if (storedScriptUrl) setScriptUrl(storedScriptUrl);
-      if (storedSheetId) setSheetId(storedSheetId);
+    const checkAuthAndLoadConfig = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Check if user is authenticated
+        const { data: { session }, error: authError } = await supabase.auth.getSession();
+        
+        if (authError) {
+          throw new Error('Authentication error: ' + authError.message);
+        }
+        
+        if (!session) {
+          throw new Error('You must be logged in to access this configuration');
+        }
+
+        // Load configuration
+        const storedScriptUrl = await attendanceService.getScriptUrl();
+        const storedSheetId = await attendanceService.getSheetId();
+        
+        if (storedScriptUrl) setScriptUrl(storedScriptUrl);
+        if (storedSheetId) setSheetId(storedSheetId);
+      } catch (err) {
+        console.error('Error loading configuration:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load configuration');
+      } finally {
+        setIsLoading(false);
+      }
     };
-    loadConfig();
+
+    checkAuthAndLoadConfig();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setError('You must be logged in to access this configuration');
+      } else {
+        setError(null);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSaveScript = async () => {
@@ -28,6 +69,7 @@ const AttendanceConfig = () => {
         description: "Google Apps Script configuration has been updated.",
       });
     } catch (error) {
+      console.error('Error saving script URL:', error);
       toast({
         title: "Error",
         description: "Failed to save Google Apps Script configuration.",
@@ -44,6 +86,7 @@ const AttendanceConfig = () => {
         description: "Google Sheet ID has been updated.",
       });
     } catch (error) {
+      console.error('Error saving sheet ID:', error);
       toast({
         title: "Error",
         description: "Failed to save Google Sheet ID.",
@@ -51,6 +94,22 @@ const AttendanceConfig = () => {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="space-y-4 p-4 border rounded-lg">
