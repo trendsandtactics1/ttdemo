@@ -19,33 +19,33 @@ const Login = () => {
     
     try {
       // Try to sign in first
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      let authData = await supabase.auth.signInWithPassword({
         email,
         password,
-      });
+      }).then(result => result.data);
+
+      let authError = null;
 
       // If sign in fails with invalid credentials, try to sign up
-      if (authError && authError.message === "Invalid login credentials") {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      if (!authData.user) {
+        const signUpResult = await supabase.auth.signUp({
           email,
           password,
         });
 
-        if (signUpError) {
-          if (signUpError.message.includes("rate_limit")) {
+        if (signUpResult.error) {
+          if (signUpResult.error.message.includes("rate_limit")) {
             throw new Error("Please wait a moment before trying again");
           }
-          throw signUpError;
+          throw signUpResult.error;
         }
 
         // Since email verification is disabled, we can proceed with the signed up user
-        if (signUpData.user) {
-          authData = signUpData;
+        if (signUpResult.data.user) {
+          authData = signUpResult.data;
         } else {
           throw new Error("Failed to create account");
         }
-      } else if (authError) {
-        throw authError;
       }
 
       if (!authData.user) {
