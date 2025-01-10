@@ -33,23 +33,7 @@ const Login = () => {
         throw new Error("Invalid password");
       }
 
-      // Then try to sign in with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: userData.name,
-            role: 'authenticated'
-          }
-        }
-      });
-
-      if (authError && authError.message !== "User already registered") {
-        throw authError;
-      }
-
-      // Now sign in
+      // Sign in with Supabase Auth
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
