@@ -5,50 +5,71 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthError } from "@supabase/supabase-js";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const validatePassword = (password: string) => {
+    if (password.length < 6) {
+      return "Password must be at least 6 characters long";
+    }
+    return "";
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError("");
+    
+    // Validate password before submission
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setValidationError(passwordError);
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
       // Try to sign in first
-      let authData = await supabase.auth.signInWithPassword({
+      let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
-      }).then(result => result.data);
-
-      let authError = null;
+      });
 
       // If sign in fails with invalid credentials, try to sign up
-      if (!authData.user) {
-        const signUpResult = await supabase.auth.signUp({
+      if (authError && authError.message === "Invalid login credentials") {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
         });
 
-        if (signUpResult.error) {
-          if (signUpResult.error.message.includes("rate_limit")) {
+        if (signUpError) {
+          if (signUpError.message.includes("rate_limit")) {
             throw new Error("Please wait a moment before trying again");
           }
-          throw signUpResult.error;
+          if (signUpError.message.includes("weak_password")) {
+            throw new Error("Password should be at least 6 characters");
+          }
+          throw signUpError;
         }
 
         // Since email verification is disabled, we can proceed with the signed up user
-        if (signUpResult.data.user) {
-          authData = signUpResult.data;
+        if (signUpData.user) {
+          authData = signUpData;
         } else {
           throw new Error("Failed to create account");
         }
+      } else if (authError) {
+        throw authError;
       }
 
-      if (!authData.user) {
+      if (!authData?.user) {
         throw new Error('No user data returned');
       }
 
@@ -115,6 +136,9 @@ const Login = () => {
           case 'Email not confirmed':
             errorMessage = 'Please verify your email address';
             break;
+          case 'weak_password':
+            errorMessage = 'Password should be at least 6 characters';
+            break;
           default:
             errorMessage = error.message;
         }
@@ -147,6 +171,11 @@ const Login = () => {
           <CardTitle className="text-2xl text-center">Login</CardTitle>
         </CardHeader>
         <CardContent>
+          {validationError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{validationError}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -170,10 +199,14 @@ const Login = () => {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setValidationError("");
+                }}
                 required
                 className="w-full"
                 disabled={isLoading}
+                minLength={6}
               />
             </div>
             <button
