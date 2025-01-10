@@ -4,107 +4,85 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      // First check if the user exists in our custom users table
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("email", email)
-        .maybeSingle();
-
-      if (userError) {
-        throw userError;
-      }
-
-      if (!userData) {
-        throw new Error("User not found");
-      }
-
-      if (userData.password !== password) {
-        throw new Error("Invalid password");
-      }
-
-      // Try to sign in with Supabase Auth
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError) {
-        // Handle email not confirmed error specifically
-        if (signInError.message.includes("Email not confirmed")) {
-          // Create the user in auth if they don't exist
-          const { error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                name: userData.name,
-                employee_id: userData.employee_id,
-              },
-              emailRedirectTo: window.location.origin,
-            }
-          });
+      if (error) throw error;
 
-          if (signUpError) throw signUpError;
+      if (user) {
+        // Fetch user role from user_roles table
+        const { data: userRoles, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-          // Try signing in again without email verification
-          const { data: session, error: retryError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
+        if (roleError) throw roleError;
 
-          if (retryError) throw retryError;
-          
-          if (!session) throw new Error("Failed to create session");
-        } else {
-          throw signInError;
+        // Fetch user details
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (userError) throw userError;
+
+        if (!userData) throw new Error('User data not found');
+
+        const role = userRoles?.role || 'employee';
+        const combinedUserData = {
+          id: user.id,
+          name: userData.name,
+          email: userData.email,
+          employeeId: userData.employee_id,
+          designation: userData.designation,
+          role: role
+        };
+
+        localStorage.setItem('workstream_current_user', JSON.stringify(combinedUserData));
+
+        toast({
+          title: "Logged in successfully",
+          description: `Welcome back, ${userData.name}!`,
+        });
+
+        // Redirect based on role
+        switch (role) {
+          case 'admin':
+            navigate("/admin");
+            break;
+          case 'manager':
+            navigate("/manager");
+            break;
+          default:
+            navigate("/employee");
         }
       }
-
-      // Determine role and redirect
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userData.id)
-        .maybeSingle();
-
-      const role = roleData?.role || 'employee';
-
-      if (role === 'admin') {
-        navigate("/admin");
-      } else if (role === 'manager') {
-        navigate("/manager");
-      } else {
-        navigate("/employee");
-      }
-
-      toast({
-        title: "Logged in successfully",
-        description: `Welcome back, ${userData.name}!`,
-      });
     } catch (error) {
-      console.error("Login error:", error);
+      console.error('Login error:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to login",
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "An error occurred during login",
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -135,7 +113,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
-                disabled={isLoading}
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
@@ -149,16 +127,16 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
-                disabled={isLoading}
+                disabled={loading}
               />
             </div>
-            <Button
+            <button
               type="submit"
-              className="w-full"
-              disabled={isLoading}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
           </form>
         </CardContent>
       </Card>

@@ -33,8 +33,6 @@ interface EmployeeFormProps {
 
 const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
@@ -48,10 +46,7 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
-      setIsLoading(true);
-
-      // First create the employee in the employees table
-      const { error: employeeError } = await supabase.from("employees").insert([{
+      const { error } = await supabase.from("employees").insert([{
         name: data.name,
         email: data.email,
         employee_id: data.employeeId,
@@ -59,22 +54,7 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
         password: data.password,
       }]);
 
-      if (employeeError) throw employeeError;
-
-      // Create auth user
-      const { error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            name: data.name,
-            employee_id: data.employeeId,
-            designation: data.designation,
-          }
-        }
-      });
-
-      if (authError) throw authError;
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -90,8 +70,6 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
         description: error instanceof Error ? error.message : "Failed to add employee",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -174,9 +152,9 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
                 )}
               />
             </div>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit">
               <Plus className="h-4 w-4 mr-2" />
-              {isLoading ? "Adding..." : "Add Employee"}
+              Add Employee
             </Button>
           </form>
         </Form>
