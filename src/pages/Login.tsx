@@ -37,15 +37,22 @@ const Login = () => {
         throw new Error("Invalid password");
       }
 
-      // Sign in with Supabase Auth
+      // Try to sign in with Supabase Auth
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          data: {
+            name: userData.name,
+            employee_id: userData.employee_id,
+          }
+        }
       });
 
       if (signInError) {
-        // If the user doesn't exist in auth, create them
-        if (signInError.message.includes("Invalid login credentials")) {
+        // Handle email not confirmed error specifically
+        if (signInError.message.includes("Email not confirmed")) {
+          // Create the user in auth if they don't exist
           const { error: signUpError } = await supabase.auth.signUp({
             email,
             password,
@@ -54,18 +61,21 @@ const Login = () => {
                 name: userData.name,
                 employee_id: userData.employee_id,
               },
-            },
+              emailRedirectTo: window.location.origin,
+            }
           });
 
           if (signUpError) throw signUpError;
 
-          // Try signing in again
-          const { error: retryError } = await supabase.auth.signInWithPassword({
+          // Try signing in again without email verification
+          const { data: session, error: retryError } = await supabase.auth.signInWithPassword({
             email,
             password,
           });
 
           if (retryError) throw retryError;
+          
+          if (!session) throw new Error("Failed to create session");
         } else {
           throw signInError;
         }
