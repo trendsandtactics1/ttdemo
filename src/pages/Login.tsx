@@ -1,55 +1,84 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    let employeeId;
-    if (email === "karthikjungleemara@gmail.com") {
-      employeeId = "TT012";
-    } else if (email.includes("admin")) {
-      employeeId = "ADMIN001";
-    } else if (email.includes("manager")) {
-      employeeId = "MGR001";
-    } else {
-      employeeId = `TT${Math.floor(Math.random() * 100)}`;
-    }
-
-    let userData = {
-      id: crypto.randomUUID(),
-      name: email.split('@')[0],
-      email: email,
-      employeeId: employeeId,
-      designation: "Employee",
-      password: password
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        redirectBasedOnRole(session.user.id);
+      }
     };
+    checkSession();
+  }, []);
 
-    if (email.includes("admin")) {
-      userData.designation = "Admin";
-      navigate("/admin");
-    } else if (email.includes("manager")) {
-      userData.designation = "Manager";
-      navigate("/manager");
+  const redirectBasedOnRole = async (userId: string) => {
+    const { data: userRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+
+    if (userRoles?.role === 'admin') {
+      navigate('/admin');
+    } else if (userRoles?.role === 'manager') {
+      navigate('/manager');
     } else {
-      userData.designation = "Employee";
-      navigate("/employee");
+      navigate('/employee');
     }
+  };
 
-    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
-    
-    toast({
-      title: "Logged in successfully",
-      description: `Welcome back, ${userData.name}!`,
-    });
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (authError) throw authError;
+      if (!user) throw new Error('No user returned from authentication');
+
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (userError) throw userError;
+
+      toast({
+        title: "Logged in successfully",
+        description: `Welcome back, ${userData.name}!`,
+      });
+
+      await redirectBasedOnRole(user.id);
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to login');
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to login',
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -67,6 +96,11 @@ const Login = () => {
           <CardTitle className="text-2xl text-center">Login</CardTitle>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -79,6 +113,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
@@ -92,13 +127,15 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
+                disabled={loading}
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors disabled:opacity-50"
+              disabled={loading}
             >
-              Sign In
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
         </CardContent>
