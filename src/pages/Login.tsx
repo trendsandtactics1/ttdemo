@@ -35,7 +35,7 @@ const Login = () => {
       }
 
       // Now fetch the user's profile data from the users table
-      const { data: userData, error: userError } = await supabase
+      let { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
