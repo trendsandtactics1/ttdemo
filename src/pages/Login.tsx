@@ -3,53 +3,68 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    let employeeId;
-    if (email === "karthikjungleemara@gmail.com") {
-      employeeId = "TT012";
-    } else if (email.includes("admin")) {
-      employeeId = "ADMIN001";
-    } else if (email.includes("manager")) {
-      employeeId = "MGR001";
-    } else {
-      employeeId = `TT${Math.floor(Math.random() * 100)}`;
+    setIsLoading(true);
+
+    try {
+      // First authenticate with Supabase Auth
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      // Then get the employee details
+      const { data: employeeData, error: employeeError } = await supabase
+        .from("employees")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      if (employeeError) throw employeeError;
+
+      if (!employeeData) {
+        throw new Error("Employee not found");
+      }
+
+      // Store the current user data
+      localStorage.setItem('workstream_current_user', JSON.stringify(employeeData));
+
+      // Determine role and redirect
+      if (email.includes("admin")) {
+        navigate("/admin");
+      } else if (email.includes("manager")) {
+        navigate("/manager");
+      } else {
+        navigate("/employee");
+      }
+
+      toast({
+        title: "Logged in successfully",
+        description: `Welcome back, ${employeeData.name}!`,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to login",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    let userData = {
-      id: crypto.randomUUID(),
-      name: email.split('@')[0],
-      email: email,
-      employeeId: employeeId,
-      designation: "Employee",
-      password: password
-    };
-
-    if (email.includes("admin")) {
-      userData.designation = "Admin";
-      navigate("/admin");
-    } else if (email.includes("manager")) {
-      userData.designation = "Manager";
-      navigate("/manager");
-    } else {
-      userData.designation = "Employee";
-      navigate("/employee");
-    }
-
-    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
-    
-    toast({
-      title: "Logged in successfully",
-      description: `Welcome back, ${userData.name}!`,
-    });
   };
 
   return (
@@ -79,6 +94,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -92,14 +108,16 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
+                disabled={isLoading}
               />
             </div>
-            <button
+            <Button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
+              className="w-full"
+              disabled={isLoading}
             >
-              Sign In
-            </button>
+              {isLoading ? "Signing in..." : "Sign In"}
+            </Button>
           </form>
         </CardContent>
       </Card>
