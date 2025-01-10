@@ -18,34 +18,60 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // First authenticate with Supabase Auth
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) throw authError;
-
-      // Then get the employee details
-      const { data: employeeData, error: employeeError } = await supabase
-        .from("employees")
+      // First check if the user exists in our custom users table
+      const { data: userData, error: userError } = await supabase
+        .from("users")
         .select("*")
         .eq("email", email)
         .single();
 
-      if (employeeError) throw employeeError;
-
-      if (!employeeData) {
-        throw new Error("Employee not found");
+      if (userError) {
+        throw new Error("User not found");
       }
 
+      if (userData.password !== password) {
+        throw new Error("Invalid password");
+      }
+
+      // Then try to sign in with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: userData.name,
+            role: 'authenticated'
+          }
+        }
+      });
+
+      if (authError && authError.message !== "User already registered") {
+        throw authError;
+      }
+
+      // Now sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) throw signInError;
+
       // Store the current user data
-      localStorage.setItem('workstream_current_user', JSON.stringify(employeeData));
+      localStorage.setItem('workstream_current_user', JSON.stringify(userData));
 
       // Determine role and redirect
-      if (email.includes("admin")) {
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.id)
+        .single();
+
+      const role = roleData?.role || 'employee';
+
+      if (role === 'admin') {
         navigate("/admin");
-      } else if (email.includes("manager")) {
+      } else if (role === 'manager') {
         navigate("/manager");
       } else {
         navigate("/employee");
@@ -53,7 +79,7 @@ const Login = () => {
 
       toast({
         title: "Logged in successfully",
-        description: `Welcome back, ${employeeData.name}!`,
+        description: `Welcome back, ${userData.name}!`,
       });
     } catch (error) {
       console.error("Login error:", error);
