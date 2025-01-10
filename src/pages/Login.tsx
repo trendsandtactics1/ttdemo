@@ -41,12 +41,6 @@ const Login = () => {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: {
-            name: userData.name,
-            employee_id: userData.employee_id,
-          }
-        }
       });
 
       if (signInError) {
