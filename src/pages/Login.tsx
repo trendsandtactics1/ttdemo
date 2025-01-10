@@ -16,6 +16,13 @@ const Login = () => {
     e.preventDefault();
     
     try {
+      // First try to sign up the user if they don't exist
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      // If sign up fails (user might already exist), proceed with sign in
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -39,7 +46,24 @@ const Login = () => {
       }
 
       if (!userData) {
-        throw new Error('User profile not found');
+        // If user doesn't exist in users table, create them
+        const { data: newUserData, error: createError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: authData.user.id,
+              email: email,
+              name: email.split('@')[0], // Temporary name from email
+              employee_id: `EMP${Math.floor(Math.random() * 10000)}`, // Temporary employee ID
+              designation: 'employee', // Default designation
+              password: password,
+            }
+          ])
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        userData = newUserData;
       }
 
       // Store user data in localStorage (temporary, will be removed later)
