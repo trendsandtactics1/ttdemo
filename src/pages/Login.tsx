@@ -3,53 +3,87 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    let employeeId;
-    if (email === "karthikjungleemara@gmail.com") {
-      employeeId = "TT012";
-    } else if (email.includes("admin")) {
-      employeeId = "ADMIN001";
-    } else if (email.includes("manager")) {
-      employeeId = "MGR001";
-    } else {
-      employeeId = `TT${Math.floor(Math.random() * 100)}`;
+    setLoading(true);
+
+    try {
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (user) {
+        // Fetch user role from user_roles table
+        const { data: userRoles, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (roleError) throw roleError;
+
+        // Fetch user details
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (userError) throw userError;
+
+        if (!userData) throw new Error('User data not found');
+
+        const role = userRoles?.role || 'employee';
+        const combinedUserData = {
+          id: user.id,
+          name: userData.name,
+          email: userData.email,
+          employeeId: userData.employee_id,
+          designation: userData.designation,
+          role: role
+        };
+
+        localStorage.setItem('workstream_current_user', JSON.stringify(combinedUserData));
+
+        toast({
+          title: "Logged in successfully",
+          description: `Welcome back, ${userData.name}!`,
+        });
+
+        // Redirect based on role
+        switch (role) {
+          case 'admin':
+            navigate("/admin");
+            break;
+          case 'manager':
+            navigate("/manager");
+            break;
+          default:
+            navigate("/employee");
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "An error occurred during login",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    let userData = {
-      id: crypto.randomUUID(),
-      name: email.split('@')[0],
-      email: email,
-      employeeId: employeeId,
-      designation: "Employee",
-      password: password
-    };
-
-    if (email.includes("admin")) {
-      userData.designation = "Admin";
-      navigate("/admin");
-    } else if (email.includes("manager")) {
-      userData.designation = "Manager";
-      navigate("/manager");
-    } else {
-      userData.designation = "Employee";
-      navigate("/employee");
-    }
-
-    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
-    
-    toast({
-      title: "Logged in successfully",
-      description: `Welcome back, ${userData.name}!`,
-    });
   };
 
   return (
@@ -79,6 +113,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
@@ -92,13 +127,15 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
+                disabled={loading}
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
             >
-              Sign In
+              {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </CardContent>
