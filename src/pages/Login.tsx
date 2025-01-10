@@ -9,24 +9,42 @@ import { AuthError } from "@supabase/supabase-js";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     try {
-      // First try to sign up the user if they don't exist
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      // If sign up fails (user might already exist), proceed with sign in
+      // Try to sign in first instead of sign up
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
+      // If sign in fails, then try to sign up
+      if (authError && authError.message === "Invalid login credentials") {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (signUpError) {
+          if (signUpError.message.includes("rate_limit")) {
+            throw new Error("Please wait a moment before trying again");
+          }
+          throw signUpError;
+        }
+
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link to complete your registration.",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       if (authError) throw authError;
 
@@ -35,7 +53,8 @@ const Login = () => {
       }
 
       // Now fetch the user's profile data from the users table
-      let { data: userData, error: userError } = await supabase
+      let userData;
+      const { data: existingUser, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
@@ -45,7 +64,7 @@ const Login = () => {
         throw new Error('Failed to fetch user data');
       }
 
-      if (!userData) {
+      if (!existingUser) {
         // If user doesn't exist in users table, create them
         const { data: newUserData, error: createError } = await supabase
           .from('users')
@@ -64,6 +83,8 @@ const Login = () => {
 
         if (createError) throw createError;
         userData = newUserData;
+      } else {
+        userData = existingUser;
       }
 
       // Store user data in localStorage (temporary, will be removed later)
@@ -106,6 +127,8 @@ const Login = () => {
         description: errorMessage,
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -136,6 +159,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -149,13 +173,15 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
+                disabled={isLoading}
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </CardContent>
