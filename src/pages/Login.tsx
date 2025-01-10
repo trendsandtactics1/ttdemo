@@ -57,6 +57,17 @@ const Login = () => {
         password,
       });
 
+      // If there's an email_not_confirmed error, show a specific message
+      if (authError?.message.includes("Email not confirmed")) {
+        toast({
+          title: "Email Not Confirmed",
+          description: "Please check your email for a confirmation link or contact support.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // If sign in fails due to invalid credentials, try to sign up
       if (authError && authError.code === "invalid_credentials") {
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -65,15 +76,6 @@ const Login = () => {
         });
 
         if (signUpError) {
-          // If sign up fails with email_not_confirmed, show a specific message
-          if (signUpError.code === "email_not_confirmed") {
-            toast({
-              title: "Email Confirmation Required",
-              description: "Please check your email for a confirmation link before logging in.",
-              variant: "destructive",
-            });
-            return;
-          }
           throw signUpError;
         }
 
@@ -83,6 +85,7 @@ const Login = () => {
             title: "Account Created",
             description: "Please check your email for a confirmation link.",
           });
+          setIsLoading(false);
           return;
         } else {
           throw new Error("Failed to create account");
