@@ -18,15 +18,15 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      // Try to sign in first instead of sign up
+      // Try to sign in first
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      // If sign in fails, then try to sign up
+      // If sign in fails with invalid credentials, try to sign up
       if (authError && authError.message === "Invalid login credentials") {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
         });
@@ -38,15 +38,15 @@ const Login = () => {
           throw signUpError;
         }
 
-        toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link to complete your registration.",
-        });
-        setIsLoading(false);
-        return;
+        // Since email verification is disabled, we can proceed with the signed up user
+        if (signUpData.user) {
+          authData = signUpData;
+        } else {
+          throw new Error("Failed to create account");
+        }
+      } else if (authError) {
+        throw authError;
       }
-
-      if (authError) throw authError;
 
       if (!authData.user) {
         throw new Error('No user data returned');
