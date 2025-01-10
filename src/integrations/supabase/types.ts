@@ -36,27 +36,6 @@ export type Database = {
         }
         Relationships: []
       }
-      attendance_config: {
-        Row: {
-          created_at: string
-          id: string
-          script_url: string | null
-          sheet_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          script_url?: string | null
-          sheet_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          script_url?: string | null
-          sheet_id?: string | null
-        }
-        Relationships: []
-      }
       employees: {
         Row: {
           created_at: string
@@ -87,75 +66,6 @@ export type Database = {
           name?: string
           password?: string
           profile_photo?: string | null
-        }
-        Relationships: []
-      }
-      leave_requests: {
-        Row: {
-          created_at: string
-          employee_id: string
-          end_date: string
-          id: string
-          reason: string
-          start_date: string
-          status: string
-          type: string
-        }
-        Insert: {
-          created_at?: string
-          employee_id: string
-          end_date: string
-          id?: string
-          reason: string
-          start_date: string
-          status?: string
-          type: string
-        }
-        Update: {
-          created_at?: string
-          employee_id?: string
-          end_date?: string
-          id?: string
-          reason?: string
-          start_date?: string
-          status?: string
-          type?: string
-        }
-        Relationships: []
-      }
-      tasks: {
-        Row: {
-          assigned_date: string
-          assigned_to: string
-          created_at: string
-          description: string
-          due_date: string
-          id: string
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          assigned_date: string
-          assigned_to: string
-          created_at?: string
-          description: string
-          due_date: string
-          id?: string
-          status: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          assigned_date?: string
-          assigned_to?: string
-          created_at?: string
-          description?: string
-          due_date?: string
-          id?: string
-          status?: string
-          title?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -197,7 +107,6 @@ export type Database = {
           id: string
           name: string
           password: string
-          profile_photo: string | null
         }
         Insert: {
           created_at?: string
@@ -207,7 +116,6 @@ export type Database = {
           id: string
           name: string
           password: string
-          profile_photo?: string | null
         }
         Update: {
           created_at?: string
@@ -217,7 +125,6 @@ export type Database = {
           id?: string
           name?: string
           password?: string
-          profile_photo?: string | null
         }
         Relationships: []
       }

@@ -25,11 +25,7 @@ interface AttendanceRecord {
   effectiveHours: number;
 }
 
-interface AttendanceTableProps {
-  showTodayOnly?: boolean;
-}
-
-const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
+const AttendanceTable = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,25 +33,16 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
     const fetchLogs = async () => {
       setLoading(true);
       const logs = await attendanceService.getAttendanceLogs();
-      
-      // Filter logs if showTodayOnly is true
-      let filteredLogs = logs;
-      if (showTodayOnly) {
-        const today = new Date().toISOString().split('T')[0];
-        filteredLogs = logs.filter(log => log.date === today);
-      }
-      
       // Sort logs by date in descending order
-      const sortedLogs = filteredLogs.sort((a, b) => 
+      const sortedLogs = logs.sort((a, b) => 
         new Date(b.date).getTime() - new Date(a.date).getTime()
       );
-      
       setAttendanceLogs(sortedLogs);
       setLoading(false);
     };
 
     fetchLogs();
-  }, [showTodayOnly]);
+  }, []);
 
   const formatTime = (dateTimeString: string) => {
     try {
@@ -96,7 +83,7 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
 
   return (
     <div className="space-y-6">
-      {!showTodayOnly && <AttendanceConfig />}
+      <AttendanceConfig />
       
       <Card className="p-4">
         <div className="rounded-md border overflow-x-auto">
