@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthError } from "@supabase/supabase-js";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,29 +16,39 @@ const Login = () => {
     e.preventDefault();
     
     try {
-      // First check if user exists in users table
-      const { data: user, error: userError } = await supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error('No user data returned');
+      }
+
+      // Now fetch the user's profile data from the users table
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('email', email)
-        .eq('password', password)
         .maybeSingle();
 
       if (userError) {
-        throw new Error('Database error occurred');
+        throw new Error('Failed to fetch user data');
       }
 
-      if (!user) {
-        throw new Error('Invalid credentials');
+      if (!userData) {
+        throw new Error('User profile not found');
       }
 
-      // Store user data in localStorage for now (we'll update this to use Supabase auth later)
-      localStorage.setItem('workstream_current_user', JSON.stringify(user));
+      // Store user data in localStorage (temporary, will be removed later)
+      localStorage.setItem('workstream_current_user', JSON.stringify(userData));
       
       // Navigate based on role
-      if (user.designation.toLowerCase().includes('admin')) {
+      if (userData.designation.toLowerCase().includes('admin')) {
         navigate("/admin");
-      } else if (user.designation.toLowerCase().includes('manager')) {
+      } else if (userData.designation.toLowerCase().includes('manager')) {
         navigate("/manager");
       } else {
         navigate("/employee");
@@ -45,13 +56,30 @@ const Login = () => {
 
       toast({
         title: "Logged in successfully",
-        description: `Welcome back, ${user.name}!`,
+        description: `Welcome back, ${userData.name}!`,
       });
     } catch (error) {
       console.error('Login error:', error);
+      let errorMessage = 'Login failed';
+      
+      if (error instanceof AuthError) {
+        switch (error.message) {
+          case 'Invalid login credentials':
+            errorMessage = 'Invalid email or password';
+            break;
+          case 'Email not confirmed':
+            errorMessage = 'Please verify your email address';
+            break;
+          default:
+            errorMessage = error.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid credentials",
+        description: errorMessage,
         variant: "destructive",
       });
     }
