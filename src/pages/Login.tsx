@@ -3,165 +3,53 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { AuthError, AuthApiError } from "@supabase/supabase-js";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [validationError, setValidationError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const validatePassword = (password: string) => {
-    if (password.length < 6) {
-      return "Password must be at least 6 characters long";
-    }
-    return "";
-  };
-
-  const handleAuthError = (error: AuthError) => {
-    if (error instanceof AuthApiError) {
-      switch (error.code) {
-        case "email_not_confirmed":
-          return "Please check your email for a confirmation link. If you haven't received it, try signing up again.";
-        case "invalid_credentials":
-          return "Invalid email or password. Please check your credentials.";
-        case "rate_limit_exceeded":
-          return "Too many attempts. Please try again later.";
-        default:
-          return error.message;
-      }
-    }
-    return error.message;
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setValidationError("");
     
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      setValidationError(passwordError);
-      return;
+    let employeeId;
+    if (email === "karthikjungleemara@gmail.com") {
+      employeeId = "TT012";
+    } else if (email.includes("admin")) {
+      employeeId = "ADMIN001";
+    } else if (email.includes("manager")) {
+      employeeId = "MGR001";
+    } else {
+      employeeId = `TT${Math.floor(Math.random() * 100)}`;
     }
-    
-    setIsLoading(true);
-    
-    try {
-      // First try to sign in
-      let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
 
-      // If there's an email_not_confirmed error, show a specific message
-      if (authError?.message.includes("Email not confirmed")) {
-        toast({
-          title: "Email Not Confirmed",
-          description: "Please check your email for a confirmation link or contact support.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
+    let userData = {
+      id: crypto.randomUUID(),
+      name: email.split('@')[0],
+      email: email,
+      employeeId: employeeId,
+      designation: "Employee",
+      password: password
+    };
 
-      // If sign in fails due to invalid credentials, try to sign up
-      if (authError && authError.code === "invalid_credentials") {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-
-        if (signUpError) {
-          throw signUpError;
-        }
-
-        if (signUpData.user) {
-          authData = signUpData;
-          toast({
-            title: "Account Created",
-            description: "Please check your email for a confirmation link.",
-          });
-          setIsLoading(false);
-          return;
-        } else {
-          throw new Error("Failed to create account");
-        }
-      } else if (authError) {
-        const errorMessage = handleAuthError(authError);
-        throw new Error(errorMessage);
-      }
-
-      if (!authData?.user) {
-        throw new Error('No user data returned');
-      }
-
-      let userData;
-      const { data: existingUser, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (userError) {
-        throw new Error('Failed to fetch user data');
-      }
-
-      if (!existingUser) {
-        const { data: newUserData, error: createError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: authData.user.id,
-              email: email,
-              name: email.split('@')[0],
-              employee_id: `EMP${Math.floor(Math.random() * 10000)}`,
-              designation: 'employee',
-              password: password,
-            }
-          ])
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        userData = newUserData;
-      } else {
-        userData = existingUser;
-      }
-
-      localStorage.setItem('workstream_current_user', JSON.stringify(userData));
-      
-      if (userData.designation.toLowerCase().includes('admin')) {
-        navigate("/admin");
-      } else if (userData.designation.toLowerCase().includes('manager')) {
-        navigate("/manager");
-      } else {
-        navigate("/employee");
-      }
-
-      toast({
-        title: "Logged in successfully",
-        description: `Welcome back, ${userData.name}!`,
-      });
-    } catch (error) {
-      console.error('Login error:', error);
-      let errorMessage = 'Login failed';
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-
-      toast({
-        title: "Login failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    if (email.includes("admin")) {
+      userData.designation = "Admin";
+      navigate("/admin");
+    } else if (email.includes("manager")) {
+      userData.designation = "Manager";
+      navigate("/manager");
+    } else {
+      userData.designation = "Employee";
+      navigate("/employee");
     }
+
+    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
+    
+    toast({
+      title: "Logged in successfully",
+      description: `Welcome back, ${userData.name}!`,
+    });
   };
 
   return (
@@ -179,11 +67,6 @@ const Login = () => {
           <CardTitle className="text-2xl text-center">Login</CardTitle>
         </CardHeader>
         <CardContent>
-          {validationError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{validationError}</AlertDescription>
-            </Alert>
-          )}
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -196,7 +79,6 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
-                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -207,22 +89,16 @@ const Login = () => {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setValidationError("");
-                }}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
-                disabled={isLoading}
-                minLength={6}
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              Sign In
             </button>
           </form>
         </CardContent>
