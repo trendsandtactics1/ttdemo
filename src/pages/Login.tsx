@@ -43,10 +43,33 @@ const Login = () => {
         password,
       });
 
-      if (signInError) throw signInError;
+      if (signInError) {
+        // If the user doesn't exist in auth, create them
+        if (signInError.message.includes("Invalid login credentials")) {
+          const { error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                name: userData.name,
+                employee_id: userData.employee_id,
+              },
+            },
+          });
 
-      // Store the current user data
-      localStorage.setItem('workstream_current_user', JSON.stringify(userData));
+          if (signUpError) throw signUpError;
+
+          // Try signing in again
+          const { error: retryError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (retryError) throw retryError;
+        } else {
+          throw signInError;
+        }
+      }
 
       // Determine role and redirect
       const { data: roleData } = await supabase
