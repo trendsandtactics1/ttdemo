@@ -3,55 +3,103 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { localStorageService } from "@/services/localStorageService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
-import { Employee } from "@/services/localStorageService";
+import { supabase } from "@/integrations/supabase/client";
+import { DatabaseUser } from "@/types/database";
 
 const EmployeeProfile = () => {
-  const [profile, setProfile] = useState<Partial<Employee>>({
-    name: "",
-    email: "",
-    employeeId: "",
-    designation: "",
-    profilePhoto: "",
-  });
+  const [profile, setProfile] = useState<Partial<DatabaseUser>>({});
   const { toast } = useToast();
 
   useEffect(() => {
-    const employees = localStorageService.getEmployees();
-    // In a real app, this would come from auth context
-    const currentEmployee = employees[0];
-    if (currentEmployee) {
-      setProfile({
-        ...currentEmployee,
-        profilePhoto: currentEmployee.profilePhoto || "",
-      });
-    }
+    loadProfile();
   }, []);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        handleUpdateProfile({ profilePhoto: base64String });
-      };
-      reader.readAsDataURL(file);
+  const loadProfile = async () => {
+    try {
+      const currentUser = JSON.parse(localStorage.getItem('workstream_current_user') || '{}');
+      
+      if (!currentUser.email) {
+        throw new Error('No user found');
+      }
+
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', currentUser.email)
+        .single();
+
+      if (error) throw error;
+
+      setProfile(userData);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleUpdateProfile = (updates: Partial<Employee>) => {
-    if (!profile.employeeId) return;
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && profile.id) {
+      try {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64String = reader.result as string;
+          
+          const { error } = await supabase
+            .from('users')
+            .update({ profile_photo: base64String })
+            .eq('id', profile.id);
+
+          if (error) throw error;
+
+          setProfile(prev => ({ ...prev, profile_photo: base64String }));
+          toast({
+            title: "Success",
+            description: "Profile photo updated successfully",
+          });
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Error uploading photo:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update profile photo",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleUpdateProfile = async (updates: Partial<DatabaseUser>) => {
+    if (!profile.id) return;
     
-    const updatedProfile = { ...profile, ...updates };
-    localStorageService.updateEmployee(profile.employeeId, updatedProfile as Employee);
-    setProfile(updatedProfile);
-    toast({
-      title: "Success",
-      description: "Profile updated successfully",
-    });
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      setProfile(prev => ({ ...prev, ...updates }));
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -65,7 +113,7 @@ const EmployeeProfile = () => {
           <div className="flex justify-center mb-6">
             <div className="relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={profile.profilePhoto} />
+                <AvatarImage src={profile.profile_photo} />
                 <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <label
@@ -102,14 +150,16 @@ const EmployeeProfile = () => {
             <div>
               <Input
                 value={profile.designation || ""}
-                onChange={(e) =>
-                  handleUpdateProfile({ designation: e.target.value })
-                }
+                onChange={(e) => handleUpdateProfile({ designation: e.target.value })}
                 placeholder="Designation"
               />
             </div>
             <div>
-              <Input value={profile.employeeId || ""} disabled placeholder="Employee ID" />
+              <Input 
+                value={profile.employee_id || ""} 
+                disabled 
+                placeholder="Employee ID" 
+              />
             </div>
           </div>
         </CardContent>

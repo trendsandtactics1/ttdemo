@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogTrigger } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Pencil, Trash2, Image } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import AnnouncementForm from "./AnnouncementForm";
-import AnnouncementCard from "./AnnouncementCard";
 
 interface Announcement {
   id: string;
@@ -16,77 +15,99 @@ interface Announcement {
   createdAt: string;
 }
 
-interface DatabaseAnnouncement {
-  id: string;
-  title: string;
-  content: string;
-  image?: string;
-  created_at: string;
-  created_by?: string;
-}
-
 const Announcements = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [image, setImage] = useState<string>("");
   const { toast } = useToast();
 
-  const transformDatabaseAnnouncement = (dbAnnouncement: DatabaseAnnouncement): Announcement => ({
-    id: dbAnnouncement.id,
-    title: dbAnnouncement.title,
-    content: dbAnnouncement.content,
-    image: dbAnnouncement.image,
-    createdAt: dbAnnouncement.created_at,
-  });
+  useEffect(() => {
+    const stored = localStorage.getItem("announcements");
+    if (stored) {
+      // Sort announcements in descending order by createdAt
+      const sortedAnnouncements = JSON.parse(stored).sort((a: Announcement, b: Announcement) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setAnnouncements(sortedAnnouncements);
+    }
+  }, []);
 
-  const fetchAnnouncements = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("announcements")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      
-      const transformedAnnouncements = (data || []).map(transformDatabaseAnnouncement);
-      setAnnouncements(transformedAnnouncements);
-    } catch (error) {
-      console.error("Error fetching announcements:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch announcements",
-        variant: "destructive",
-      });
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  useEffect(() => {
-    fetchAnnouncements();
-  }, []);
-
-  const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from("announcements")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Announcement deleted successfully",
-      });
-      
-      fetchAnnouncements();
-    } catch (error) {
-      console.error("Error deleting announcement:", error);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !content) {
       toast({
         title: "Error",
-        description: "Failed to delete announcement",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
+      return;
     }
+
+    const newAnnouncements = [...announcements];
+    
+    if (editingAnnouncement) {
+      const index = newAnnouncements.findIndex(a => a.id === editingAnnouncement.id);
+      newAnnouncements[index] = {
+        ...editingAnnouncement,
+        title,
+        content,
+        image: image || editingAnnouncement.image,
+      };
+    } else {
+      newAnnouncements.push({
+        id: crypto.randomUUID(),
+        title,
+        content,
+        image,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
+    setAnnouncements(newAnnouncements);
+    localStorage.setItem("announcements", JSON.stringify(newAnnouncements));
+    
+    setTitle("");
+    setContent("");
+    setImage("");
+    setEditingAnnouncement(null);
+    setIsOpen(false);
+    
+    toast({
+      title: "Success",
+      description: `Announcement ${editingAnnouncement ? 'updated' : 'created'} successfully`,
+    });
+  };
+
+  const handleEdit = (announcement: Announcement) => {
+    setEditingAnnouncement(announcement);
+    setTitle(announcement.title);
+    setContent(announcement.content);
+    setImage(announcement.image || "");
+    setIsOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    const newAnnouncements = announcements.filter(a => a.id !== id);
+    setAnnouncements(newAnnouncements);
+    localStorage.setItem("announcements", JSON.stringify(newAnnouncements));
+    toast({
+      title: "Success",
+      description: "Announcement deleted successfully",
+    });
   };
 
   return (
@@ -97,16 +118,58 @@ const Announcements = () => {
           <DialogTrigger asChild>
             <Button onClick={() => {
               setEditingAnnouncement(null);
+              setTitle("");
+              setContent("");
+              setImage("");
             }}>
               <Plus className="h-4 w-4 mr-2" />
               New Announcement
             </Button>
           </DialogTrigger>
-          <AnnouncementForm
-            editingAnnouncement={editingAnnouncement}
-            onSuccess={fetchAnnouncements}
-            onClose={() => setIsOpen(false)}
-          />
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editingAnnouncement ? "Edit Announcement" : "Create Announcement"}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Input
+                  placeholder="Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div>
+                <Textarea
+                  placeholder="Content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block mb-2">
+                  <Button type="button" variant="outline" onClick={() => document.getElementById('image-upload')?.click()}>
+                    <Image className="h-4 w-4 mr-2" />
+                    Upload Image (Optional)
+                  </Button>
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+                {image && (
+                  <img src={image} alt="Preview" className="mt-2 max-h-40 rounded" />
+                )}
+              </div>
+              <Button type="submit" className="w-full">
+                {editingAnnouncement ? "Update" : "Create"}
+              </Button>
+            </form>
+          </DialogContent>
         </Dialog>
       </div>
 
@@ -119,15 +182,42 @@ const Announcements = () => {
           </Card>
         ) : (
           announcements.map((announcement) => (
-            <AnnouncementCard
-              key={announcement.id}
-              announcement={announcement}
-              onEdit={() => {
-                setEditingAnnouncement(announcement);
-                setIsOpen(true);
-              }}
-              onDelete={() => handleDelete(announcement.id)}
-            />
+            <Card key={announcement.id}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle>{announcement.title}</CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleEdit(announcement)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDelete(announcement.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p>{announcement.content}</p>
+                {announcement.image && (
+                  <img
+                    src={announcement.image}
+                    alt={announcement.title}
+                    className="rounded-lg max-h-60 object-cover"
+                  />
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Posted on {new Date(announcement.createdAt).toLocaleDateString()}
+                </p>
+              </CardContent>
+            </Card>
           ))
         )}
       </div>
