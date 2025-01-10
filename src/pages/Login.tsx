@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -11,46 +10,46 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      // First check if user exists in users table
-      const { data: users, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .eq('password', password)
-        .single();
-
-      if (userError || !users) {
-        throw new Error('Invalid credentials');
-      }
-
-      // Store user data in localStorage for now (we'll update this to use Supabase auth later)
-      localStorage.setItem('workstream_current_user', JSON.stringify(users));
-      
-      // Navigate based on role
-      if (users.designation.toLowerCase().includes('admin')) {
-        navigate("/admin");
-      } else if (users.designation.toLowerCase().includes('manager')) {
-        navigate("/manager");
-      } else {
-        navigate("/employee");
-      }
-
-      toast({
-        title: "Logged in successfully",
-        description: `Welcome back, ${users.name}!`,
-      });
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid credentials",
-        variant: "destructive",
-      });
+    let employeeId;
+    if (email === "karthikjungleemara@gmail.com") {
+      employeeId = "TT012";
+    } else if (email.includes("admin")) {
+      employeeId = "ADMIN001";
+    } else if (email.includes("manager")) {
+      employeeId = "MGR001";
+    } else {
+      employeeId = `TT${Math.floor(Math.random() * 100)}`;
     }
+
+    let userData = {
+      id: crypto.randomUUID(),
+      name: email.split('@')[0],
+      email: email,
+      employeeId: employeeId,
+      designation: "Employee",
+      password: password
+    };
+
+    if (email.includes("admin")) {
+      userData.designation = "Admin";
+      navigate("/admin");
+    } else if (email.includes("manager")) {
+      userData.designation = "Manager";
+      navigate("/manager");
+    } else {
+      userData.designation = "Employee";
+      navigate("/employee");
+    }
+
+    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
+    
+    toast({
+      title: "Logged in successfully",
+      description: `Welcome back, ${userData.name}!`,
+    });
   };
 
   return (

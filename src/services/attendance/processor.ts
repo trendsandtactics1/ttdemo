@@ -1,28 +1,6 @@
 import { CheckInLog, AttendanceRecord } from './types';
 import { calculateHours } from './utils';
 
-const isWithinWorkingHours = (timestamp: string): boolean => {
-  const date = new Date(timestamp);
-  const hours = date.getUTCHours();
-  // Check if time is between 1 AM and 12 PM (UTC)
-  return hours >= 1 && hours <= 12;
-};
-
-const adjustTimeToWorkingHours = (timestamp: string): string => {
-  const date = new Date(timestamp);
-  const hours = date.getUTCHours();
-  
-  if (hours < 1) {
-    // If before 1 AM, set to 1 AM
-    date.setUTCHours(1, 0, 0, 0);
-  } else if (hours > 12) {
-    // If after 12 PM, set to 12 PM
-    date.setUTCHours(12, 0, 0, 0);
-  }
-  
-  return date.toISOString();
-};
-
 export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] => {
   if (!logs.length) return [];
 
@@ -57,12 +35,8 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     const lastLog = sortedLogs[sortedLogs.length - 1];
     const date = new Date(firstLog.timestamp).toISOString().split('T')[0];
 
-    // Adjust check-in and check-out times to working hours
-    const adjustedCheckIn = adjustTimeToWorkingHours(firstLog.timestamp);
-    const adjustedCheckOut = adjustTimeToWorkingHours(lastLog.timestamp);
-
     // Calculate total working hours (from first check-in to last check-out)
-    const totalHours = calculateHours(adjustedCheckIn, adjustedCheckOut);
+    const totalHours = calculateHours(firstLog.timestamp, lastLog.timestamp);
 
     // Process intermediate punch-ins as breaks
     const breaks: string[] = [];
@@ -77,30 +51,22 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
       const breakEnd = intermediateLogs[i + 1];
       
       if (breakEnd) {
-        // Only count breaks within working hours
-        const adjustedBreakStart = adjustTimeToWorkingHours(breakStart.timestamp);
-        const adjustedBreakEnd = adjustTimeToWorkingHours(breakEnd.timestamp);
-        
-        if (isWithinWorkingHours(adjustedBreakStart) && isWithinWorkingHours(adjustedBreakEnd)) {
-          const breakDuration = calculateHours(adjustedBreakStart, adjustedBreakEnd);
-          totalBreakHours += breakDuration;
-          breaks.push(adjustedBreakStart);
-          breaks.push(adjustedBreakEnd);
-        }
+        const breakDuration = calculateHours(breakStart.timestamp, breakEnd.timestamp);
+        totalBreakHours += breakDuration;
+        breaks.push(breakStart.timestamp);
+        breaks.push(breakEnd.timestamp);
       }
     }
 
     // Calculate effective hours (total hours - break hours)
-    // Ensure we don't exceed the working hours (1 AM to 12 PM = 11 hours max)
-    const maxWorkingHours = 11;
-    const effectiveHours = Math.min(Math.max(0, totalHours - totalBreakHours), maxWorkingHours);
+    const effectiveHours = Math.max(0, totalHours - totalBreakHours);
 
     return {
       employeeId: firstLog.employeeId,
       employeeName: firstLog.employeeName,
       date: date,
-      checkIn: adjustedCheckIn,
-      checkOut: adjustedCheckOut,
+      checkIn: firstLog.timestamp,
+      checkOut: lastLog.timestamp,
       breaks: breaks,
       totalBreakHours: Math.round(totalBreakHours * 100) / 100,
       effectiveHours: Math.round(effectiveHours * 100) / 100

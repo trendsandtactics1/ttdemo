@@ -1,12 +1,17 @@
-import { DatabaseUser } from './database';
-
 export type UserRole = 'admin' | 'manager' | 'employee';
 
 export interface UserRoleObject {
   role: UserRole;
 }
 
-export interface User extends DatabaseUser {
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  employee_id: string;
+  designation: string;
+  password: string;
+  created_at: string;
   user_roles?: UserRoleObject[];
 }
 
