@@ -23,9 +23,13 @@ const Login = () => {
         .from("users")
         .select("*")
         .eq("email", email)
-        .single();
+        .maybeSingle();
 
       if (userError) {
+        throw userError;
+      }
+
+      if (!userData) {
         throw new Error("User not found");
       }
 
@@ -49,7 +53,7 @@ const Login = () => {
         .from("user_roles")
         .select("role")
         .eq("user_id", userData.id)
-        .single();
+        .maybeSingle();
 
       const role = roleData?.role || 'employee';
 
