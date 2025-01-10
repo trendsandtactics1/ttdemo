@@ -24,12 +24,12 @@ const Login = () => {
 
   const handleAuthError = (error: AuthError) => {
     if (error instanceof AuthApiError) {
-      switch (error.message) {
-        case "Email not confirmed":
+      switch (error.code) {
+        case "email_not_confirmed":
           return "Please check your email for a confirmation link. If you haven't received it, try signing up again.";
-        case "Invalid login credentials":
+        case "invalid_credentials":
           return "Invalid email or password. Please check your credentials.";
-        case "Rate limit exceeded":
+        case "rate_limit_exceeded":
           return "Too many attempts. Please try again later.";
         default:
           return error.message;
@@ -51,12 +51,27 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      // First try to sign in
       let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (authError) {
+      // If sign in fails, try to sign up
+      if (authError && authError.code === "invalid_credentials") {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (signUpError) throw signUpError;
+
+        if (signUpData.user) {
+          authData = signUpData;
+        } else {
+          throw new Error("Failed to create account");
+        }
+      } else if (authError) {
         const errorMessage = handleAuthError(authError);
         throw new Error(errorMessage);
       }
