@@ -16,11 +16,28 @@ interface Announcement {
   createdAt: string;
 }
 
+interface DatabaseAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  image?: string;
+  created_at: string;
+  created_by?: string;
+}
+
 const Announcements = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const { toast } = useToast();
+
+  const transformDatabaseAnnouncement = (dbAnnouncement: DatabaseAnnouncement): Announcement => ({
+    id: dbAnnouncement.id,
+    title: dbAnnouncement.title,
+    content: dbAnnouncement.content,
+    image: dbAnnouncement.image,
+    createdAt: dbAnnouncement.created_at,
+  });
 
   const fetchAnnouncements = async () => {
     try {
@@ -30,7 +47,9 @@ const Announcements = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setAnnouncements(data || []);
+      
+      const transformedAnnouncements = (data || []).map(transformDatabaseAnnouncement);
+      setAnnouncements(transformedAnnouncements);
     } catch (error) {
       console.error("Error fetching announcements:", error);
       toast({
