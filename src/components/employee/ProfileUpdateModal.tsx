@@ -5,117 +5,54 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
+import { localStorageService } from "@/services/localStorageService";
+import { Employee } from "@/services/localStorageService";
 import { Upload, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-
-interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  employee_id: string;
-  designation: string;
-  profile_photo?: string;
-}
 
 const ProfileUpdateModal = () => {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [profile, setProfile] = useState<Partial<Employee>>({});
+  const [profile, setProfile] = useState<Partial<Employee>>({
+    name: "",
+    email: "",
+    employeeId: "",
+    designation: "",
+    profilePhoto: "",
+  });
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchProfile();
-  }, [open]);
-
-  const fetchProfile = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .eq('email', user.email)
-        .single();
-
-      if (error) throw error;
-      if (data) {
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load profile",
-        variant: "destructive",
-      });
+    const employees = localStorageService.getEmployees();
+    // In a real app, this would come from auth context
+    const currentEmployee = employees[0];
+    if (currentEmployee) {
+      setProfile(currentEmployee);
     }
-  };
+  }, [open]); // Refresh profile data when modal opens
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setLoading(true);
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from('profiles')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profiles')
-        .getPublicUrl(fileName);
-
-      await handleUpdateProfile({ profile_photo: publicUrl });
-      
-      toast({
-        title: "Success",
-        description: "Profile photo updated successfully",
-      });
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-      toast({
-        title: "Error",
-        description: "Failed to upload photo",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setProfile(prev => ({ ...prev, profilePhoto: base64String }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleUpdateProfile = async (updates: Partial<Employee>) => {
-    try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) throw new Error("No authenticated user");
-
-      const { error } = await supabase
-        .from('employees')
-        .update({ ...updates })
-        .eq('email', user.email);
-
-      if (error) throw error;
-
-      setProfile(prev => ({ ...prev, ...updates }));
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleUpdateProfile = () => {
+    if (!profile.employeeId) return;
+    
+    localStorageService.updateEmployee(profile.employeeId, profile as Employee);
+    toast({
+      title: "Success",
+      description: "Profile updated successfully",
+    });
+    setOpen(false);
+    
+    // Dispatch an event to notify other components of the update
+    window.dispatchEvent(new Event('profile-updated'));
   };
 
   return (
@@ -134,7 +71,7 @@ const ProfileUpdateModal = () => {
           <div className="flex justify-center">
             <div className="relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={profile.profile_photo} />
+                <AvatarImage src={profile.profilePhoto} />
                 <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <label
@@ -148,7 +85,6 @@ const ProfileUpdateModal = () => {
                   accept="image/*"
                   className="hidden"
                   onChange={handlePhotoUpload}
-                  disabled={loading}
                 />
               </label>
             </div>
@@ -158,9 +94,8 @@ const ProfileUpdateModal = () => {
             <Input
               id="name"
               value={profile.name || ""}
-              onChange={(e) => handleUpdateProfile({ name: e.target.value })}
+              onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
               placeholder="Your name"
-              disabled={loading}
             />
           </div>
           <div className="space-y-2">
@@ -169,7 +104,7 @@ const ProfileUpdateModal = () => {
               id="email"
               type="email"
               value={profile.email || ""}
-              disabled
+              onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
               placeholder="Your email"
             />
           </div>
@@ -178,20 +113,22 @@ const ProfileUpdateModal = () => {
             <Input
               id="designation"
               value={profile.designation || ""}
-              onChange={(e) => handleUpdateProfile({ designation: e.target.value })}
+              onChange={(e) => setProfile(prev => ({ ...prev, designation: e.target.value }))}
               placeholder="Your designation"
-              disabled={loading}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="employeeId">Employee ID</Label>
             <Input
               id="employeeId"
-              value={profile.employee_id || ""}
+              value={profile.employeeId || ""}
               disabled
               placeholder="Employee ID"
             />
           </div>
+          <Button onClick={handleUpdateProfile} className="w-full">
+            Save Changes
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
