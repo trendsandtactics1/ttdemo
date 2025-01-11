@@ -8,37 +8,36 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    // First try to sign in to check if user exists
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
+    // Check if user exists in users table
+    const { data: existingUser, error: userError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', data.email)
+      .maybeSingle();
+
+    if (userError) throw userError;
 
     let userId;
 
-    if (signInError) {
-      if (signInError instanceof AuthApiError && signInError.status === 400) {
-        // User doesn't exist, create new auth user
-        const { data: newAuthUser, error: signUpError } = await supabase.auth.signUp({
-          email: data.email,
-          password: data.password,
-        });
-
-        if (signUpError) {
-          if (signUpError instanceof AuthError) {
-            throw new Error(signUpError.message);
-          }
-          throw signUpError;
-        }
-
-        if (!newAuthUser?.user?.id) throw new Error("Failed to create user");
-        userId = newAuthUser.user.id;
-      } else {
-        throw signInError;
-      }
+    if (existingUser) {
+      // If user exists, use their ID
+      userId = existingUser.id;
     } else {
-      // User exists, use their ID
-      userId = signInData.user.id;
+      // If user doesn't exist, create new auth user
+      const { data: newAuthUser, error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (signUpError) {
+        if (signUpError instanceof AuthError) {
+          throw new Error(signUpError.message);
+        }
+        throw signUpError;
+      }
+
+      if (!newAuthUser?.user?.id) throw new Error("Failed to create user");
+      userId = newAuthUser.user.id;
     }
 
     // Upsert user data
