@@ -8,13 +8,25 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    // First check if user exists in auth system
-    const { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(data.email);
+    // First check if user exists in users table
+    const { data: existingUser, error: userError } = await supabase
+      .from("users")
+      .select("id, email")
+      .eq("email", data.email)
+      .single();
+
+    if (userError && userError.code !== "PGRST116") {
+      // PGRST116 means no rows returned, which is expected for new users
+      throw userError;
+    }
 
     let userId;
 
-    if (authError) {
-      // User doesn't exist in auth system, create them
+    if (existingUser) {
+      // If user exists in our table, use their ID
+      userId = existingUser.id;
+    } else {
+      // If user doesn't exist, create new auth user
       const { data: newAuthUser, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -29,9 +41,6 @@ export const createUser = async (data: UserFormData) => {
 
       if (!newAuthUser?.user?.id) throw new Error("Failed to create user");
       userId = newAuthUser.user.id;
-    } else {
-      // User exists, use their ID
-      userId = authUser.user.id;
     }
 
     // Upsert user data
