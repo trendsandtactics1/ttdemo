@@ -24,13 +24,17 @@ const ProfileUpdateModal = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchProfile();
+    if (open) {
+      fetchProfile();
+    }
   }, [open]);
 
   const fetchProfile = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user?.email) {
+        throw new Error("No authenticated user found");
+      }
 
       const { data, error } = await supabase
         .from('employees')
@@ -39,7 +43,9 @@ const ProfileUpdateModal = () => {
         .single();
 
       if (error) throw error;
+      
       if (data) {
+        console.log("Fetched profile:", data);
         setProfile(data);
       }
     } catch (error) {
@@ -96,7 +102,7 @@ const ProfileUpdateModal = () => {
 
       const { error } = await supabase
         .from('employees')
-        .update({ ...updates })
+        .update(updates)
         .eq('email', user.email);
 
       if (error) throw error;
