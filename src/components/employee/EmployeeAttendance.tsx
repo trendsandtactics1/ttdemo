@@ -35,16 +35,22 @@ const EmployeeAttendance = () => {
         const allLogs = await attendanceService.getAttendanceLogs();
         console.log('All logs received:', allLogs.length);
         
-        // Filter logs for the current employee
-        const employeeLogs = allLogs
-          .filter(log => {
-            console.log('Comparing:', log.employeeId, currentUser.employeeId);
-            return log.employeeId === currentUser.employeeId;
-          })
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        // Filter logs for the current employee - use trim() to handle whitespace
+        const employeeLogs = allLogs.filter(log => {
+          const normalizedLogId = log.employeeId.trim().toLowerCase();
+          const normalizedUserId = currentUser.employeeId.trim().toLowerCase();
+          console.log('Comparing normalized IDs:', normalizedLogId, normalizedUserId);
+          return normalizedLogId === normalizedUserId;
+        });
         
         console.log('Filtered logs for employee:', employeeLogs.length);
-        setAttendanceLogs(employeeLogs);
+        
+        // Sort logs by date in descending order
+        const sortedLogs = employeeLogs.sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        
+        setAttendanceLogs(sortedLogs);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching attendance logs:', error);
