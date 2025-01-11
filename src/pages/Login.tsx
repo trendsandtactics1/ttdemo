@@ -14,15 +14,25 @@ const Login = () => {
     e.preventDefault();
     
     let employeeId;
-    if (email === "karthikjungleemara@gmail.com") {
-      employeeId = "TT012";
-    } else if (email.includes("admin")) {
-      employeeId = "ADMIN001";
-    } else if (email.includes("manager")) {
-      employeeId = "MGR001";
-    } else {
-      employeeId = `TT${Math.floor(Math.random() * 100)}`;
-    }
+
+if (email === "karthikjungleemara@gmail.com") {
+  employeeId = "TT012";
+} else if (email === "sonukrishnan1313@gmail.com") {
+  employeeId = "TT009";
+} else if (email === "sristar.live@gmail.com") {
+  employeeId = "TT004";
+} else if (email === "shinujeopoulose@gmail.com") {
+  employeeId = "TT006";
+} else if (email.includes("admin")) {
+  const adminIds = ["ADMIN001", "ADMIN002", "ADMIN003"];
+  employeeId = adminIds[Math.floor(Math.random() * adminIds.length)];
+} else if (email.includes("manager")) {
+  const managerIds = ["MGR001", "MGR002", "MGR003"];
+  employeeId = managerIds[Math.floor(Math.random() * managerIds.length)];
+} else {
+  employeeId = `TT${Math.floor(Math.random() * 100)}`;
+}
+
 
     let userData = {
       id: crypto.randomUUID(),
