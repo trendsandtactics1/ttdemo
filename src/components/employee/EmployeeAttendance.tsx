@@ -38,13 +38,24 @@ const EmployeeAttendance = () => {
           .from('employees')
           .select('*')
           .eq('email', currentUser.email)
-          .single();
+          .maybeSingle();
 
         if (employeeError) {
           console.error('Error fetching employee data:', employeeError);
           toast({
             title: "Error",
             description: "Failed to fetch employee details",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        if (!employeeData) {
+          console.log('No employee record found for email:', currentUser.email);
+          toast({
+            title: "No Employee Record",
+            description: "Could not find your employee record. Please contact your administrator.",
             variant: "destructive",
           });
           setLoading(false);
