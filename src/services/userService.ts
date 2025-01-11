@@ -8,22 +8,13 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    // Check if user exists in users table
-    const { data: existingUser, error: userError } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('email', data.email)
-      .maybeSingle();
-
-    if (userError) throw userError;
+    // First check if user exists in auth system
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserByEmail(data.email);
 
     let userId;
 
-    if (existingUser) {
-      // If user exists, use their ID
-      userId = existingUser.id;
-    } else {
-      // If user doesn't exist, create new auth user
+    if (authError) {
+      // User doesn't exist in auth system, create them
       const { data: newAuthUser, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -38,6 +29,9 @@ export const createUser = async (data: UserFormData) => {
 
       if (!newAuthUser?.user?.id) throw new Error("Failed to create user");
       userId = newAuthUser.user.id;
+    } else {
+      // User exists, use their ID
+      userId = authUser.user.id;
     }
 
     // Upsert user data
