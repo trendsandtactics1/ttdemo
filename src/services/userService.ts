@@ -2,31 +2,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData } from "@/types/user";
 import { AuthError } from "@supabase/supabase-js";
 
-const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
 export const createUser = async (data: UserFormData) => {
   if (!validateEmail(data.email)) {
     throw new Error("Invalid email format");
   }
 
   try {
-    // First check if user exists in auth system using admin API
-    const { data: { users: existingAuthUsers }, error: getUserError } = await supabase.auth.admin.listUsers({
-      filters: {
-        email: data.email
-      }
-    });
-
+    // First check if user exists in auth system
+    const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
+    
     if (getUserError) throw getUserError;
-
+    
+    const existingUser = users?.find(user => user.email === data.email);
     let userId;
 
-    if (existingAuthUsers && existingAuthUsers.length > 0) {
+    if (existingUser) {
       // If user exists in auth, use their ID
-      userId = existingAuthUsers[0].id;
+      userId = existingUser.id;
     } else {
       // If user doesn't exist in auth, create new auth user
       const { data: newAuthUser, error: signUpError } = await supabase.auth.signUp({
@@ -46,7 +38,7 @@ export const createUser = async (data: UserFormData) => {
     }
 
     // Check if user exists in users table
-    const { data: existingUser, error: userError } = await supabase
+    const { data: existingDbUser, error: userError } = await supabase
       .from('users')
       .select('id, email')
       .eq('email', data.email)
@@ -58,7 +50,7 @@ export const createUser = async (data: UserFormData) => {
     const { error: profileError } = await supabase
       .from("users")
       .upsert({
-        id: existingUser?.id || userId,
+        id: existingDbUser?.id || userId,
         email: data.email,
         name: data.name,
         employee_id: data.employeeId,
@@ -72,13 +64,13 @@ export const createUser = async (data: UserFormData) => {
     const { error: roleError } = await supabase
       .from("user_roles")
       .upsert({
-        user_id: existingUser?.id || userId,
+        user_id: existingDbUser?.id || userId,
         role: data.role,
       });
 
     if (roleError) throw roleError;
 
-    return { id: existingUser?.id || userId };
+    return { id: existingDbUser?.id || userId };
   } catch (error) {
     console.error("Error creating user:", error);
     if (error instanceof Error) {
@@ -86,6 +78,11 @@ export const createUser = async (data: UserFormData) => {
     }
     throw new Error("An unexpected error occurred");
   }
+};
+
+const validateEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 };
 
 export const fetchUsers = async () => {
