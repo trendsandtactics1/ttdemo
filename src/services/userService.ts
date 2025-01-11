@@ -14,20 +14,19 @@ export const createUser = async (data: UserFormData) => {
 
   try {
     // First check if user exists in auth system
-    const { data: existingUsers } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('email', data.email)
-      .single();
+    const { data: authUser } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
 
     let userId;
 
-    if (existingUsers) {
-      // If user exists, use their ID
-      userId = existingUsers.id;
+    if (authUser?.user) {
+      // If user exists in auth, use their ID
+      userId = authUser.user.id;
     } else {
-      // If user doesn't exist, create new auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // If user doesn't exist in auth, create new auth user
+      const { data: newAuthUser, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
       });
@@ -39,15 +38,24 @@ export const createUser = async (data: UserFormData) => {
         throw authError;
       }
 
-      if (!authData.user?.id) throw new Error("Failed to create user");
-      userId = authData.user.id;
+      if (!newAuthUser?.user?.id) throw new Error("Failed to create user");
+      userId = newAuthUser.user.id;
     }
+
+    // Check if user exists in users table
+    const { data: existingUser, error: userError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', data.email)
+      .maybeSingle();
+
+    if (userError) throw userError;
 
     // Upsert user data
     const { error: profileError } = await supabase
       .from("users")
       .upsert({
-        id: userId,
+        id: existingUser?.id || userId,
         email: data.email,
         name: data.name,
         employee_id: data.employeeId,
@@ -61,13 +69,13 @@ export const createUser = async (data: UserFormData) => {
     const { error: roleError } = await supabase
       .from("user_roles")
       .upsert({
-        user_id: userId,
+        user_id: existingUser?.id || userId,
         role: data.role,
       });
 
     if (roleError) throw roleError;
 
-    return { id: userId };
+    return { id: existingUser?.id || userId };
   } catch (error) {
     console.error("Error creating user:", error);
     if (error instanceof Error) {
