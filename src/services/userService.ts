@@ -13,40 +13,63 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-    });
+    // First check if user exists in auth system
+    const { data: existingUsers } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', data.email)
+      .single();
 
-    if (authError) {
-      if (authError instanceof AuthError) {
-        throw new Error(authError.message);
+    let userId;
+
+    if (existingUsers) {
+      // If user exists, use their ID
+      userId = existingUsers.id;
+    } else {
+      // If user doesn't exist, create new auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) {
+        if (authError instanceof AuthError) {
+          throw new Error(authError.message);
+        }
+        throw authError;
       }
-      throw authError;
+
+      if (!authData.user?.id) throw new Error("Failed to create user");
+      userId = authData.user.id;
     }
 
-    if (!authData.user?.id) throw new Error("Failed to create user");
-
-    const { error: profileError } = await supabase.from("users").insert({
-      id: authData.user.id,
-      email: data.email,
-      name: data.name,
-      employee_id: data.employeeId,
-      designation: data.designation,
-      password: data.password,
-    });
+    // Upsert user data
+    const { error: profileError } = await supabase
+      .from("users")
+      .upsert({
+        id: userId,
+        email: data.email,
+        name: data.name,
+        employee_id: data.employeeId,
+        designation: data.designation,
+        password: data.password,
+      });
 
     if (profileError) throw profileError;
 
-    const { error: roleError } = await supabase.from("user_roles").insert({
-      user_id: authData.user.id,
-      role: data.role,
-    });
+    // Upsert user role
+    const { error: roleError } = await supabase
+      .from("user_roles")
+      .upsert({
+        user_id: userId,
+        role: data.role,
+      });
 
     if (roleError) throw roleError;
 
-    return authData.user;
+    return { id: userId };
   } catch (error) {
+    console.error("Error creating user:", error);
     if (error instanceof Error) {
       throw new Error(error.message);
     }
