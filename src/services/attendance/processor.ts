@@ -64,7 +64,6 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     return {
       employeeId: firstLog.employeeId,
       employeeName: firstLog.employeeName,
-      emailId: firstLog.emailId, // Include emailId in the processed record
       date: date,
       checkIn: firstLog.timestamp,
       checkOut: lastLog.timestamp,

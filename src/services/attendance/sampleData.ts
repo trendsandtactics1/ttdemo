@@ -1,42 +1,36 @@
-import { CheckInLog } from './types';
+import { AttendanceRecord } from './types';
 
-export const getSampleData = (): CheckInLog[] => {
-  const now = new Date();
-  const yesterday = new Date(now);
+export const getSampleData = (): AttendanceRecord[] => {
+  const today = new Date();
+  const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
   return [
     {
-      employeeId: "TT012",
-      employeeName: "Karthik",
-      timestamp: now.toISOString(),
-      emailId: "karthikjungleemara@gmail.com",
-      position: "Developer",
-      punchType: "IN"
+      employeeId: "EMP001",
+      employeeName: "John Doe",
+      date: today.toISOString(),
+      checkIn: new Date(today.setHours(9, 0)).toISOString(),
+      checkOut: new Date(today.setHours(17, 30)).toISOString(),
+      breaks: [
+        new Date(today.setHours(12, 0)).toISOString(),
+        new Date(today.setHours(13, 0)).toISOString()
+      ],
+      totalBreakHours: 1,
+      effectiveHours: 7.5
     },
     {
-      employeeId: "TT012",
-      employeeName: "Karthik",
-      timestamp: new Date(now.setHours(now.getHours() + 9)).toISOString(),
-      emailId: "karthikjungleemara@gmail.com",
-      position: "Developer",
-      punchType: "OUT"
-    },
-    {
-      employeeId: "TT012",
-      employeeName: "Karthik",
-      timestamp: yesterday.toISOString(),
-      emailId: "karthikjungleemara@gmail.com",
-      position: "Developer",
-      punchType: "IN"
-    },
-    {
-      employeeId: "TT012",
-      employeeName: "Karthik",
-      timestamp: new Date(yesterday.setHours(yesterday.getHours() + 9)).toISOString(),
-      emailId: "karthikjungleemara@gmail.com",
-      position: "Developer",
-      punchType: "OUT"
+      employeeId: "EMP002",
+      employeeName: "Jane Smith",
+      date: yesterday.toISOString(),
+      checkIn: new Date(yesterday.setHours(8, 45)).toISOString(),
+      checkOut: new Date(yesterday.setHours(17, 15)).toISOString(),
+      breaks: [
+        new Date(yesterday.setHours(12, 15)).toISOString(),
+        new Date(yesterday.setHours(13, 15)).toISOString()
+      ],
+      totalBreakHours: 1,
+      effectiveHours: 7.5
     }
   ];
 };
