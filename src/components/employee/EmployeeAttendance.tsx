@@ -12,7 +12,7 @@ const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
-  const [showModal, setShowModal] = useState(true); // Changed to true by default
+  const [showModal, setShowModal] = useState(false);
   const currentUser = localStorageService.getCurrentUser();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -34,6 +34,7 @@ const EmployeeAttendance = () => {
         console.log('All logs:', allLogs);
         console.log('Current user:', currentUser);
         
+        // Filter logs for the current employee
         const employeeLogs = allLogs
           .filter(log => log.employeeId === currentUser.employeeId)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -41,9 +42,10 @@ const EmployeeAttendance = () => {
         console.log('Filtered logs:', employeeLogs);
         setAttendanceLogs(employeeLogs);
         
-        // Set the first log as selected by default if available
+        // Set the most recent log as selected by default
         if (employeeLogs.length > 0) {
           setSelectedLog(employeeLogs[0]);
+          setShowModal(true);
         }
         
         setLoading(false);

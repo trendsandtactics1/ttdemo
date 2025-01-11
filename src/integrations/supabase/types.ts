@@ -106,6 +106,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      insert_employee_data: {
+        Args: {
+          p_email: string
+          p_name: string
+          p_employee_id: string
+          p_designation: string
+          p_password: string
+        }
+        Returns: undefined
+      }
       is_admin: {
         Args: {
           user_uid: string
