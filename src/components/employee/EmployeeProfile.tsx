@@ -10,29 +10,28 @@ interface Employee {
   id: string;
   name: string;
   email: string;
-  employeeId: string;
+  employee_id: string;
   designation: string;
-  profilePhoto?: string;
+  profile_photo?: string;
 }
 
 const EmployeeProfile = () => {
   const [profile, setProfile] = useState<Partial<Employee>>({
     name: "",
     email: "",
-    employeeId: "",
+    employee_id: "",
     designation: "",
-    profilePhoto: "",
+    profile_photo: "",
   });
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchEmployeeProfile = async () => {
       try {
-        // Simulate authenticated employee
         const { data: employees, error } = await supabase
           .from("employees")
           .select("*")
-          .limit(1); // Replace with proper auth logic to get the current employee
+          .limit(1);
 
         if (error) throw error;
 
@@ -40,7 +39,7 @@ const EmployeeProfile = () => {
         if (currentEmployee) {
           setProfile({
             ...currentEmployee,
-            profilePhoto: currentEmployee.profilePhoto || "",
+            profile_photo: currentEmployee.profile_photo || "",
           });
         }
       } catch (error) {
@@ -57,14 +56,14 @@ const EmployeeProfile = () => {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64String = reader.result as string;
-        await handleUpdateProfile({ profilePhoto: base64String });
+        await handleUpdateProfile({ profile_photo: base64String });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleUpdateProfile = async (updates: Partial<Employee>) => {
-    if (!profile.employeeId) return;
+    if (!profile.employee_id) return;
 
     try {
       const updatedProfile = { ...profile, ...updates };
@@ -72,7 +71,7 @@ const EmployeeProfile = () => {
       const { error } = await supabase
         .from("employees")
         .update(updates)
-        .eq("employeeId", profile.employeeId);
+        .eq("employee_id", profile.employee_id);
 
       if (error) throw error;
 
@@ -101,7 +100,7 @@ const EmployeeProfile = () => {
           <div className="flex justify-center mb-6">
             <div className="relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={profile.profilePhoto} />
+                <AvatarImage src={profile.profile_photo} />
                 <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <label
@@ -145,7 +144,7 @@ const EmployeeProfile = () => {
               />
             </div>
             <div>
-              <Input value={profile.employeeId || ""} disabled placeholder="Employee ID" />
+              <Input value={profile.employee_id || ""} disabled placeholder="Employee ID" />
             </div>
           </div>
         </CardContent>
