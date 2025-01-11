@@ -30,30 +30,21 @@ const EmployeeAttendance = () => {
       }
 
       try {
+        setLoading(true);
         const allLogs = await attendanceService.getAttendanceLogs();
-        console.log('All logs:', allLogs);
-        console.log('Current user:', currentUser);
         
         // Filter logs for the current employee
         const employeeLogs = allLogs
           .filter(log => log.employeeId === currentUser.employeeId)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
-        console.log('Filtered logs:', employeeLogs);
         setAttendanceLogs(employeeLogs);
-        
-        // Set the most recent log as selected by default
-        if (employeeLogs.length > 0) {
-          setSelectedLog(employeeLogs[0]);
-          setShowModal(true);
-        }
-        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching attendance logs:', error);
         toast({
           title: "Error",
-          description: "Failed to fetch attendance records",
+          description: "Failed to fetch attendance records. Please try again later.",
           variant: "destructive",
         });
         setLoading(false);
