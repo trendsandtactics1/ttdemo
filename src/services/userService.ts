@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData } from "@/types/user";
-import { AuthError, User as AuthUser } from "@supabase/supabase-js";
+import { AuthError } from "@supabase/supabase-js";
 
 export const createUser = async (data: UserFormData) => {
   if (!validateEmail(data.email)) {
@@ -8,19 +8,22 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    // First check if user exists in auth system
-    const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
-    
-    if (getUserError) throw getUserError;
-    
-    const existingUser = users?.find((user: AuthUser) => user.email === data.email);
+    // Check if user exists in users table
+    const { data: existingUser, error: userError } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', data.email)
+      .maybeSingle();
+
+    if (userError) throw userError;
+
     let userId;
 
     if (existingUser) {
-      // If user exists in auth, use their ID
+      // If user exists, update their data
       userId = existingUser.id;
     } else {
-      // If user doesn't exist in auth, create new auth user
+      // If user doesn't exist, create new auth user
       const { data: newAuthUser, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -37,20 +40,11 @@ export const createUser = async (data: UserFormData) => {
       userId = newAuthUser.user.id;
     }
 
-    // Check if user exists in users table
-    const { data: existingDbUser, error: userError } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('email', data.email)
-      .maybeSingle();
-
-    if (userError) throw userError;
-
     // Upsert user data
     const { error: profileError } = await supabase
       .from("users")
       .upsert({
-        id: existingDbUser?.id || userId,
+        id: userId,
         email: data.email,
         name: data.name,
         employee_id: data.employeeId,
@@ -64,13 +58,13 @@ export const createUser = async (data: UserFormData) => {
     const { error: roleError } = await supabase
       .from("user_roles")
       .upsert({
-        user_id: existingDbUser?.id || userId,
+        user_id: userId,
         role: data.role,
       });
 
     if (roleError) throw roleError;
 
-    return { id: existingDbUser?.id || userId };
+    return { id: userId };
   } catch (error) {
     console.error("Error creating user:", error);
     if (error instanceof Error) {
