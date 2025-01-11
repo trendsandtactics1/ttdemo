@@ -23,6 +23,12 @@ if (email === "karthikjungleemara@gmail.com") {
   employeeId = "TT004";
 } else if (email === "shinujeopoulose@gmail.com") {
   employeeId = "TT006";
+} else if (email === "unnihari2332@gmail.com") {
+  employeeId = "TT013";
+} else if (email === "vinodvinod18696@gmail.com") {
+  employeeId = "TT001";
+} else if (email === "tnmani.manikandan11@gmail.com") {
+  employeeId = "TT010";
 } else if (email.includes("admin")) {
   const adminIds = ["ADMIN001", "ADMIN002", "ADMIN003"];
   employeeId = adminIds[Math.floor(Math.random() * adminIds.length)];
