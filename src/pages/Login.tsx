@@ -3,76 +3,53 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Attempt to sign in
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) throw authError;
-
-      // Get user role
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', authData.user.id)
-        .single();
-
-      if (roleError) throw roleError;
-
-      // Get user details
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('name')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (userError) throw userError;
-
-      // Redirect based on role
-      const role = roleData.role;
-      switch (role) {
-        case 'admin':
-          navigate("/admin");
-          break;
-        case 'manager':
-          navigate("/manager");
-          break;
-        case 'employee':
-          navigate("/employee");
-          break;
-        default:
-          throw new Error("Invalid role");
-      }
-
-      toast({
-        title: "Logged in successfully",
-        description: `Welcome back, ${userData.name}!`,
-      });
-    } catch (error) {
-      console.error("Login error:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to login",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+    
+    let employeeId;
+    if (email === "karthikjungleemara@gmail.com") {
+      employeeId = "TT012";
+    } else if (email.includes("admin")) {
+      employeeId = "ADMIN001";
+    } else if (email.includes("manager")) {
+      employeeId = "MGR001";
+    } else {
+      employeeId = `TT${Math.floor(Math.random() * 100)}`;
     }
+
+    let userData = {
+      id: crypto.randomUUID(),
+      name: email.split('@')[0],
+      email: email,
+      employeeId: employeeId,
+      designation: "Employee",
+      password: password
+    };
+
+    if (email.includes("admin")) {
+      userData.designation = "Admin";
+      navigate("/admin");
+    } else if (email.includes("manager")) {
+      userData.designation = "Manager";
+      navigate("/manager");
+    } else {
+      userData.designation = "Employee";
+      navigate("/employee");
+    }
+
+    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
+    
+    toast({
+      title: "Logged in successfully",
+      description: `Welcome back, ${userData.name}!`,
+    });
   };
 
   return (
@@ -102,7 +79,6 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
-                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -116,15 +92,13 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
-                disabled={isLoading}
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors disabled:opacity-50"
-              disabled={isLoading}
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              Sign In
             </button>
           </form>
         </CardContent>

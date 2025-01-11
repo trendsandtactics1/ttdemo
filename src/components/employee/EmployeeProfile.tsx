@@ -1,92 +1,57 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client"; // Updated import path
+import { localStorageService } from "@/services/localStorageService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
-
-interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  employee_id: string;
-  designation: string;
-  profile_photo?: string;
-}
+import { Employee } from "@/services/localStorageService";
 
 const EmployeeProfile = () => {
   const [profile, setProfile] = useState<Partial<Employee>>({
     name: "",
     email: "",
-    employee_id: "",
+    employeeId: "",
     designation: "",
-    profile_photo: "",
+    profilePhoto: "",
   });
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchEmployeeProfile = async () => {
-      try {
-        const { data: employees, error } = await supabase
-          .from("employees")
-          .select("*")
-          .limit(1);
-
-        if (error) throw error;
-
-        const currentEmployee = employees?.[0];
-        if (currentEmployee) {
-          setProfile({
-            ...currentEmployee,
-            profile_photo: currentEmployee.profile_photo || "",
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching employee profile:", error);
-      }
-    };
-
-    fetchEmployeeProfile();
+    const employees = localStorageService.getEmployees();
+    // In a real app, this would come from auth context
+    const currentEmployee = employees[0];
+    if (currentEmployee) {
+      setProfile({
+        ...currentEmployee,
+        profilePhoto: currentEmployee.profilePhoto || "",
+      });
+    }
   }, []);
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = async () => {
+      reader.onloadend = () => {
         const base64String = reader.result as string;
-        await handleUpdateProfile({ profile_photo: base64String });
+        handleUpdateProfile({ profilePhoto: base64String });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleUpdateProfile = async (updates: Partial<Employee>) => {
-    if (!profile.employee_id) return;
-
-    try {
-      const updatedProfile = { ...profile, ...updates };
-
-      const { error } = await supabase
-        .from("employees")
-        .update(updates)
-        .eq("employee_id", profile.employee_id);
-
-      if (error) throw error;
-
-      setProfile(updatedProfile);
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile. Please try again.",
-      });
-    }
+  const handleUpdateProfile = (updates: Partial<Employee>) => {
+    if (!profile.employeeId) return;
+    
+    const updatedProfile = { ...profile, ...updates };
+    localStorageService.updateEmployee(profile.employeeId, updatedProfile as Employee);
+    setProfile(updatedProfile);
+    toast({
+      title: "Success",
+      description: "Profile updated successfully",
+    });
   };
 
   return (
@@ -100,7 +65,7 @@ const EmployeeProfile = () => {
           <div className="flex justify-center mb-6">
             <div className="relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={profile.profile_photo} />
+                <AvatarImage src={profile.profilePhoto} />
                 <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <label
@@ -144,7 +109,7 @@ const EmployeeProfile = () => {
               />
             </div>
             <div>
-              <Input value={profile.employee_id || ""} disabled placeholder="Employee ID" />
+              <Input value={profile.employeeId || ""} disabled placeholder="Employee ID" />
             </div>
           </div>
         </CardContent>
