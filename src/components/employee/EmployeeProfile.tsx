@@ -3,10 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { localStorageService } from "@/services/localStorageService";
+import { supabase } from "@/supabaseClient"; // Import Supabase client
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
-import { Employee } from "@/services/localStorageService";
+
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  employeeId: string;
+  designation: string;
+  profilePhoto?: string;
+}
 
 const EmployeeProfile = () => {
   const [profile, setProfile] = useState<Partial<Employee>>({
@@ -19,39 +27,68 @@ const EmployeeProfile = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const employees = localStorageService.getEmployees();
-    // In a real app, this would come from auth context
-    const currentEmployee = employees[0];
-    if (currentEmployee) {
-      setProfile({
-        ...currentEmployee,
-        profilePhoto: currentEmployee.profilePhoto || "",
-      });
-    }
+    const fetchEmployeeProfile = async () => {
+      try {
+        // Simulate authenticated employee
+        const { data: employees, error } = await supabase
+          .from("employees")
+          .select("*")
+          .limit(1); // Replace with proper auth logic to get the current employee
+
+        if (error) throw error;
+
+        const currentEmployee = employees?.[0];
+        if (currentEmployee) {
+          setProfile({
+            ...currentEmployee,
+            profilePhoto: currentEmployee.profilePhoto || "",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching employee profile:", error);
+      }
+    };
+
+    fetchEmployeeProfile();
   }, []);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64String = reader.result as string;
-        handleUpdateProfile({ profilePhoto: base64String });
+        await handleUpdateProfile({ profilePhoto: base64String });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleUpdateProfile = (updates: Partial<Employee>) => {
+  const handleUpdateProfile = async (updates: Partial<Employee>) => {
     if (!profile.employeeId) return;
-    
-    const updatedProfile = { ...profile, ...updates };
-    localStorageService.updateEmployee(profile.employeeId, updatedProfile as Employee);
-    setProfile(updatedProfile);
-    toast({
-      title: "Success",
-      description: "Profile updated successfully",
-    });
+
+    try {
+      const updatedProfile = { ...profile, ...updates };
+
+      const { error } = await supabase
+        .from("employees")
+        .update(updates)
+        .eq("employeeId", profile.employeeId);
+
+      if (error) throw error;
+
+      setProfile(updatedProfile);
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+      });
+    }
   };
 
   return (
