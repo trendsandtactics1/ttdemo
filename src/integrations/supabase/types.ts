@@ -9,153 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      announcements: {
-        Row: {
-          content: string
-          created_at: string
-          created_by: string | null
-          id: string
-          image: string | null
-          title: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          image?: string | null
-          title: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          image?: string | null
-          title?: string
-        }
-        Relationships: []
-      }
-      attendance_config: {
-        Row: {
-          created_at: string
-          id: string
-          script_url: string | null
-          sheet_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          script_url?: string | null
-          sheet_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          script_url?: string | null
-          sheet_id?: string | null
-        }
-        Relationships: []
-      }
       employees: {
         Row: {
           created_at: string
-          designation: string
-          email: string
-          employee_id: string
+          designation: string | null
+          email: string | null
+          employee_id: string | null
           id: string
-          name: string
-          password: string
+          name: string | null
+          password: string | null
           profile_photo: string | null
         }
         Insert: {
           created_at?: string
-          designation: string
-          email: string
-          employee_id: string
+          designation?: string | null
+          email?: string | null
+          employee_id?: string | null
           id?: string
-          name: string
-          password: string
+          name?: string | null
+          password?: string | null
           profile_photo?: string | null
         }
         Update: {
           created_at?: string
-          designation?: string
-          email?: string
-          employee_id?: string
+          designation?: string | null
+          email?: string | null
+          employee_id?: string | null
           id?: string
-          name?: string
-          password?: string
+          name?: string | null
+          password?: string | null
           profile_photo?: string | null
-        }
-        Relationships: []
-      }
-      leave_requests: {
-        Row: {
-          created_at: string
-          employee_id: string
-          end_date: string
-          id: string
-          reason: string
-          start_date: string
-          status: string
-          type: string
-        }
-        Insert: {
-          created_at?: string
-          employee_id: string
-          end_date: string
-          id?: string
-          reason: string
-          start_date: string
-          status?: string
-          type: string
-        }
-        Update: {
-          created_at?: string
-          employee_id?: string
-          end_date?: string
-          id?: string
-          reason?: string
-          start_date?: string
-          status?: string
-          type?: string
-        }
-        Relationships: []
-      }
-      tasks: {
-        Row: {
-          assigned_date: string
-          assigned_to: string
-          created_at: string
-          description: string
-          due_date: string
-          id: string
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          assigned_date: string
-          assigned_to: string
-          created_at?: string
-          description: string
-          due_date: string
-          id?: string
-          status: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          assigned_date?: string
-          assigned_to?: string
-          created_at?: string
-          description?: string
-          due_date?: string
-          id?: string
-          status?: string
-          title?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -191,33 +74,30 @@ export type Database = {
       users: {
         Row: {
           created_at: string
-          designation: string
+          designation: string | null
           email: string
-          employee_id: string
+          employee_id: string | null
           id: string
-          name: string
-          password: string
-          profile_photo: string | null
+          name: string | null
+          password: string | null
         }
         Insert: {
           created_at?: string
-          designation: string
+          designation?: string | null
           email: string
-          employee_id: string
-          id: string
-          name: string
-          password: string
-          profile_photo?: string | null
+          employee_id?: string | null
+          id?: string
+          name?: string | null
+          password?: string | null
         }
         Update: {
           created_at?: string
-          designation?: string
+          designation?: string | null
           email?: string
-          employee_id?: string
+          employee_id?: string | null
           id?: string
-          name?: string
-          password?: string
-          profile_photo?: string | null
+          name?: string | null
+          password?: string | null
         }
         Relationships: []
       }
@@ -226,7 +106,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: {
+          user_uid: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       user_role: "admin" | "manager" | "employee"
