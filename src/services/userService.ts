@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData } from "@/types/user";
-import { AuthError, AuthApiError } from "@supabase/supabase-js";
+import { AuthError } from "@supabase/supabase-js";
 
 export const createUser = async (data: UserFormData) => {
   if (!validateEmail(data.email)) {
@@ -13,10 +13,9 @@ export const createUser = async (data: UserFormData) => {
       .from("users")
       .select("id, email")
       .eq("email", data.email)
-      .single();
+      .maybeSingle();
 
-    if (userError && userError.code !== "PGRST116") {
-      // PGRST116 means no rows returned, which is expected for new users
+    if (userError) {
       throw userError;
     }
 
