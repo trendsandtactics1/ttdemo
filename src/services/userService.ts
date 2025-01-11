@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData } from "@/types/user";
-import { AuthError } from "@supabase/supabase-js";
 
 export const createUser = async (data: UserFormData) => {
   if (!validateEmail(data.email)) {
@@ -8,53 +7,34 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    // First try to sign in to check if user exists
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    // Create auth user
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
     });
 
-    let userId;
+    if (signUpError) throw signUpError;
+    if (!authData?.user?.id) throw new Error("Failed to create user");
 
-    if (signInError && signInError.status !== 400) {
-      // If error is not "Invalid login credentials", then it's unexpected
-      throw signInError;
-    }
+    const userId = authData.user.id;
 
-    if (signInData?.user) {
-      // User exists, use their ID
-      userId = signInData.user.id;
-    } else {
-      // User doesn't exist, create new user
-      const { data: newUser, error: signUpError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (signUpError) throw signUpError;
-      if (!newUser?.user?.id) throw new Error("Failed to create user");
-      
-      userId = newUser.user.id;
-    }
-
-    // Upsert user data
+    // Create user profile
     const { error: profileError } = await supabase
       .from("users")
-      .upsert({
+      .insert({
         id: userId,
         email: data.email,
         name: data.name,
         employee_id: data.employeeId,
         designation: data.designation,
-        password: data.password,
       });
 
     if (profileError) throw profileError;
 
-    // Upsert user role
+    // Assign user role
     const { error: roleError } = await supabase
       .from("user_roles")
-      .upsert({
+      .insert({
         user_id: userId,
         role: data.role,
       });
