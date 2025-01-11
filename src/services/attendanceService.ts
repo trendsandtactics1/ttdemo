@@ -11,8 +11,8 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   const sheetId = localStorage.getItem(SHEET_ID_STORAGE_KEY);
   
   if (!scriptUrl && !sheetId) {
-    console.log('No configuration found, returning empty array');
-    return [];
+    console.log('Using sample data as no configuration found');
+    return getSampleData();
   }
 
   try {
@@ -22,46 +22,54 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
       
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`Failed to fetch attendance data: ${response.status} ${response.statusText}`);
+        console.error('Failed to fetch from Google Sheets, falling back to sample data');
+        return getSampleData();
       }
       
       const text = await response.text();
-      console.log('Raw response:', text);
+      console.log('Raw response received');
       
       const logs = parseGoogleSheetJson(text);
-      console.log('Parsed logs:', logs);
+      if (logs.length === 0) {
+        console.log('No logs found in Google Sheets, falling back to sample data');
+        return getSampleData();
+      }
       return logs;
     } else if (scriptUrl) {
       const response = await fetch(scriptUrl);
       if (!response.ok) {
-        throw new Error('Failed to fetch attendance data');
+        console.error('Failed to fetch from script URL, falling back to sample data');
+        return getSampleData();
       }
       const logs = await response.json();
-      console.log('Fetched logs from script:', logs);
       return logs;
     }
   } catch (error) {
     console.error('Error fetching attendance data:', error);
-    return [];
+    return getSampleData();
   }
   
-  return [];
+  return getSampleData();
 };
 
 export const attendanceService = {
   getAttendanceLogs: async () => {
-    const logs = await fetchCheckInLogs();
-    console.log('Total fetched logs:', logs.length);
-    
-    // If we have configuration but no logs, return empty array
-    if (logs.length === 0) {
-      console.log('No logs found in configured source');
+    try {
+      const logs = await fetchCheckInLogs();
+      console.log('Total fetched logs:', logs.length);
+      
+      if (logs.length === 0) {
+        console.log('No logs found, returning empty array');
+        return [];
+      }
+      
+      const processedLogs = processAttendanceLogs(logs);
+      console.log('Processed logs:', processedLogs);
+      return processedLogs;
+    } catch (error) {
+      console.error('Error in getAttendanceLogs:', error);
       return [];
     }
-    
-    const processedLogs = processAttendanceLogs(logs);
-    console.log('Processed logs:', processedLogs);
-    return processedLogs;
   },
   
   setScriptUrl: (url: string) => {

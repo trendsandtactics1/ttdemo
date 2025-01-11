@@ -31,13 +31,19 @@ const EmployeeAttendance = () => {
 
       try {
         setLoading(true);
+        console.log('Fetching attendance logs for user:', currentUser.employeeId);
         const allLogs = await attendanceService.getAttendanceLogs();
+        console.log('All logs received:', allLogs.length);
         
         // Filter logs for the current employee
         const employeeLogs = allLogs
-          .filter(log => log.employeeId === currentUser.employeeId)
+          .filter(log => {
+            console.log('Comparing:', log.employeeId, currentUser.employeeId);
+            return log.employeeId === currentUser.employeeId;
+          })
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
+        console.log('Filtered logs for employee:', employeeLogs.length);
         setAttendanceLogs(employeeLogs);
         setLoading(false);
       } catch (error) {
@@ -55,6 +61,7 @@ const EmployeeAttendance = () => {
   }, [currentUser, navigate, toast]);
 
   const handleViewDetails = (log: AttendanceRecord) => {
+    console.log('Viewing details for log:', log);
     setSelectedLog(log);
     setShowModal(true);
   };
