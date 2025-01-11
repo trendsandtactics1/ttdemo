@@ -42,7 +42,7 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
         return getSampleData();
       }
       const logs = await response.json();
-      return logs;
+      return logs as CheckInLog[];
     }
   } catch (error) {
     console.error('Error fetching attendance data:', error);
@@ -53,7 +53,7 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
 };
 
 export const attendanceService = {
-  getAttendanceLogs: async () => {
+  getAttendanceLogs: async (): Promise<AttendanceRecord[]> => {
     try {
       const logs = await fetchCheckInLogs();
       console.log('Total fetched logs:', logs.length);
