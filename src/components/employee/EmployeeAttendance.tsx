@@ -7,6 +7,7 @@ import AttendanceTable from "./attendance/AttendanceTable";
 import AttendanceDetailsModal from "./attendance/AttendanceDetailsModal";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
@@ -31,36 +32,55 @@ const EmployeeAttendance = () => {
 
       try {
         setLoading(true);
-        console.log('Fetching attendance logs for user:', currentUser.employeeId);
+        
+        // First, get the employee details from Supabase
+        const { data: employeeData, error: employeeError } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('email', currentUser.email)
+          .single();
+
+        if (employeeError) {
+          console.error('Error fetching employee data:', employeeError);
+          toast({
+            title: "Error",
+            description: "Failed to fetch employee details",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        console.log('Fetching attendance logs for employee:', employeeData);
         const allLogs = await attendanceService.getAttendanceLogs();
         console.log('All logs received:', allLogs.length);
         
         // Filter logs for the current employee with improved matching
         const employeeLogs = allLogs.filter(log => {
           // Normalize both IDs by removing non-alphanumeric characters and converting to lowercase
-          const normalizeId = (id: string) => id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+          const normalizeId = (id: string) => id?.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
           
           const normalizedLogId = normalizeId(log.employeeId);
-          const normalizedUserId = normalizeId(currentUser.employeeId);
+          const normalizedEmployeeId = normalizeId(employeeData.employee_id);
           
           // Extract numeric parts for additional comparison
           const getNumericPart = (id: string) => {
-            const matches = id.match(/\d+/);
+            const matches = id?.match(/\d+/);
             return matches ? parseInt(matches[0]) : null;
           };
           
           const logIdNumber = getNumericPart(log.employeeId);
-          const userIdNumber = getNumericPart(currentUser.employeeId);
+          const employeeIdNumber = getNumericPart(employeeData.employee_id);
           
           console.log('Comparing IDs:', {
-            original: { log: log.employeeId, user: currentUser.employeeId },
-            normalized: { log: normalizedLogId, user: normalizedUserId },
-            numeric: { log: logIdNumber, user: userIdNumber }
+            original: { log: log.employeeId, employee: employeeData.employee_id },
+            normalized: { log: normalizedLogId, employee: normalizedEmployeeId },
+            numeric: { log: logIdNumber, employee: employeeIdNumber }
           });
           
           // Match if either the normalized strings match or the numeric parts match
-          return normalizedLogId === normalizedUserId || 
-                 (logIdNumber !== null && userIdNumber !== null && logIdNumber === userIdNumber);
+          return normalizedLogId === normalizedEmployeeId || 
+                 (logIdNumber !== null && employeeIdNumber !== null && logIdNumber === employeeIdNumber);
         });
         
         console.log('Filtered logs for employee:', employeeLogs.length);
