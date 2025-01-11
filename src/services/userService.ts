@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData } from "@/types/user";
-import { AuthError } from "@supabase/supabase-js";
+import { AuthError, User as AuthUser } from "@supabase/supabase-js";
 
 export const createUser = async (data: UserFormData) => {
   if (!validateEmail(data.email)) {
@@ -13,7 +13,7 @@ export const createUser = async (data: UserFormData) => {
     
     if (getUserError) throw getUserError;
     
-    const existingUser = users?.find(user => user.email === data.email);
+    const existingUser = users?.find((user: AuthUser) => user.email === data.email);
     let userId;
 
     if (existingUser) {
