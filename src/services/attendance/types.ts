@@ -10,6 +10,7 @@ export interface CheckInLog {
 export interface AttendanceRecord {
   employeeId: string;
   employeeName: string;
+  emailId?: string; // Added this field as optional
   date: string;
   checkIn: string;
   checkOut: string;
