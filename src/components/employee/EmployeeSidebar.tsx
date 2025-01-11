@@ -17,7 +17,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import ProfileUpdateModal from "./ProfileUpdateModal";
-import { useState } from "react";
 
 interface MenuItem {
   title: string;
@@ -29,7 +28,6 @@ interface MenuItem {
 const EmployeeSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const menuItems: MenuItem[] = [
     { title: "Attendance", path: "/employee/attendance", icon: Calendar },
@@ -62,10 +60,7 @@ const EmployeeSidebar = () => {
                 </SidebarMenuItem>
               ))}
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setIsProfileModalOpen(true)}>
-                  <User className="h-4 w-4" />
-                  <span>Update Profile</span>
-                </SidebarMenuButton>
+                <ProfileUpdateModal />
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -77,10 +72,6 @@ const EmployeeSidebar = () => {
           </SidebarMenuButton>
         </div>
       </SidebarContent>
-      <ProfileUpdateModal 
-        open={isProfileModalOpen}
-        onOpenChange={setIsProfileModalOpen}
-      />
     </Sidebar>
   );
 };
