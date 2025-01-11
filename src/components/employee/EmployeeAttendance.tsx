@@ -66,34 +66,48 @@ const EmployeeAttendance = () => {
         const allLogs = await attendanceService.getAttendanceLogs();
         console.log('All logs received:', allLogs.length);
         
-        // Filter logs for the current employee with improved matching
+        // Enhanced filtering logic for matching employee IDs
         const employeeLogs = allLogs.filter(log => {
-          // Normalize both IDs by removing non-alphanumeric characters and converting to lowercase
-          const normalizeId = (id: string) => id?.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-          
-          const normalizedLogId = normalizeId(log.employeeId);
-          const normalizedEmployeeId = normalizeId(employeeData.employee_id);
-          
-          // Extract numeric parts for additional comparison
+          // Helper function to normalize IDs for comparison
+          const normalizeId = (id: string) => {
+            if (!id) return '';
+            // Remove all non-alphanumeric characters and convert to lowercase
+            return id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+          };
+
+          // Helper function to extract numeric part from ID
           const getNumericPart = (id: string) => {
-            const matches = id?.match(/\d+/);
+            if (!id) return null;
+            const matches = id.match(/\d+/);
             return matches ? parseInt(matches[0]) : null;
           };
+
+          // Normalize both IDs
+          const logId = normalizeId(log.employeeId);
+          const employeeId = normalizeId(employeeData.employee_id);
           
-          const logIdNumber = getNumericPart(log.employeeId);
-          const employeeIdNumber = getNumericPart(employeeData.employee_id);
-          
+          // Get numeric parts for comparison
+          const logNumeric = getNumericPart(log.employeeId);
+          const employeeNumeric = getNumericPart(employeeData.employee_id);
+
+          // Also check if the email matches (some logs might have email instead of ID)
+          const emailMatch = log.emailId?.toLowerCase() === employeeData.email?.toLowerCase();
+
           console.log('Comparing IDs:', {
             original: { log: log.employeeId, employee: employeeData.employee_id },
-            normalized: { log: normalizedLogId, employee: normalizedEmployeeId },
-            numeric: { log: logIdNumber, employee: employeeIdNumber }
+            normalized: { log: logId, employee: employeeId },
+            numeric: { log: logNumeric, employee: employeeNumeric },
+            emailMatch
           });
-          
-          // Match if either the normalized strings match or the numeric parts match
-          return normalizedLogId === normalizedEmployeeId || 
-                 (logIdNumber !== null && employeeIdNumber !== null && logIdNumber === employeeIdNumber);
+
+          // Return true if any of the matching conditions are met
+          return logId === employeeId || 
+                 emailMatch || 
+                 (logNumeric !== null && 
+                  employeeNumeric !== null && 
+                  logNumeric === employeeNumeric);
         });
-        
+
         console.log('Filtered logs for employee:', employeeLogs.length);
         
         // Sort logs by date in descending order
