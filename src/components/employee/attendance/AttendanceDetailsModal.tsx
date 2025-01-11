@@ -9,8 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
 import { AttendanceRecord } from "@/services/attendance/types";
 import { formatHoursToHHMM } from "@/utils/timeFormat";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 interface AttendanceDetailsModalProps {
   log: AttendanceRecord | null;
@@ -19,34 +17,6 @@ interface AttendanceDetailsModalProps {
 }
 
 const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsModalProps) => {
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchEmployeeId = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user?.email) return;
-
-        const { data, error } = await supabase
-          .from('employees')
-          .select('employee_id')
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (error) throw error;
-        if (data) {
-          setEmployeeId(data.employee_id);
-        }
-      } catch (error) {
-        console.error('Error fetching employee ID:', error);
-      }
-    };
-
-    if (open) {
-      fetchEmployeeId();
-    }
-  }, [open]);
-
   const formatTime = (dateTimeString: string | null) => {
     if (!dateTimeString) return "N/A";
     try {
@@ -79,16 +49,13 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
     return <Badge className="bg-red-500">Absent</Badge>;
   };
 
-  // Only show attendance details if the employee IDs match
-  const shouldShowDetails = log && employeeId && log.employeeId === employeeId;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Attendance Details</DialogTitle>
         </DialogHeader>
-        {shouldShowDetails ? (
+        {log ? (
           <ScrollArea className="max-h-[80vh]">
             <div className="space-y-4 p-4">
               <div className="grid grid-cols-2 gap-4">
@@ -151,7 +118,7 @@ const AttendanceDetailsModal = ({ log, open, onOpenChange }: AttendanceDetailsMo
           </ScrollArea>
         ) : (
           <div className="p-4 text-center text-muted-foreground">
-            {!employeeId ? "Loading..." : "No attendance data available for your employee ID"}
+            No attendance data available
           </div>
         )}
       </DialogContent>

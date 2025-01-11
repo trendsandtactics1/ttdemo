@@ -24,37 +24,23 @@ const ProfileUpdateModal = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (open) {
-      fetchProfile();
-    }
+    fetchProfile();
   }, [open]);
 
   const fetchProfile = async () => {
     try {
-      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user?.email) {
-        throw new Error("No authenticated user found");
-      }
+      if (!user) return;
 
       const { data, error } = await supabase
         .from('employees')
         .select('*')
         .eq('email', user.email)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
-      
       if (data) {
-        console.log('Fetched profile:', data);
         setProfile(data);
-      } else {
-        toast({
-          title: "Profile not found",
-          description: "No profile data found for this user.",
-          variant: "destructive",
-        });
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -63,8 +49,6 @@ const ProfileUpdateModal = () => {
         description: "Failed to load profile",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -112,7 +96,7 @@ const ProfileUpdateModal = () => {
 
       const { error } = await supabase
         .from('employees')
-        .update(updates)
+        .update({ ...updates })
         .eq('email', user.email);
 
       if (error) throw error;
@@ -122,9 +106,6 @@ const ProfileUpdateModal = () => {
         title: "Success",
         description: "Profile updated successfully",
       });
-      
-      // Refresh profile data
-      await fetchProfile();
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -149,75 +130,69 @@ const ProfileUpdateModal = () => {
         <DialogHeader>
           <DialogTitle>Update Profile</DialogTitle>
         </DialogHeader>
-        {loading ? (
-          <div className="flex justify-center p-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex justify-center">
-              <div className="relative">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile.profile_photo} />
-                  <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <label
-                  htmlFor="photo-upload"
-                  className="absolute bottom-0 right-0 p-1 bg-primary rounded-full cursor-pointer"
-                >
-                  <Upload className="h-4 w-4 text-primary-foreground" />
-                  <input
-                    id="photo-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                    disabled={loading}
-                  />
-                </label>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={profile.name || ""}
-                onChange={(e) => handleUpdateProfile({ name: e.target.value })}
-                placeholder="Your name"
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profile.email || ""}
-                disabled
-                placeholder="Your email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="designation">Designation</Label>
-              <Input
-                id="designation"
-                value={profile.designation || ""}
-                onChange={(e) => handleUpdateProfile({ designation: e.target.value })}
-                placeholder="Your designation"
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="employeeId">Employee ID</Label>
-              <Input
-                id="employeeId"
-                value={profile.employee_id || ""}
-                disabled
-                placeholder="Employee ID"
-              />
+        <div className="space-y-4">
+          <div className="flex justify-center">
+            <div className="relative">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={profile.profile_photo} />
+                <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <label
+                htmlFor="photo-upload"
+                className="absolute bottom-0 right-0 p-1 bg-primary rounded-full cursor-pointer"
+              >
+                <Upload className="h-4 w-4 text-primary-foreground" />
+                <input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                  disabled={loading}
+                />
+              </label>
             </div>
           </div>
-        )}
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              value={profile.name || ""}
+              onChange={(e) => handleUpdateProfile({ name: e.target.value })}
+              placeholder="Your name"
+              disabled={loading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={profile.email || ""}
+              disabled
+              placeholder="Your email"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="designation">Designation</Label>
+            <Input
+              id="designation"
+              value={profile.designation || ""}
+              onChange={(e) => handleUpdateProfile({ designation: e.target.value })}
+              placeholder="Your designation"
+              disabled={loading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="employeeId">Employee ID</Label>
+            <Input
+              id="employeeId"
+              value={profile.employee_id || ""}
+              disabled
+              placeholder="Employee ID"
+            />
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
