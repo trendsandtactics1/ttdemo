@@ -7,21 +7,38 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    // Create auth user
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    // First check if user exists by trying to sign in
+    const { data: existingUser, error: signInError } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     });
 
-    if (signUpError) throw signUpError;
-    if (!authData?.user?.id) throw new Error("Failed to create user");
+    let userId: string;
 
-    const userId = authData.user.id;
+    if (signInError && signInError.message !== "Invalid login credentials") {
+      throw signInError;
+    }
 
-    // Create user profile
+    if (existingUser?.user) {
+      // User exists, use their ID
+      userId = existingUser.user.id;
+    } else {
+      // User doesn't exist, create them
+      const { data: newUser, error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (signUpError) throw signUpError;
+      if (!newUser?.user?.id) throw new Error("Failed to create user");
+
+      userId = newUser.user.id;
+    }
+
+    // Upsert user data
     const { error: profileError } = await supabase
       .from("users")
-      .insert({
+      .upsert({
         id: userId,
         email: data.email,
         name: data.name,
@@ -31,10 +48,10 @@ export const createUser = async (data: UserFormData) => {
 
     if (profileError) throw profileError;
 
-    // Assign user role
+    // Upsert user role
     const { error: roleError } = await supabase
       .from("user_roles")
-      .insert({
+      .upsert({
         user_id: userId,
         role: data.role,
       });
