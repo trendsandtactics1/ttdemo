@@ -35,12 +35,32 @@ const EmployeeAttendance = () => {
         const allLogs = await attendanceService.getAttendanceLogs();
         console.log('All logs received:', allLogs.length);
         
-        // Filter logs for the current employee - use trim() to handle whitespace
+        // Filter logs for the current employee with improved matching
         const employeeLogs = allLogs.filter(log => {
-          const normalizedLogId = log.employeeId.trim().toLowerCase();
-          const normalizedUserId = currentUser.employeeId.trim().toLowerCase();
-          console.log('Comparing normalized IDs:', normalizedLogId, normalizedUserId);
-          return normalizedLogId === normalizedUserId;
+          // Normalize both IDs by removing non-alphanumeric characters and converting to lowercase
+          const normalizeId = (id: string) => id.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+          
+          const normalizedLogId = normalizeId(log.employeeId);
+          const normalizedUserId = normalizeId(currentUser.employeeId);
+          
+          // Extract numeric parts for additional comparison
+          const getNumericPart = (id: string) => {
+            const matches = id.match(/\d+/);
+            return matches ? parseInt(matches[0]) : null;
+          };
+          
+          const logIdNumber = getNumericPart(log.employeeId);
+          const userIdNumber = getNumericPart(currentUser.employeeId);
+          
+          console.log('Comparing IDs:', {
+            original: { log: log.employeeId, user: currentUser.employeeId },
+            normalized: { log: normalizedLogId, user: normalizedUserId },
+            numeric: { log: logIdNumber, user: userIdNumber }
+          });
+          
+          // Match if either the normalized strings match or the numeric parts match
+          return normalizedLogId === normalizedUserId || 
+                 (logIdNumber !== null && userIdNumber !== null && logIdNumber === userIdNumber);
         });
         
         console.log('Filtered logs for employee:', employeeLogs.length);
