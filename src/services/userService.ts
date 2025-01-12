@@ -92,15 +92,24 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
 export const fetchUsers = async () => {
   try {
-    const { data: users, error } = await serviceRoleClient
+    const { data, error } = await serviceRoleClient
       .from("users")
-      .select("*, user_roles (role)");
+      .select(`
+        *,
+        user_roles (
+          role
+        )
+      `);
 
-    if (error) throw error;
-    return users || [];
+    if (error) {
+      console.error("Error fetching users:", error);
+      throw error;
+    }
+    
+    return data || [];
   } catch (error) {
     console.error("Error fetching users:", error);
-    return [];
+    throw error;
   }
 };
 
