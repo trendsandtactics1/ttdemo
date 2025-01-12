@@ -38,7 +38,7 @@ export const createUser = async (data: UserFormData) => {
       // If user already exists, proceed with profile update
       if (signUpError.message.includes("already registered")) {
         // Get the user's data from the users table using their email
-        const { data: existingUser, error: fetchError } = await supabase
+        const { data: existingUser, error: fetchError } = await serviceRoleClient
           .from("users")
           .select("id")
           .eq("email", data.email)
@@ -68,7 +68,7 @@ export const createUser = async (data: UserFormData) => {
 
 const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
   // Always use service role client for first user
-  const client = isFirstUser ? serviceRoleClient : supabase;
+  const client = isFirstUser ? serviceRoleClient : serviceRoleClient;
 
   // Upsert user profile
   const { error: profileError } = await client
@@ -99,7 +99,7 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
 export const fetchUsers = async () => {
   try {
-    const { data: users, error } = await supabase
+    const { data: users, error } = await serviceRoleClient
       .from("users")
       .select("*, user_roles (role)");
 
@@ -115,7 +115,7 @@ export const deleteUser = async (userId: string) => {
   if (!userId) throw new Error("User ID is required");
   
   try {
-    const { error } = await supabase.from("users").delete().eq("id", userId);
+    const { error } = await serviceRoleClient.from("users").delete().eq("id", userId);
     if (error) throw error;
   } catch (error) {
     if (error instanceof Error) {
