@@ -3,13 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { localStorageService } from "@/services/localStorageService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
-import { Employee } from "@/services/localStorageService";
+import { supabase } from "@/integrations/supabase/client";
 
 const EmployeeProfile = () => {
-  const [profile, setProfile] = useState<Partial<Employee>>({
+  const [profile, setProfile] = useState({
     name: "",
     email: "",
     employeeId: "",
@@ -19,39 +18,81 @@ const EmployeeProfile = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const employees = localStorageService.getEmployees();
-    // In a real app, this would come from auth context
-    const currentEmployee = employees[0];
-    if (currentEmployee) {
-      setProfile({
-        ...currentEmployee,
-        profilePhoto: currentEmployee.profilePhoto || "",
-      });
-    }
+    const fetchProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from("employees")
+          .select("*")
+          .eq("email", user.email)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setProfile({
+            name: data.name || "",
+            email: data.email || "",
+            employeeId: data.employee_id || "",
+            designation: data.designation || "",
+            profilePhoto: data.profile_photo || "",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch profile details",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchProfile();
   }, []);
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        handleUpdateProfile({ profilePhoto: base64String });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+    if (!file) return;
 
-  const handleUpdateProfile = (updates: Partial<Employee>) => {
-    if (!profile.employeeId) return;
-    
-    const updatedProfile = { ...profile, ...updates };
-    localStorageService.updateEmployee(profile.employeeId, updatedProfile as Employee);
-    setProfile(updatedProfile);
-    toast({
-      title: "Success",
-      description: "Profile updated successfully",
-    });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.email}-${Math.random()}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('profile')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile')
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from('employees')
+        .update({ profile_photo: publicUrl })
+        .eq('email', user.email);
+
+      if (updateError) throw updateError;
+
+      setProfile(prev => ({ ...prev, profilePhoto: publicUrl }));
+      toast({
+        title: "Success",
+        description: "Profile photo updated successfully",
+      });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload profile photo",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -86,30 +127,32 @@ const EmployeeProfile = () => {
           <div className="grid gap-4">
             <div>
               <Input
-                value={profile.name || ""}
-                onChange={(e) => handleUpdateProfile({ name: e.target.value })}
+                value={profile.name}
                 placeholder="Name"
+                disabled
               />
             </div>
             <div>
               <Input
-                value={profile.email || ""}
-                onChange={(e) => handleUpdateProfile({ email: e.target.value })}
+                value={profile.email}
                 placeholder="Email"
                 type="email"
+                disabled
               />
             </div>
             <div>
               <Input
-                value={profile.designation || ""}
-                onChange={(e) =>
-                  handleUpdateProfile({ designation: e.target.value })
-                }
+                value={profile.designation}
                 placeholder="Designation"
+                disabled
               />
             </div>
             <div>
-              <Input value={profile.employeeId || ""} disabled placeholder="Employee ID" />
+              <Input 
+                value={profile.employeeId} 
+                placeholder="Employee ID" 
+                disabled
+              />
             </div>
           </div>
         </CardContent>

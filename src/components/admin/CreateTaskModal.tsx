@@ -20,11 +20,30 @@ const CreateTaskModal = () => {
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState<Date>();
   const [assignedDate, setAssignedDate] = useState<Date>(new Date());
-  const [employees, setEmployees] = useState<Array<{ id: string; name: string }>>([]);
+  const [employees, setEmployees] = useState<Array<{ id: string; email: string }>>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    setEmployees(localStorageService.getEmployees());
+    const fetchEmployees = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("employees")
+          .select("id, email")
+          .order("email");
+        
+        if (error) throw error;
+        setEmployees(data || []);
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch employees",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchEmployees();
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -45,11 +64,6 @@ const CreateTaskModal = () => {
       status: "pending",
       dueDate: dueDate.toISOString(),
       assignedDate: assignedDate.toISOString(),
-    });
-
-    toast({
-      title: "Success",
-      description: "Task created successfully",
     });
 
     setTitle("");
@@ -93,6 +107,7 @@ const CreateTaskModal = () => {
               className="min-h-[100px]"
             />
           </div>
+          
           <div className="space-y-2">
             <Label htmlFor="assignedTo">Assign To</Label>
             <Select onValueChange={setAssignedTo} value={assignedTo}>
@@ -101,13 +116,14 @@ const CreateTaskModal = () => {
               </SelectTrigger>
               <SelectContent>
                 {employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name}
+                  <SelectItem key={employee.id} value={employee.email}>
+                    {employee.email}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
           <div className="space-y-2">
             <Label>Assigned Date</Label>
             <Popover>

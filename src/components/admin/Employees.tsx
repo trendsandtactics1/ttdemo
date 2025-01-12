@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import EmployeeForm from "./EmployeeForm";
 import EmployeeList from "./EmployeeList";
 
 const Employees = () => {
@@ -47,7 +46,6 @@ const Employees = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Employees</h2>
-      <EmployeeForm onEmployeeAdded={fetchEmployees} />
       {isLoading ? (
         <div className="flex items-center justify-center p-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
