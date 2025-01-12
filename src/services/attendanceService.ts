@@ -2,11 +2,15 @@ import { CheckInLog, AttendanceRecord } from './attendance/types';
 import { parseGoogleSheetJson } from './attendance/utils';
 import { processAttendanceLogs } from './attendance/processor';
 
-const SHEET_ID = '1_s2NILKubSewIlRgLPXypfGw7p5BwxZtrUjRURA4NdA';
+// Constants for local storage keys
+const SCRIPT_URL_KEY = 'attendance_script_url';
+const SHEET_ID_KEY = 'attendance_sheet_id';
+const DEFAULT_SHEET_ID = '1_s2NILKubSewIlRgLPXypfGw7p5BwxZtrUjRURA4NdA';
 
 const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+    const sheetId = attendanceService.getSheetId();
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
     console.log('Fetching from URL:', url);
     
     const response = await fetch(url);
@@ -39,5 +43,23 @@ export const attendanceService = {
     const processedLogs = processAttendanceLogs(logs);
     console.log('Processed logs:', processedLogs);
     return processedLogs;
+  },
+
+  // Add methods for managing script URL
+  getScriptUrl: () => {
+    return localStorage.getItem(SCRIPT_URL_KEY) || '';
+  },
+
+  setScriptUrl: (url: string) => {
+    localStorage.setItem(SCRIPT_URL_KEY, url);
+  },
+
+  // Add methods for managing sheet ID
+  getSheetId: () => {
+    return localStorage.getItem(SHEET_ID_KEY) || DEFAULT_SHEET_ID;
+  },
+
+  setSheetId: (id: string) => {
+    localStorage.setItem(SHEET_ID_KEY, id);
   }
 };
