@@ -20,11 +20,13 @@ export const createUser = async (data: UserFormData) => {
 
   try {
     // Check if this is the first user being created
-    const { count, error: countError } = await supabase
+    const { count, error: countError } = await serviceRoleClient
       .from('users')
       .select('*', { count: 'exact', head: true });
 
     if (countError) throw countError;
+
+    const isFirstUser = count === 0;
 
     // Try to sign up the user
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -45,7 +47,7 @@ export const createUser = async (data: UserFormData) => {
         if (fetchError) throw fetchError;
         if (!existingUser) throw new Error("Failed to retrieve existing user");
         
-        return await updateUserProfile(existingUser.id, data, count === 0);
+        return await updateUserProfile(existingUser.id, data, isFirstUser);
       }
       throw signUpError;
     }
@@ -54,7 +56,7 @@ export const createUser = async (data: UserFormData) => {
       throw new Error("Failed to create user");
     }
 
-    return await updateUserProfile(authData.user.id, data, count === 0);
+    return await updateUserProfile(authData.user.id, data, isFirstUser);
   } catch (error) {
     console.error("Error in createUser:", error);
     if (error instanceof Error) {
@@ -65,7 +67,7 @@ export const createUser = async (data: UserFormData) => {
 };
 
 const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
-  // For the first user, use service role client
+  // Always use service role client for first user
   const client = isFirstUser ? serviceRoleClient : supabase;
 
   // Upsert user profile
@@ -82,7 +84,7 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
   if (profileError) throw profileError;
 
-  // Upsert user role
+  // Upsert user role - use service role client for first user
   const { error: roleError } = await client
     .from("user_roles")
     .upsert({
