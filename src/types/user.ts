@@ -12,7 +12,7 @@ export interface User {
   designation: string;
   password: string;
   created_at: string;
-  user_roles?: UserRoleObject;
+  user_roles?: UserRoleObject[];
 }
 
 export interface UserFormData {

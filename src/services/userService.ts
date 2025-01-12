@@ -1,5 +1,5 @@
 import { supabase, serviceRoleClient } from "@/integrations/supabase/client";
-import { User, UserFormData } from "@/types/user";
+import { User, UserFormData, UserRole } from "@/types/user";
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -82,7 +82,7 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
     .from("user_roles")
     .upsert({
       user_id: userId,
-      role: isFirstUser ? 'admin' : data.role,
+      role: isFirstUser ? 'admin' as UserRole : data.role,
     });
 
   if (roleError) throw roleError;
@@ -90,7 +90,7 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
   return { success: true, userId };
 };
 
-export const fetchUsers = async () => {
+export const fetchUsers = async (): Promise<User[]> => {
   try {
     const { data, error } = await serviceRoleClient
       .from("users")
@@ -106,7 +106,7 @@ export const fetchUsers = async () => {
       throw error;
     }
     
-    return data || [];
+    return (data as User[]) || [];
   } catch (error) {
     console.error("Error fetching users:", error);
     throw error;
