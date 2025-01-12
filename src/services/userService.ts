@@ -1,12 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, serviceRoleClient } from "@/integrations/supabase/client";
 import { User, UserFormData } from "@/types/user";
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = "https://sqnomwztuuaxtzdbqvji.supabase.co";
-const SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxbm9td3p0dXVheHR6ZGJxdmppIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjMzOTE0NywiZXhwIjoyMDUxOTE1MTQ3fQ.vQjgODEzKEzXRz5e_-YvQDuqxNB5E_vJNZhFE9B7MAg";
-
-// Create a Supabase client with the service role key
-const serviceRoleClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -28,7 +21,7 @@ export const createUser = async (data: UserFormData) => {
 
     const isFirstUser = count === 0;
 
-    // Try to sign up the user
+    // Try to sign up the user with auth client
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -67,8 +60,8 @@ export const createUser = async (data: UserFormData) => {
 };
 
 const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
-  // Always use service role client for first user
-  const client = isFirstUser ? serviceRoleClient : serviceRoleClient;
+  // Always use service role client
+  const client = serviceRoleClient;
 
   // Upsert user profile
   const { error: profileError } = await client
@@ -84,12 +77,12 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
   if (profileError) throw profileError;
 
-  // Upsert user role - use service role client for first user
+  // Upsert user role
   const { error: roleError } = await client
     .from("user_roles")
     .upsert({
       user_id: userId,
-      role: isFirstUser ? 'admin' : data.role, // First user is always admin
+      role: isFirstUser ? 'admin' : data.role,
     });
 
   if (roleError) throw roleError;
@@ -115,7 +108,11 @@ export const deleteUser = async (userId: string) => {
   if (!userId) throw new Error("User ID is required");
   
   try {
-    const { error } = await serviceRoleClient.from("users").delete().eq("id", userId);
+    const { error } = await serviceRoleClient
+      .from("users")
+      .delete()
+      .eq("id", userId);
+      
     if (error) throw error;
   } catch (error) {
     if (error instanceof Error) {
