@@ -13,65 +13,56 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    // First, check if the user exists in the users table
-    const { data: existingUser } = await supabase
-      .from("users")
-      .select("id, email")
-      .eq("email", data.email)
-      .single();
-
+    // First check if user exists in auth
+    const { data: existingAuthUser } = await supabase.auth.admin.getUserByEmail(data.email);
+    
     let userId;
 
-    if (existingUser) {
-      // If user exists, update their information
-      userId = existingUser.id;
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({
-          name: data.name,
-          employee_id: data.employeeId,
-          designation: data.designation,
-          password: data.password,
-        })
-        .eq("id", userId);
-
-      if (updateError) throw updateError;
+    if (existingAuthUser) {
+      // If user exists in auth, use their ID
+      userId = existingAuthUser.id;
     } else {
-      // If user doesn't exist, create new auth user and profile
+      // If user doesn't exist, create new auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
       });
 
       if (authError) {
-        if (authError instanceof AuthError) {
-          // Handle specific auth errors
-          if (authError.message.includes("already registered")) {
-            throw new Error("This email is already registered. Please use a different email.");
+        // If user already exists but we didn't find them, just proceed with profile update
+        if (authError.message.includes("already registered")) {
+          const { data: retryAuthUser } = await supabase.auth.admin.getUserByEmail(data.email);
+          if (!retryAuthUser) {
+            throw new Error("Failed to retrieve existing user");
           }
-          throw new Error(authError.message);
+          userId = retryAuthUser.id;
+        } else {
+          throw authError;
         }
-        throw authError;
+      } else if (!authData.user?.id) {
+        throw new Error("Failed to create user");
+      } else {
+        userId = authData.user.id;
       }
+    }
 
-      if (!authData.user?.id) throw new Error("Failed to create user");
-      
-      userId = authData.user.id;
-
-      // Create user profile
-      const { error: profileError } = await supabase.from("users").insert({
+    // Upsert user profile
+    const { error: profileError } = await supabase
+      .from("users")
+      .upsert({
         id: userId,
         email: data.email,
         name: data.name,
         employee_id: data.employeeId,
         designation: data.designation,
         password: data.password,
+      }, {
+        onConflict: 'id'
       });
 
-      if (profileError) throw profileError;
-    }
+    if (profileError) throw profileError;
 
-    // Update or create user role
+    // Upsert user role
     const { error: roleError } = await supabase
       .from("user_roles")
       .upsert({
