@@ -13,44 +13,83 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-    });
+    // First, check if the user exists in the users table
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("id, email")
+      .eq("email", data.email)
+      .single();
 
-    if (authError) {
-      if (authError instanceof AuthError) {
-        throw new Error(authError.message);
+    let userId;
+
+    if (existingUser) {
+      // If user exists, update their information
+      userId = existingUser.id;
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
+          name: data.name,
+          employee_id: data.employeeId,
+          designation: data.designation,
+          password: data.password,
+        })
+        .eq("id", userId);
+
+      if (updateError) throw updateError;
+    } else {
+      // If user doesn't exist, create new auth user and profile
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) {
+        if (authError instanceof AuthError) {
+          // Handle specific auth errors
+          if (authError.message.includes("already registered")) {
+            throw new Error("This email is already registered. Please use a different email.");
+          }
+          throw new Error(authError.message);
+        }
+        throw authError;
       }
-      throw authError;
+
+      if (!authData.user?.id) throw new Error("Failed to create user");
+      
+      userId = authData.user.id;
+
+      // Create user profile
+      const { error: profileError } = await supabase.from("users").insert({
+        id: userId,
+        email: data.email,
+        name: data.name,
+        employee_id: data.employeeId,
+        designation: data.designation,
+        password: data.password,
+      });
+
+      if (profileError) throw profileError;
     }
 
-    if (!authData.user?.id) throw new Error("Failed to create user");
-
-    const { error: profileError } = await supabase.from("users").insert({
-      id: authData.user.id,
-      email: data.email,
-      name: data.name,
-      employee_id: data.employeeId,
-      designation: data.designation,
-      password: data.password,
-    });
-
-    if (profileError) throw profileError;
-
-    const { error: roleError } = await supabase.from("user_roles").insert({
-      user_id: authData.user.id,
-      role: data.role,
-    });
+    // Update or create user role
+    const { error: roleError } = await supabase
+      .from("user_roles")
+      .upsert({
+        user_id: userId,
+        role: data.role,
+      }, {
+        onConflict: 'user_id'
+      });
 
     if (roleError) throw roleError;
 
-    return authData.user;
+    return { success: true, userId };
   } catch (error) {
+    console.error("Error in createUser:", error);
     if (error instanceof Error) {
       throw new Error(error.message);
     }
-    throw new Error("An unexpected error occurred");
+    throw new Error("An unexpected error occurred while creating the user");
   }
 };
 
