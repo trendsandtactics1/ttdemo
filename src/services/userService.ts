@@ -21,10 +21,11 @@ export const createUser = async (data: UserFormData) => {
 
     const isFirstUser = count === 0;
 
-    // Try to sign up the user with auth client
-    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+    // Create auth user with service role client
+    const { data: authData, error: signUpError } = await serviceRoleClient.auth.admin.createUser({
       email: data.email,
       password: data.password,
+      email_confirm: true
     });
 
     if (signUpError) {
@@ -60,34 +61,36 @@ export const createUser = async (data: UserFormData) => {
 };
 
 const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
-  // Always use service role client for admin operations
-  const client = serviceRoleClient;
+  try {
+    // Upsert user profile
+    const { error: profileError } = await serviceRoleClient
+      .from("users")
+      .upsert({
+        id: userId,
+        email: data.email,
+        name: data.name,
+        employee_id: data.employeeId,
+        designation: data.designation,
+        password: data.password,
+      });
 
-  // Upsert user profile
-  const { error: profileError } = await client
-    .from("users")
-    .upsert({
-      id: userId,
-      email: data.email,
-      name: data.name,
-      employee_id: data.employeeId,
-      designation: data.designation,
-      password: data.password,
-    });
+    if (profileError) throw profileError;
 
-  if (profileError) throw profileError;
+    // Upsert user role
+    const { error: roleError } = await serviceRoleClient
+      .from("user_roles")
+      .upsert({
+        user_id: userId,
+        role: isFirstUser ? 'admin' as UserRole : data.role,
+      });
 
-  // Upsert user role
-  const { error: roleError } = await client
-    .from("user_roles")
-    .upsert({
-      user_id: userId,
-      role: isFirstUser ? 'admin' as UserRole : data.role,
-    });
+    if (roleError) throw roleError;
 
-  if (roleError) throw roleError;
-
-  return { success: true, userId };
+    return { success: true, userId };
+  } catch (error) {
+    console.error("Error in updateUserProfile:", error);
+    throw error;
+  }
 };
 
 export const fetchUsers = async (): Promise<User[]> => {
@@ -106,17 +109,15 @@ export const fetchUsers = async (): Promise<User[]> => {
       throw error;
     }
 
-    // Transform the data to match the User type, handling the case where user_roles might be an error
+    // Transform the data to match the User type
     const transformedData = data?.map(user => ({
       ...user,
-      user_roles: user.user_roles && !('error' in user.user_roles) 
-        ? (Array.isArray(user.user_roles) ? user.user_roles : [user.user_roles])
-        : null
+      user_roles: Array.isArray(user.user_roles) ? user.user_roles : [user.user_roles]
     })) as User[];
 
     return transformedData || [];
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error("Error in fetchUsers:", error);
     throw error;
   }
 };
@@ -125,10 +126,8 @@ export const deleteUser = async (userId: string) => {
   if (!userId) throw new Error("User ID is required");
   
   try {
-    const { error } = await serviceRoleClient
-      .from("users")
-      .delete()
-      .eq("id", userId);
+    // Delete the user from auth.users (this will cascade to public.users due to FK)
+    const { error } = await serviceRoleClient.auth.admin.deleteUser(userId);
       
     if (error) throw error;
   } catch (error) {
