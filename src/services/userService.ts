@@ -95,7 +95,13 @@ export const fetchUsers = async (): Promise<User[]> => {
     const { data, error } = await serviceRoleClient
       .from("users")
       .select(`
-        *,
+        id,
+        email,
+        name,
+        employee_id,
+        designation,
+        password,
+        created_at,
         user_roles (
           role
         )
@@ -111,8 +117,14 @@ export const fetchUsers = async (): Promise<User[]> => {
     }
 
     return data.map(user => ({
-      ...user,
-      user_roles: Array.isArray(user.user_roles) ? user.user_roles : [user.user_roles]
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      employee_id: user.employee_id,
+      designation: user.designation,
+      password: user.password,
+      created_at: user.created_at,
+      user_roles: user.user_roles ? Array.isArray(user.user_roles) ? user.user_roles : [user.user_roles] : []
     }));
 
   } catch (error) {
