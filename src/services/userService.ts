@@ -13,71 +13,35 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    // First check if user exists in auth
-    const { data: users, error: listError } = await supabase.auth.admin.listUsers();
-    if (listError) throw listError;
+    // Try to sign up the user
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+    });
 
-    const existingAuthUser = users?.find(user => user.email === data.email);
-    let userId;
+    if (signUpError) {
+      // If user already exists, proceed with profile update
+      if (signUpError.message.includes("already registered")) {
+        // Get the user's data from the users table using their email
+        const { data: existingUser, error: fetchError } = await supabase
+          .from("users")
+          .select("id")
+          .eq("email", data.email)
+          .single();
 
-    if (existingAuthUser) {
-      // If user exists in auth, use their ID
-      userId = existingAuthUser.id;
-    } else {
-      // If user doesn't exist, create new auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (authError) {
-        // If user already exists but we didn't find them, just proceed with profile update
-        if (authError.message.includes("already registered")) {
-          const { data: retryUsers } = await supabase.auth.admin.listUsers();
-          const retryAuthUser = retryUsers?.find(user => user.email === data.email);
-          if (!retryAuthUser) {
-            throw new Error("Failed to retrieve existing user");
-          }
-          userId = retryAuthUser.id;
-        } else {
-          throw authError;
-        }
-      } else if (!authData.user?.id) {
-        throw new Error("Failed to create user");
-      } else {
-        userId = authData.user.id;
+        if (fetchError) throw fetchError;
+        if (!existingUser) throw new Error("Failed to retrieve existing user");
+        
+        return await updateUserProfile(existingUser.id, data);
       }
+      throw signUpError;
     }
 
-    // Upsert user profile
-    const { error: profileError } = await supabase
-      .from("users")
-      .upsert({
-        id: userId,
-        email: data.email,
-        name: data.name,
-        employee_id: data.employeeId,
-        designation: data.designation,
-        password: data.password,
-      }, {
-        onConflict: 'id'
-      });
+    if (!authData.user?.id) {
+      throw new Error("Failed to create user");
+    }
 
-    if (profileError) throw profileError;
-
-    // Upsert user role
-    const { error: roleError } = await supabase
-      .from("user_roles")
-      .upsert({
-        user_id: userId,
-        role: data.role,
-      }, {
-        onConflict: 'user_id'
-      });
-
-    if (roleError) throw roleError;
-
-    return { success: true, userId };
+    return await updateUserProfile(authData.user.id, data);
   } catch (error) {
     console.error("Error in createUser:", error);
     if (error instanceof Error) {
@@ -85,6 +49,38 @@ export const createUser = async (data: UserFormData) => {
     }
     throw new Error("An unexpected error occurred while creating the user");
   }
+};
+
+const updateUserProfile = async (userId: string, data: UserFormData) => {
+  // Upsert user profile
+  const { error: profileError } = await supabase
+    .from("users")
+    .upsert({
+      id: userId,
+      email: data.email,
+      name: data.name,
+      employee_id: data.employeeId,
+      designation: data.designation,
+      password: data.password,
+    }, {
+      onConflict: 'id'
+    });
+
+  if (profileError) throw profileError;
+
+  // Upsert user role
+  const { error: roleError } = await supabase
+    .from("user_roles")
+    .upsert({
+      user_id: userId,
+      role: data.role,
+    }, {
+      onConflict: 'user_id'
+    });
+
+  if (roleError) throw roleError;
+
+  return { success: true, userId };
 };
 
 export const fetchUsers = async () => {
