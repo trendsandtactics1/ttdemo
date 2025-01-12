@@ -14,8 +14,10 @@ export const createUser = async (data: UserFormData) => {
 
   try {
     // First check if user exists in auth
-    const { data: existingAuthUser } = await supabase.auth.admin.getUserByEmail(data.email);
-    
+    const { data: users, error: listError } = await supabase.auth.admin.listUsers();
+    if (listError) throw listError;
+
+    const existingAuthUser = users?.find(user => user.email === data.email);
     let userId;
 
     if (existingAuthUser) {
@@ -31,7 +33,8 @@ export const createUser = async (data: UserFormData) => {
       if (authError) {
         // If user already exists but we didn't find them, just proceed with profile update
         if (authError.message.includes("already registered")) {
-          const { data: retryAuthUser } = await supabase.auth.admin.getUserByEmail(data.email);
+          const { data: retryUsers } = await supabase.auth.admin.listUsers();
+          const retryAuthUser = retryUsers?.find(user => user.email === data.email);
           if (!retryAuthUser) {
             throw new Error("Failed to retrieve existing user");
           }
