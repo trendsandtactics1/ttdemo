@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData } from "@/types/user";
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = "https://sqnomwztuuaxtzdbqvji.supabase.co";
+const SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxbm9td3p0dXVheHR6ZGJxdmppIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNjMzOTE0NywiZXhwIjoyMDUxOTE1MTQ3fQ.vQjgODEzKEzXRz5e_-YvQDuqxNB5E_vJNZhFE9B7MAg";
+
+// Create a Supabase client with the service role key
+const serviceRoleClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -58,8 +65,11 @@ export const createUser = async (data: UserFormData) => {
 };
 
 const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
+  // For the first user, use service role client
+  const client = isFirstUser ? serviceRoleClient : supabase;
+
   // Upsert user profile
-  const { error: profileError } = await supabase
+  const { error: profileError } = await client
     .from("users")
     .upsert({
       id: userId,
@@ -72,11 +82,8 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
   if (profileError) throw profileError;
 
-  // For the first user or if role is admin, use service role client
-  const roleClient = isFirstUser ? supabase : supabase;
-
   // Upsert user role
-  const { error: roleError } = await roleClient
+  const { error: roleError } = await client
     .from("user_roles")
     .upsert({
       user_id: userId,
