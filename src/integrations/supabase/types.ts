@@ -9,7 +9,131 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      employees: {
+        Row: {
+          created_at: string | null
+          designation: string
+          email: string
+          employee_id: string
+          id: string
+          name: string
+          password: string
+          profile_photo: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          designation: string
+          email: string
+          employee_id: string
+          id?: string
+          name: string
+          password: string
+          profile_photo?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          designation?: string
+          email?: string
+          employee_id?: string
+          id?: string
+          name?: string
+          password?: string
+          profile_photo?: string | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["email"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          designation: string
+          email: string
+          employee_id: string
+          id: string
+          name: string
+          password: string
+        }
+        Insert: {
+          created_at?: string | null
+          designation: string
+          email: string
+          employee_id: string
+          id: string
+          name: string
+          password: string
+        }
+        Update: {
+          created_at?: string | null
+          designation?: string
+          email?: string
+          employee_id?: string
+          id?: string
+          name?: string
+          password?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
