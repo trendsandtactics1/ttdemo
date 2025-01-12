@@ -7,12 +7,13 @@ import AttendanceTable from "./attendance/AttendanceTable";
 import AttendanceDetailsModal from "./attendance/AttendanceDetailsModal";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
 
 const EmployeeAttendance = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
-  const [showModal, setShowModal] = useState(true); // Changed to true by default
+  const [showModal, setShowModal] = useState(false);
   const currentUser = localStorageService.getCurrentUser();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -41,7 +42,6 @@ const EmployeeAttendance = () => {
         console.log('Filtered logs:', employeeLogs);
         setAttendanceLogs(employeeLogs);
         
-        // Set the first log as selected by default if available
         if (employeeLogs.length > 0) {
           setSelectedLog(employeeLogs[0]);
         }
@@ -76,24 +76,26 @@ const EmployeeAttendance = () => {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <h2 className="text-3xl font-bold tracking-tight">My Attendance</h2>
-      
-      {attendanceLogs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
-          <p className="text-lg text-gray-600">No attendance records found.</p>
-        </div>
-      ) : (
-        <AttendanceTable 
-          attendanceLogs={attendanceLogs} 
-          onViewDetails={handleViewDetails}
-        />
-      )}
+      <Card className="p-4 md:p-6">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6">My Attendance</h2>
+        
+        {attendanceLogs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+            <p className="text-lg text-gray-600">No attendance records found.</p>
+          </div>
+        ) : (
+          <AttendanceTable 
+            attendanceLogs={attendanceLogs} 
+            onViewDetails={handleViewDetails}
+          />
+        )}
 
-      <AttendanceDetailsModal
-        log={selectedLog}
-        open={showModal}
-        onOpenChange={setShowModal}
-      />
+        <AttendanceDetailsModal
+          log={selectedLog}
+          open={showModal}
+          onOpenChange={setShowModal}
+        />
+      </Card>
     </div>
   );
 };
