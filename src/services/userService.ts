@@ -60,7 +60,7 @@ export const createUser = async (data: UserFormData) => {
 };
 
 const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
-  // Always use service role client
+  // Always use service role client for admin operations
   const client = serviceRoleClient;
 
   // Upsert user profile
