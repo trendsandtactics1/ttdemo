@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { localStorageService } from "@/services/localStorageService";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const CreateTaskModal = () => {
   const [open, setOpen] = useState(false);
