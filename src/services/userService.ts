@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserFormData } from "@/types/user";
-import { AuthError } from "@supabase/supabase-js";
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,6 +12,13 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
+    // Check if this is the first user being created
+    const { count, error: countError } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true });
+
+    if (countError) throw countError;
+
     // Try to sign up the user
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email: data.email,
@@ -32,7 +38,7 @@ export const createUser = async (data: UserFormData) => {
         if (fetchError) throw fetchError;
         if (!existingUser) throw new Error("Failed to retrieve existing user");
         
-        return await updateUserProfile(existingUser.id, data);
+        return await updateUserProfile(existingUser.id, data, count === 0);
       }
       throw signUpError;
     }
@@ -41,7 +47,7 @@ export const createUser = async (data: UserFormData) => {
       throw new Error("Failed to create user");
     }
 
-    return await updateUserProfile(authData.user.id, data);
+    return await updateUserProfile(authData.user.id, data, count === 0);
   } catch (error) {
     console.error("Error in createUser:", error);
     if (error instanceof Error) {
@@ -51,7 +57,7 @@ export const createUser = async (data: UserFormData) => {
   }
 };
 
-const updateUserProfile = async (userId: string, data: UserFormData) => {
+const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
   // Upsert user profile
   const { error: profileError } = await supabase
     .from("users")
@@ -66,12 +72,15 @@ const updateUserProfile = async (userId: string, data: UserFormData) => {
 
   if (profileError) throw profileError;
 
-  // Upsert user role using the existing unique constraint
-  const { error: roleError } = await supabase
+  // For the first user or if role is admin, use service role client
+  const roleClient = isFirstUser ? supabase : supabase;
+
+  // Upsert user role
+  const { error: roleError } = await roleClient
     .from("user_roles")
     .upsert({
       user_id: userId,
-      role: data.role,
+      role: isFirstUser ? 'admin' : data.role, // First user is always admin
     });
 
   if (roleError) throw roleError;
