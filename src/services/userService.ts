@@ -106,13 +106,15 @@ export const fetchUsers = async (): Promise<User[]> => {
       throw error;
     }
 
-    // Transform the data to match the User type
+    // Transform the data to match the User type, handling the case where user_roles might be an error
     const transformedData = data?.map(user => ({
       ...user,
-      user_roles: Array.isArray(user.user_roles) ? user.user_roles : null
+      user_roles: user.user_roles && !('error' in user.user_roles) 
+        ? (Array.isArray(user.user_roles) ? user.user_roles : [user.user_roles])
+        : null
     })) as User[];
 
-    return transformedData;
+    return transformedData || [];
   } catch (error) {
     console.error("Error fetching users:", error);
     throw error;
