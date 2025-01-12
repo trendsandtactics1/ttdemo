@@ -53,10 +53,7 @@ export const createUser = async (data: UserFormData) => {
     return await updateUserProfile(authData.user.id, data, isFirstUser);
   } catch (error) {
     console.error("Error in createUser:", error);
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("An unexpected error occurred while creating the user");
+    throw error;
   }
 };
 
@@ -109,13 +106,15 @@ export const fetchUsers = async (): Promise<User[]> => {
       throw error;
     }
 
-    // Transform the data to match the User type
-    const transformedData = data?.map(user => ({
+    if (!data) {
+      return [];
+    }
+
+    return data.map(user => ({
       ...user,
       user_roles: Array.isArray(user.user_roles) ? user.user_roles : [user.user_roles]
-    })) as User[];
+    }));
 
-    return transformedData || [];
   } catch (error) {
     console.error("Error in fetchUsers:", error);
     throw error;
@@ -126,14 +125,13 @@ export const deleteUser = async (userId: string) => {
   if (!userId) throw new Error("User ID is required");
   
   try {
-    // Delete the user from auth.users (this will cascade to public.users due to FK)
     const { error } = await serviceRoleClient.auth.admin.deleteUser(userId);
       
     if (error) throw error;
+
+    return { success: true };
   } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
-    }
-    throw new Error("Failed to delete user");
+    console.error("Error in deleteUser:", error);
+    throw error;
   }
 };
