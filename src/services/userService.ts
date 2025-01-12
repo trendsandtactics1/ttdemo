@@ -62,20 +62,16 @@ const updateUserProfile = async (userId: string, data: UserFormData) => {
       employee_id: data.employeeId,
       designation: data.designation,
       password: data.password,
-    }, {
-      onConflict: 'id'
     });
 
   if (profileError) throw profileError;
 
-  // Upsert user role
+  // Upsert user role using the existing unique constraint
   const { error: roleError } = await supabase
     .from("user_roles")
     .upsert({
       user_id: userId,
       role: data.role,
-    }, {
-      onConflict: 'user_id'
     });
 
   if (roleError) throw roleError;
