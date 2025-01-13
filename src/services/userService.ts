@@ -12,7 +12,6 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    // Check if this is the first user being created
     const { count, error: countError } = await serviceRoleClient
       .from('users')
       .select('*', { count: 'exact', head: true });
@@ -21,7 +20,6 @@ export const createUser = async (data: UserFormData) => {
 
     const isFirstUser = count === 0;
 
-    // Create auth user with service role client
     const { data: authData, error: signUpError } = await serviceRoleClient.auth.admin.createUser({
       email: data.email,
       password: data.password,
@@ -88,7 +86,6 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
 export const fetchUsers = async (): Promise<User[]> => {
   try {
-    // First, fetch users
     const { data: users, error: usersError } = await serviceRoleClient
       .from("users")
       .select("*");
@@ -100,7 +97,6 @@ export const fetchUsers = async (): Promise<User[]> => {
 
     if (!users) return [];
 
-    // Then, fetch roles for all users
     const { data: roles, error: rolesError } = await serviceRoleClient
       .from("user_roles")
       .select("*");
@@ -110,7 +106,6 @@ export const fetchUsers = async (): Promise<User[]> => {
       throw rolesError;
     }
 
-    // Combine users with their roles
     return users.map(user => ({
       ...user,
       user_roles: roles
