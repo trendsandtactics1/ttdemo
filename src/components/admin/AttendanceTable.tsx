@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { attendanceService } from "@/services/attendanceService";
-import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { formatHoursToHHMM } from "@/utils/timeFormat";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect, useState } from "react";
 
 interface AttendanceRecord {
   employeeId: string;
@@ -32,6 +33,7 @@ interface AttendanceTableProps {
 const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -99,48 +101,97 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
     );
   }
 
+  const MobileAttendanceCard = ({ log }: { log: AttendanceRecord }) => (
+    <Card className="p-4 mb-4">
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="font-medium">{formatDate(log.date)}</span>
+          {getAttendanceStatus(log.effectiveHours)}
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <p className="text-muted-foreground">Name</p>
+            <p>{log.employeeName}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">ID</p>
+            <p>{log.employeeId}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Check In</p>
+            <p>{formatTime(log.checkIn)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Check Out</p>
+            <p>{formatTime(log.checkOut)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Break Hours</p>
+            <p>{formatHoursToHHMM(log.totalBreakHours)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Effective Hours</p>
+            <p>{formatHoursToHHMM(log.effectiveHours)}</p>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
       <Card className="p-4">
         <ScrollArea className="h-[calc(100vh-12rem)]">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-nowrap">Date</TableHead>
-                  <TableHead className="whitespace-nowrap">Name</TableHead>
-                  <TableHead className="whitespace-nowrap">Employee ID</TableHead>
-                  <TableHead className="whitespace-nowrap">Check In</TableHead>
-                  <TableHead className="whitespace-nowrap">Check Out</TableHead>
-                  <TableHead className="whitespace-nowrap">Break Hours</TableHead>
-                  <TableHead className="whitespace-nowrap">Effective Hours</TableHead>
-                  <TableHead className="whitespace-nowrap">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {attendanceLogs.length === 0 ? (
+          {isMobile ? (
+            <div className="space-y-4">
+              {attendanceLogs.length === 0 ? (
+                <p className="text-center py-4">No attendance records found</p>
+              ) : (
+                attendanceLogs.map((log, index) => (
+                  <MobileAttendanceCard key={index} log={log} />
+                ))
+              )}
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-4">
-                      No attendance records found
-                    </TableCell>
+                    <TableHead className="whitespace-nowrap">Date</TableHead>
+                    <TableHead className="whitespace-nowrap">Name</TableHead>
+                    <TableHead className="whitespace-nowrap">Employee ID</TableHead>
+                    <TableHead className="whitespace-nowrap">Check In</TableHead>
+                    <TableHead className="whitespace-nowrap">Check Out</TableHead>
+                    <TableHead className="whitespace-nowrap">Break Hours</TableHead>
+                    <TableHead className="whitespace-nowrap">Effective Hours</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
                   </TableRow>
-                ) : (
-                  attendanceLogs.map((log, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="whitespace-nowrap">{formatDate(log.date)}</TableCell>
-                      <TableCell className="whitespace-nowrap">{log.employeeName}</TableCell>
-                      <TableCell className="whitespace-nowrap">{log.employeeId}</TableCell>
-                      <TableCell className="whitespace-nowrap">{formatTime(log.checkIn)}</TableCell>
-                      <TableCell className="whitespace-nowrap">{formatTime(log.checkOut)}</TableCell>
-                      <TableCell className="whitespace-nowrap">{formatHoursToHHMM(log.totalBreakHours)}</TableCell>
-                      <TableCell className="whitespace-nowrap">{formatHoursToHHMM(log.effectiveHours)}</TableCell>
-                      <TableCell className="whitespace-nowrap">{getAttendanceStatus(log.effectiveHours)}</TableCell>
+                </TableHeader>
+                <TableBody>
+                  {attendanceLogs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-4">
+                        No attendance records found
+                      </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    attendanceLogs.map((log, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="whitespace-nowrap">{formatDate(log.date)}</TableCell>
+                        <TableCell className="whitespace-nowrap">{log.employeeName}</TableCell>
+                        <TableCell className="whitespace-nowrap">{log.employeeId}</TableCell>
+                        <TableCell className="whitespace-nowrap">{formatTime(log.checkIn)}</TableCell>
+                        <TableCell className="whitespace-nowrap">{formatTime(log.checkOut)}</TableCell>
+                        <TableCell className="whitespace-nowrap">{formatHoursToHHMM(log.totalBreakHours)}</TableCell>
+                        <TableCell className="whitespace-nowrap">{formatHoursToHHMM(log.effectiveHours)}</TableCell>
+                        <TableCell className="whitespace-nowrap">{getAttendanceStatus(log.effectiveHours)}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </ScrollArea>
       </Card>
     </div>

@@ -15,7 +15,7 @@ const AdminDashboard = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AdminSidebar />
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 md:p-6 pt-16 md:pt-6">
           <Routes>
             <Route path="/" element={<AdminHome />} />
             <Route path="/attendance" element={<AttendanceTable />} />
