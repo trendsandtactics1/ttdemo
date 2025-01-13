@@ -9,10 +9,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { localStorageService } from "@/services/localStorageService";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+
+interface Employee {
+  id: string;
+  email: string;
+  name: string;
+  designation: string;
+}
 
 const CreateTaskModal = () => {
   const [open, setOpen] = useState(false);
@@ -21,7 +27,7 @@ const CreateTaskModal = () => {
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState<Date>();
   const [assignedDate, setAssignedDate] = useState<Date>(new Date());
-  const [employees, setEmployees] = useState<Array<{ id: string; email: string }>>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,10 +35,13 @@ const CreateTaskModal = () => {
       try {
         const { data, error } = await supabase
           .from("employees")
-          .select("id, email")
-          .order("email");
+          .select("id, email, name, designation")
+          .order("name");
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching employees:", error);
+          throw error;
+        }
         setEmployees(data || []);
       } catch (error) {
         console.error("Error fetching employees:", error);
@@ -47,7 +56,7 @@ const CreateTaskModal = () => {
     fetchEmployees();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !assignedTo || !dueDate || !assignedDate) {
       toast({
@@ -58,21 +67,44 @@ const CreateTaskModal = () => {
       return;
     }
 
-    localStorageService.addTask({
-      title,
-      description,
-      assignedTo,
-      status: "pending",
-      dueDate: dueDate.toISOString(),
-      assignedDate: assignedDate.toISOString(),
-    });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No authenticated user found");
+      }
 
-    setTitle("");
-    setDescription("");
-    setAssignedTo("");
-    setDueDate(undefined);
-    setAssignedDate(new Date());
-    setOpen(false);
+      const { error } = await supabase.from("tasks").insert([{
+        title,
+        description,
+        assigned_to: assignedTo,
+        created_by: user.id,
+        status: "pending",
+        due_date: dueDate.toISOString(),
+        assigned_date: assignedDate.toISOString(),
+      }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Task created successfully",
+      });
+
+      setTitle("");
+      setDescription("");
+      setAssignedTo("");
+      setDueDate(undefined);
+      setAssignedDate(new Date());
+      setOpen(false);
+    } catch (error) {
+      console.error("Error creating task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create task",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -118,7 +150,7 @@ const CreateTaskModal = () => {
               <SelectContent>
                 {employees.map((employee) => (
                   <SelectItem key={employee.id} value={employee.email}>
-                    {employee.email}
+                    {employee.name} - {employee.designation}
                   </SelectItem>
                 ))}
               </SelectContent>

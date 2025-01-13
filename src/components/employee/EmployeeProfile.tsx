@@ -29,7 +29,10 @@ const EmployeeProfile = () => {
           .eq("email", user.email)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching profile:", error);
+          throw error;
+        }
 
         if (data) {
           setProfile({
