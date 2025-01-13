@@ -36,7 +36,6 @@ if (email === "karthikjungleemara@gmail.com") {
   employeeId = "TT002";
 } else if (email === "sathiyamoorthytt005@gmail.com") {
   employeeId = "TT003";
-  employeeId = managerIds[Math.floor(Math.random() * managerIds.length)];
 } else {
   employeeId = `TT${Math.floor(Math.random() * 100)}`;
 }
