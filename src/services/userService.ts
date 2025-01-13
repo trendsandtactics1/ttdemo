@@ -29,9 +29,7 @@ export const createUser = async (data: UserFormData) => {
     });
 
     if (signUpError) {
-      // If user already exists, proceed with profile update
       if (signUpError.message.includes("already registered")) {
-        // Get the user's data from the users table using their email
         const { data: existingUser, error: fetchError } = await serviceRoleClient
           .from("users")
           .select("id")
@@ -59,7 +57,6 @@ export const createUser = async (data: UserFormData) => {
 
 const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
   try {
-    // Upsert user profile
     const { error: profileError } = await serviceRoleClient
       .from("users")
       .upsert({
@@ -73,7 +70,6 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
     if (profileError) throw profileError;
 
-    // Upsert user role
     const { error: roleError } = await serviceRoleClient
       .from("user_roles")
       .upsert({
@@ -92,33 +88,36 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
 export const fetchUsers = async (): Promise<User[]> => {
   try {
-    const { data: usersData, error: usersError } = await serviceRoleClient
+    // First, fetch users
+    const { data: users, error: usersError } = await serviceRoleClient
       .from("users")
-      .select(`
-        id,
-        email,
-        name,
-        employee_id,
-        designation,
-        password,
-        created_at
-      `);
+      .select("*");
 
-    if (usersError) throw usersError;
+    if (usersError) {
+      console.error("Error fetching users:", usersError);
+      throw usersError;
+    }
 
-    const { data: rolesData, error: rolesError } = await serviceRoleClient
+    if (!users) return [];
+
+    // Then, fetch roles for all users
+    const { data: roles, error: rolesError } = await serviceRoleClient
       .from("user_roles")
-      .select('user_id, role');
+      .select("*");
 
-    if (rolesError) throw rolesError;
+    if (rolesError) {
+      console.error("Error fetching roles:", rolesError);
+      throw rolesError;
+    }
 
-    if (!usersData) return [];
-
-    return usersData.map(user => ({
+    // Combine users with their roles
+    return users.map(user => ({
       ...user,
-      user_roles: rolesData
-        ?.filter(role => role.user_id === user.id)
-        .map(role => ({ role: role.role })) || []
+      user_roles: roles
+        ? roles
+            .filter(role => role.user_id === user.id)
+            .map(role => ({ role: role.role }))
+        : []
     }));
 
   } catch (error) {
