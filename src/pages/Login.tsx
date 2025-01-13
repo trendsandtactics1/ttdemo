@@ -14,6 +14,10 @@ const Login = () => {
     e.preventDefault();
     
     let employeeId;
+const managerEmails = {
+  "sathiyamoorthytt005@gmail.com": "TT003",
+  "kandhan87selvaraj@gmail.com": "TT002"
+};
 
 if (email === "karthikjungleemara@gmail.com") {
   employeeId = "TT012";
@@ -32,15 +36,11 @@ if (email === "karthikjungleemara@gmail.com") {
 } else if (email.includes("admin")) {
   const adminIds = ["ADMIN001", "ADMIN002", "ADMIN003"];
   employeeId = adminIds[Math.floor(Math.random() * adminIds.length)];
-} else if (email === "kandhan87selvaraj@gmail.com") {
-  employeeId = "TT002";
-} else if (email === "sathiyamoorthytt005@gmail.com") {
-  employeeId = "TT003";
+} else if (email in managerEmails) {
+  employeeId = managerEmails[email];
 } else {
   employeeId = `TT${Math.floor(Math.random() * 100)}`;
 }
-
-
     let userData = {
       id: crypto.randomUUID(),
       name: email.split('@')[0],
