@@ -32,8 +32,10 @@ if (email === "karthikjungleemara@gmail.com") {
 } else if (email.includes("admin")) {
   const adminIds = ["ADMIN001", "ADMIN002", "ADMIN003"];
   employeeId = adminIds[Math.floor(Math.random() * adminIds.length)];
-} else if (email.includes("manager")) {
-  const managerIds = ["MGR001", "MGR002", "MGR003"];
+} else if (email === "kandhan87selvaraj@gmail.com") {
+  employeeId = "TT002";
+} else if (email === "sathiyamoorthytt005@gmail.com") {
+  employeeId = "TT003";
   employeeId = managerIds[Math.floor(Math.random() * managerIds.length)];
 } else {
   employeeId = `TT${Math.floor(Math.random() * 100)}`;
