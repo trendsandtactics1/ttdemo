@@ -9,7 +9,7 @@ const AdminHome = () => {
   const [stats, setStats] = useState([
     {
       title: "Total Employees",
-      value: "0",
+      value: "9",
       icon: Users,
       description: "Active employees",
     },
