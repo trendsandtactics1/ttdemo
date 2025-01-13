@@ -15,13 +15,13 @@ const AdminHome = () => {
     },
     {
       title: "Present Today",
-      value: "0",
+      value: "8",
       icon: CheckCircle,
       description: "Attendance rate",
     },
     {
       title: "Absent Today",
-      value: "0",
+      value: "1",
       icon: XCircle,
       description: "Absence rate",
     },
