@@ -92,7 +92,7 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
 export const fetchUsers = async (): Promise<User[]> => {
   try {
-    const { data, error } = await serviceRoleClient
+    const { data: usersData, error: usersError } = await serviceRoleClient
       .from("users")
       .select(`
         id,
@@ -101,30 +101,24 @@ export const fetchUsers = async (): Promise<User[]> => {
         employee_id,
         designation,
         password,
-        created_at,
-        user_roles (
-          role
-        )
+        created_at
       `);
 
-    if (error) {
-      console.error("Error fetching users:", error);
-      throw error;
-    }
+    if (usersError) throw usersError;
 
-    if (!data) {
-      return [];
-    }
+    const { data: rolesData, error: rolesError } = await serviceRoleClient
+      .from("user_roles")
+      .select('user_id, role');
 
-    return data.map(user => ({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      employee_id: user.employee_id,
-      designation: user.designation,
-      password: user.password,
-      created_at: user.created_at,
-      user_roles: user.user_roles ? Array.isArray(user.user_roles) ? user.user_roles : [user.user_roles] : []
+    if (rolesError) throw rolesError;
+
+    if (!usersData) return [];
+
+    return usersData.map(user => ({
+      ...user,
+      user_roles: rolesData
+        ?.filter(role => role.user_id === user.id)
+        .map(role => ({ role: role.role })) || []
     }));
 
   } catch (error) {
