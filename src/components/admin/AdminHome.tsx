@@ -62,19 +62,19 @@ const AdminHome = () => {
       setStats([
         {
           title: "Total Employees",
-          value: 9,
+          value: totalEmployees.toString(),
           icon: Users,
           description: "Active employees",
         },
         {
           title: "Present Today",
-          value: 8,
+          value: presentToday.toString(),
           icon: CheckCircle,
           description: `${Math.round((presentToday/totalEmployees || 0) * 100)}% attendance`,
         },
         {
-          title: "AbsentToday",
-          value: 1,
+          title: "Absent Today",
+          value: absentToday.toString(),
           icon: XCircle,
           description: `${Math.round((absentToday/totalEmployees || 0) * 100)}% absence rate`,
         },
