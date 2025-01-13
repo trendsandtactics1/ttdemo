@@ -73,8 +73,8 @@ const AdminHome = () => {
           description: `${Math.round((presentToday/totalEmployees || 0) * 100)}% attendance`,
         },
         {
-          title: "1",
-          value: absentToday.toString(),
+          title: "AbsentToday",
+          value: 1,
           icon: XCircle,
           description: `${Math.round((absentToday/totalEmployees || 0) * 100)}% absence rate`,
         },
