@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { serviceRoleClient } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import EmployeeList from "./EmployeeList";
 
@@ -11,7 +11,7 @@ const Employees = () => {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await serviceRoleClient
         .from("employees")
         .select("*")
         .order("created_at", { ascending: false });

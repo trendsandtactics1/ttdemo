@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
+import { serviceRoleClient } from "@/integrations/supabase/client";
 
 interface Employee {
   id: string;
@@ -32,7 +32,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted }: EmployeeListProps) => {
 
   const handleDeleteEmployee = async (employeeId: string) => {
     try {
-      const { error } = await supabase
+      const { error } = await serviceRoleClient
         .from("employees")
         .delete()
         .eq("employee_id", employeeId);
