@@ -83,57 +83,6 @@ export type Database = {
           },
         ]
       }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          role: Database["public"]["Enums"]["user_role"]
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          created_at: string | null
-          designation: string
-          email: string
-          employee_id: string
-          id: string
-          name: string
-          password: string
-        }
-        Insert: {
-          created_at?: string | null
-          designation: string
-          email: string
-          employee_id: string
-          id: string
-          name: string
-          password: string
-        }
-        Update: {
-          created_at?: string | null
-          designation?: string
-          email?: string
-          employee_id?: string
-          id?: string
-          name?: string
-          password?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
