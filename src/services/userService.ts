@@ -1,5 +1,5 @@
 import { supabase, serviceRoleClient } from "@/integrations/supabase/client";
-import { User, UserFormData } from "@/types/user";
+import { User, UserFormData, UserRole } from "@/types/user";
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -64,7 +64,7 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
         employee_id: data.employeeId,
         designation: data.designation,
         password: data.password,
-        role: isFirstUser ? 'admin' : data.role,
+        role: isFirstUser ? 'admin' as UserRole : data.role,
       });
 
     if (profileError) throw profileError;
@@ -87,7 +87,11 @@ export const fetchUsers = async (): Promise<User[]> => {
       throw error;
     }
 
-    return employees || [];
+    // Type assertion to ensure role is of type UserRole
+    return (employees || []).map(emp => ({
+      ...emp,
+      role: emp.role as UserRole
+    }));
   } catch (error) {
     console.error("Error in fetchUsers:", error);
     throw error;

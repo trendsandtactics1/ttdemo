@@ -57,9 +57,7 @@ const UserList = ({ users, onDeleteUser }: UserListProps) => {
             <TableCell>{user?.email || 'N/A'}</TableCell>
             <TableCell>{user?.employee_id || 'N/A'}</TableCell>
             <TableCell>{user?.designation || 'N/A'}</TableCell>
-            <TableCell>
-              {user?.user_roles && user.user_roles[0]?.role ? user.user_roles[0].role : 'N/A'}
-            </TableCell>
+            <TableCell>{user?.role || 'N/A'}</TableCell>
             <TableCell>
               <Button
                 variant="ghost"
