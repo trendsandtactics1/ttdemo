@@ -1,4 +1,4 @@
-import { supabase, serviceRoleClient } from "@/integrations/supabase/client";
+import { serviceRoleClient } from "@/integrations/supabase/client";
 import { User, UserFormData, UserRole } from "@/types/user";
 
 const validateEmail = (email: string): boolean => {
@@ -12,66 +12,32 @@ export const createUser = async (data: UserFormData) => {
   }
 
   try {
-    const { count, error: countError } = await serviceRoleClient
-      .from('employees')
-      .select('*', { count: 'exact', head: true });
-
-    if (countError) throw countError;
-
-    const isFirstUser = count === 0;
-
     const { data: authData, error: signUpError } = await serviceRoleClient.auth.admin.createUser({
       email: data.email,
       password: data.password,
       email_confirm: true
     });
 
-    if (signUpError) {
-      if (signUpError.message.includes("already registered")) {
-        const { data: existingUser, error: fetchError } = await serviceRoleClient
-          .from("employees")
-          .select("id")
-          .eq("email", data.email)
-          .single();
+    if (signUpError) throw signUpError;
+    if (!authData.user?.id) throw new Error("Failed to create user");
 
-        if (fetchError) throw fetchError;
-        if (!existingUser) throw new Error("Failed to retrieve existing user");
-        
-        return await updateUserProfile(existingUser.id, data, isFirstUser);
-      }
-      throw signUpError;
-    }
-
-    if (!authData.user?.id) {
-      throw new Error("Failed to create user");
-    }
-
-    return await updateUserProfile(authData.user.id, data, isFirstUser);
-  } catch (error) {
-    console.error("Error in createUser:", error);
-    throw error;
-  }
-};
-
-const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
-  try {
     const { error: profileError } = await serviceRoleClient
       .from("employees")
-      .upsert({
-        id: userId,
+      .insert({
+        id: authData.user.id,
         email: data.email,
         name: data.name,
         employee_id: data.employeeId,
         designation: data.designation,
         password: data.password,
-        role: isFirstUser ? 'admin' as UserRole : data.role,
+        role: data.role
       });
 
     if (profileError) throw profileError;
 
-    return { success: true, userId };
+    return { success: true, userId: authData.user.id };
   } catch (error) {
-    console.error("Error in updateUserProfile:", error);
+    console.error("Error in createUser:", error);
     throw error;
   }
 };
@@ -87,7 +53,6 @@ export const fetchUsers = async (): Promise<User[]> => {
       throw error;
     }
 
-    // Type assertion to ensure role is of type UserRole
     return (employees || []).map(emp => ({
       ...emp,
       role: emp.role as UserRole
@@ -102,11 +67,9 @@ export const deleteUser = async (userId: string) => {
   if (!userId) throw new Error("User ID is required");
   
   try {
-    const { error } = await serviceRoleClient.auth.admin.deleteUser(userId);
-      
-    if (error) throw error;
+    const { error: authError } = await serviceRoleClient.auth.admin.deleteUser(userId);
+    if (authError) throw authError;
 
-    // Also delete from employees table
     const { error: deleteError } = await serviceRoleClient
       .from("employees")
       .delete()
