@@ -51,7 +51,7 @@ const AdminSidebar = () => {
           </SidebarTrigger>
         </div>
       )}
-      <Sidebar defaultCollapsed={isMobile} className="z-40">
+      <Sidebar className="z-40">
         <SidebarContent>
           <div className="p-4">
             <h1 className="text-xl font-bold">HR Admin</h1>

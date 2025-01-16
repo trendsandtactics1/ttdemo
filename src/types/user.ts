@@ -1,9 +1,5 @@
 export type UserRole = 'admin' | 'manager' | 'employee';
 
-export interface UserRoleObject {
-  role: UserRole;
-}
-
 export interface User {
   id: string;
   email: string;
@@ -11,8 +7,9 @@ export interface User {
   employee_id: string;
   designation: string;
   password: string;
-  created_at: string;
-  user_roles: UserRoleObject[] | null;
+  created_at?: string;
+  profile_photo?: string;
+  role: UserRole;
 }
 
 export interface UserFormData {

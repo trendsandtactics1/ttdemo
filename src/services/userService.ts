@@ -1,5 +1,5 @@
 import { supabase, serviceRoleClient } from "@/integrations/supabase/client";
-import { User, UserFormData, UserRole } from "@/types/user";
+import { User, UserFormData } from "@/types/user";
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,7 +13,7 @@ export const createUser = async (data: UserFormData) => {
 
   try {
     const { count, error: countError } = await serviceRoleClient
-      .from('users')
+      .from('employees')
       .select('*', { count: 'exact', head: true });
 
     if (countError) throw countError;
@@ -29,7 +29,7 @@ export const createUser = async (data: UserFormData) => {
     if (signUpError) {
       if (signUpError.message.includes("already registered")) {
         const { data: existingUser, error: fetchError } = await serviceRoleClient
-          .from("users")
+          .from("employees")
           .select("id")
           .eq("email", data.email)
           .single();
@@ -56,7 +56,7 @@ export const createUser = async (data: UserFormData) => {
 const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser: boolean = false) => {
   try {
     const { error: profileError } = await serviceRoleClient
-      .from("users")
+      .from("employees")
       .upsert({
         id: userId,
         email: data.email,
@@ -64,18 +64,10 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
         employee_id: data.employeeId,
         designation: data.designation,
         password: data.password,
+        role: isFirstUser ? 'admin' : data.role,
       });
 
     if (profileError) throw profileError;
-
-    const { error: roleError } = await serviceRoleClient
-      .from("user_roles")
-      .upsert({
-        user_id: userId,
-        role: isFirstUser ? 'admin' as UserRole : data.role,
-      });
-
-    if (roleError) throw roleError;
 
     return { success: true, userId };
   } catch (error) {
@@ -86,35 +78,16 @@ const updateUserProfile = async (userId: string, data: UserFormData, isFirstUser
 
 export const fetchUsers = async (): Promise<User[]> => {
   try {
-    const { data: users, error: usersError } = await serviceRoleClient
-      .from("users")
+    const { data: employees, error } = await serviceRoleClient
+      .from("employees")
       .select("*");
 
-    if (usersError) {
-      console.error("Error fetching users:", usersError);
-      throw usersError;
+    if (error) {
+      console.error("Error fetching employees:", error);
+      throw error;
     }
 
-    if (!users) return [];
-
-    const { data: roles, error: rolesError } = await serviceRoleClient
-      .from("user_roles")
-      .select("*");
-
-    if (rolesError) {
-      console.error("Error fetching roles:", rolesError);
-      throw rolesError;
-    }
-
-    return users.map(user => ({
-      ...user,
-      user_roles: roles
-        ? roles
-            .filter(role => role.user_id === user.id)
-            .map(role => ({ role: role.role }))
-        : []
-    }));
-
+    return employees || [];
   } catch (error) {
     console.error("Error in fetchUsers:", error);
     throw error;
@@ -128,6 +101,14 @@ export const deleteUser = async (userId: string) => {
     const { error } = await serviceRoleClient.auth.admin.deleteUser(userId);
       
     if (error) throw error;
+
+    // Also delete from employees table
+    const { error: deleteError } = await serviceRoleClient
+      .from("employees")
+      .delete()
+      .eq("id", userId);
+
+    if (deleteError) throw deleteError;
 
     return { success: true };
   } catch (error) {
