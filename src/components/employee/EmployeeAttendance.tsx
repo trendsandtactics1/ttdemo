@@ -32,23 +32,18 @@ const EmployeeAttendance = () => {
 
       try {
         const allLogs = await attendanceService.getAttendanceLogs();
-        console.log('All logs:', allLogs);
-        console.log('Current user:', currentUser);
-        
+        console.log("All logs:", allLogs);
+        console.log("Current user:", currentUser);
+
         const employeeLogs = allLogs
-          .filter(log => log.employeeId === currentUser.employeeId)
+          .filter((log) => log.employeeId === currentUser.employeeId)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        console.log('Filtered logs:', employeeLogs);
+
+        console.log("Filtered logs:", employeeLogs);
         setAttendanceLogs(employeeLogs);
-        
-        if (employeeLogs.length > 0) {
-          setSelectedLog(employeeLogs[0]);
-        }
-        
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching attendance logs:', error);
+        console.error("Error fetching attendance logs:", error);
         toast({
           title: "Error",
           description: "Failed to fetch attendance records",
@@ -62,8 +57,8 @@ const EmployeeAttendance = () => {
   }, [currentUser, navigate, toast]);
 
   const handleViewDetails = (log: AttendanceRecord) => {
-    setSelectedLog(log);
-    setShowModal(true);
+    setSelectedLog(log); // Set the clicked log
+    setShowModal(true); // Open the modal
   };
 
   if (!currentUser) {
@@ -77,23 +72,25 @@ const EmployeeAttendance = () => {
   return (
     <div className="space-y-6 p-4 md:p-6">
       <Card className="p-4 md:p-6">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6">My Attendance</h2>
-        
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6">
+          My Attendance
+        </h2>
+
         {attendanceLogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
             <p className="text-lg text-gray-600">No attendance records found.</p>
           </div>
         ) : (
-          <AttendanceTable 
-            attendanceLogs={attendanceLogs} 
-            onViewDetails={handleViewDetails}
+          <AttendanceTable
+            attendanceLogs={attendanceLogs}
+            onViewDetails={handleViewDetails} // Pass the handler
           />
         )}
 
         <AttendanceDetailsModal
-          log={selectedLog}
-          open={showModal}
-          onOpenChange={setShowModal}
+          log={selectedLog} // Pass the selected log
+          open={showModal} // Modal visibility state
+          onOpenChange={setShowModal} // Handle modal close
         />
       </Card>
     </div>
