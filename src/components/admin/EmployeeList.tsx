@@ -25,9 +25,10 @@ interface Employee {
 interface EmployeeListProps {
   employees: Employee[];
   onEmployeeDeleted: () => void;
+  loading: boolean;
 }
 
-const EmployeeList = ({ employees, onEmployeeDeleted }: EmployeeListProps) => {
+const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListProps) => {
   const { toast } = useToast();
 
   const handleDeleteEmployee = async (employeeId: string) => {
@@ -43,7 +44,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted }: EmployeeListProps) => {
         title: "Success",
         description: "Employee deleted successfully",
       });
-      
+
       onEmployeeDeleted();
     } catch (error) {
       console.error("Error deleting employee:", error);
@@ -54,6 +55,10 @@ const EmployeeList = ({ employees, onEmployeeDeleted }: EmployeeListProps) => {
       });
     }
   };
+
+  if (loading) {
+    return <p>Loading employees...</p>;
+  }
 
   return (
     <Card>
