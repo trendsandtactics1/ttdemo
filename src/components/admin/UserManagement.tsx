@@ -77,27 +77,29 @@ const UserManagement = () => {
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
-      <Card>
-        <CardHeader>
-          <CardTitle>Add New User</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <UserForm onSubmit={handleSubmit} />
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Add New User</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UserForm onSubmit={handleSubmit} />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {users.length === 0 ? (
-            <p className="text-muted-foreground">No users found.</p>
-          ) : (
-            <UserList users={users} onDeleteUser={handleDeleteUser} />
-          )}
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>All Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {users.length === 0 ? (
+              <p className="text-muted-foreground">No users found.</p>
+            ) : (
+              <UserList users={users} onDeleteUser={handleDeleteUser} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
