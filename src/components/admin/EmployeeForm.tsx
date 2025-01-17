@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { supabase } from "@/integrations/supabase/client";
+import { serviceRoleClient } from "@/integrations/supabase/client";
 
 const employeeSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -47,9 +47,10 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
   const onSubmit = async (data: EmployeeFormData) => {
     try {
       // Step 1: Create a user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await serviceRoleClient.auth.admin.createUser({
         email: data.email,
         password: data.password,
+        email_confirm: true
       });
 
       if (authError) {
@@ -58,15 +59,17 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
       }
 
       // Step 2: Insert additional employee details in the database
-      const { error: dbError } = await supabase.from("employees").insert([
-        {
-          user_id: authData.user?.id, // Link to Supabase Auth user ID
+      const { error: dbError } = await serviceRoleClient
+        .from("employees")
+        .insert({
+          id: authData.user?.id,
           name: data.name,
           email: data.email,
           employee_id: data.employeeId,
           designation: data.designation,
-        },
-      ]);
+          password: data.password,
+          role: 'employee'
+        });
 
       if (dbError) {
         console.error("Database error:", dbError);
