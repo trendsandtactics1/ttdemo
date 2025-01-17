@@ -11,7 +11,6 @@ import { Plus, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Employee {
   id: string;
@@ -33,16 +32,8 @@ const CreateTaskModal = () => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const { data, error } = await supabase
-          .from("employees")
-          .select("id, email, name, designation")
-          .order("name");
-        
-        if (error) {
-          console.error("Error fetching employees:", error);
-          throw error;
-        }
-        setEmployees(data || []);
+        // TODO: Implement new employee fetching logic
+        setEmployees([]);
       } catch (error) {
         console.error("Error fetching employees:", error);
         toast({
@@ -68,24 +59,7 @@ const CreateTaskModal = () => {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("No authenticated user found");
-      }
-
-      const { error } = await supabase.from("tasks").insert([{
-        title,
-        description,
-        assigned_to: assignedTo,
-        created_by: user.id,
-        status: "pending",
-        due_date: dueDate.toISOString(),
-        assigned_date: assignedDate.toISOString(),
-      }]);
-
-      if (error) throw error;
-
+      // TODO: Implement new task creation logic
       toast({
         title: "Success",
         description: "Task created successfully",

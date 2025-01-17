@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Upload } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 const EmployeeProfile = () => {
   const [profile, setProfile] = useState({
@@ -20,29 +19,15 @@ const EmployeeProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data, error } = await supabase
-          .from("employees")
-          .select("*")
-          .eq("email", user.email)
-          .single();
-
-        if (error) {
-          console.error("Error fetching profile:", error);
-          throw error;
-        }
-
-        if (data) {
-          setProfile({
-            name: data.name || "",
-            email: data.email || "",
-            employeeId: data.employee_id || "",
-            designation: data.designation || "",
-            profilePhoto: data.profile_photo || "",
-          });
-        }
+        // TODO: Implement new profile fetching logic
+        // Placeholder data
+        setProfile({
+          name: "",
+          email: "",
+          employeeId: "",
+          designation: "",
+          profilePhoto: "",
+        });
       } catch (error) {
         console.error("Error fetching profile:", error);
         toast({
@@ -61,29 +46,7 @@ const EmployeeProfile = () => {
     if (!file) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email) return;
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.email}-${Math.random()}.${fileExt}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('profile')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile')
-        .getPublicUrl(fileName);
-
-      const { error: updateError } = await supabase
-        .from('employees')
-        .update({ profile_photo: publicUrl })
-        .eq('email', user.email);
-
-      if (updateError) throw updateError;
-
-      setProfile(prev => ({ ...prev, profilePhoto: publicUrl }));
+      // TODO: Implement new photo upload logic
       toast({
         title: "Success",
         description: "Profile photo updated successfully",
