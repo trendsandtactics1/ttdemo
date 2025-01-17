@@ -46,7 +46,8 @@ export const fetchUsers = async (): Promise<User[]> => {
   try {
     const { data: employees, error } = await serviceRoleClient
       .from("employees")
-      .select("*");
+      .select("*")
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error("Error fetching employees:", error);
