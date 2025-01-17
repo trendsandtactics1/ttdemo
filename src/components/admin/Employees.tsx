@@ -15,8 +15,8 @@ const EmployeePage = () => {
       const { data, error } = await serviceRoleClient
         .from("employees")
         .select("*")
-        .ilike("name", `%${searchTerm}%`) // Filter by search term
-        .range((page - 1) * pageSize, page * pageSize - 1); // Pagination
+        .ilike("name", `%${searchTerm}%`)
+        .range((page - 1) * pageSize, page * pageSize - 1);
 
       if (error) throw error;
 
@@ -33,7 +33,7 @@ const EmployeePage = () => {
   }, [searchTerm, page]);
 
   const handleEmployeeDeleted = () => {
-    fetchEmployees(); // Refresh the employee list after deletion
+    fetchEmployees();
   };
 
   return (
