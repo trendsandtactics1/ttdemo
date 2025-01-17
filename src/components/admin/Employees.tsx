@@ -1,60 +1,73 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { serviceRoleClient } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
 import EmployeeList from "./EmployeeList";
 
-const Employees = () => {
-  const [employees, setEmployees] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+const EmployeePage = () => {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const fetchEmployees = async () => {
+    setLoading(true);
     try {
-      setIsLoading(true);
       const { data, error } = await serviceRoleClient
         .from("employees")
         .select("*")
-        .order("created_at", { ascending: false });
+        .ilike("name", `%${searchTerm}%`) // Filter by search term
+        .range((page - 1) * pageSize, page * pageSize - 1); // Pagination
 
-      if (error) {
-        console.error("Error details:", error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch employees. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (error) throw error;
 
       setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred while fetching employees.",
-        variant: "destructive",
-      });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [searchTerm, page]);
+
+  const handleEmployeeDeleted = () => {
+    fetchEmployees(); // Refresh the employee list after deletion
+  };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">Employees</h2>
-      {isLoading ? (
-        <div className="flex items-center justify-center p-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      ) : (
-        <EmployeeList employees={employees} onEmployeeDeleted={fetchEmployees} />
-      )}
+    <div className="space-y-4">
+      <input
+        type="text"
+        placeholder="Search employees..."
+        className="w-full p-2 border rounded"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <EmployeeList
+        employees={employees}
+        onEmployeeDeleted={handleEmployeeDeleted}
+        loading={loading}
+      />
+      <div className="flex justify-between items-center mt-4">
+        <button
+          disabled={page === 1}
+          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          onClick={() => setPage(page - 1)}
+        >
+          Previous
+        </button>
+        <span>Page {page}</span>
+        <button
+          className="px-4 py-2 bg-gray-200 rounded"
+          onClick={() => setPage(page + 1)}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
 
-export default Employees;
+export default EmployeePage;
