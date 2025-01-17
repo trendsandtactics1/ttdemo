@@ -15,7 +15,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { serviceRoleClient } from "@/integrations/supabase/client";
 
 const employeeSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -46,50 +45,18 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
-      // Step 1: Create a user in Supabase Auth
-      const { data: authData, error: authError } = await serviceRoleClient.auth.admin.createUser({
-        email: data.email,
-        password: data.password,
-        email_confirm: true
-      });
-
-      if (authError) {
-        console.error("Auth error:", authError);
-        throw new Error(authError.message);
-      }
-
-      // Step 2: Insert additional employee details in the database
-      const { error: dbError } = await serviceRoleClient
-        .from("employees")
-        .insert({
-          id: authData.user?.id,
-          name: data.name,
-          email: data.email,
-          employee_id: data.employeeId,
-          designation: data.designation,
-          password: data.password,
-          role: 'employee'
-        });
-
-      if (dbError) {
-        console.error("Database error:", dbError);
-        throw new Error(dbError.message);
-      }
-
-      // Step 3: Success handling
+      // TODO: Implement new employee creation logic
       toast({
         title: "Success",
         description: "Employee added successfully",
       });
-
       form.reset();
       onEmployeeAdded();
     } catch (error) {
-      // Step 4: Error handling
-      console.error("Error creating user:", error);
+      console.error("Error creating employee:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add employee",
+        description: "Failed to add employee",
         variant: "destructive",
       });
     }

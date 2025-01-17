@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { serviceRoleClient } from "@/integrations/supabase/client";
 import EmployeeList from "./EmployeeList";
 import { Employee } from "./types";
 import { useToast } from "@/components/ui/use-toast";
@@ -15,24 +14,15 @@ const EmployeePage = () => {
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      const { data, error } = await serviceRoleClient
-        .from("employees")
-        .select("*")
-        .ilike("name", `%${searchTerm}%`)
-        .range((page - 1) * pageSize, page * pageSize - 1);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch employees",
-          variant: "destructive",
-        });
-        throw error;
-      }
-
-      setEmployees(data || []);
+      // TODO: Implement new data fetching logic
+      setEmployees([]);
     } catch (error) {
       console.error("Error fetching employees:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch employees",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

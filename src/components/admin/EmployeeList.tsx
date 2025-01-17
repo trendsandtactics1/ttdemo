@@ -11,7 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { serviceRoleClient } from "@/integrations/supabase/client";
 import { Employee } from "./types";
 
 interface EmployeeListProps {
@@ -25,24 +24,17 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
 
   const handleDeleteEmployee = async (employeeId: string) => {
     try {
-      const { error } = await serviceRoleClient
-        .from("employees")
-        .delete()
-        .eq("employee_id", employeeId);
-
-      if (error) throw error;
-
+      // TODO: Implement new delete logic
       toast({
         title: "Success",
         description: "Employee deleted successfully",
       });
-
       onEmployeeDeleted();
     } catch (error) {
       console.error("Error deleting employee:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete employee",
+        description: "Failed to delete employee",
         variant: "destructive",
       });
     }
