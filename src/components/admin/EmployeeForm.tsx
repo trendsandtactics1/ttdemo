@@ -46,25 +46,44 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
-      const { error } = await supabase.from("employees").insert([{
-        name: data.name,
+      // Step 1: Create a user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
-        employee_id: data.employeeId,
-        designation: data.designation,
         password: data.password,
-      }]);
+      });
 
-      if (error) throw error;
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw new Error(authError.message);
+      }
 
+      // Step 2: Insert additional employee details in the database
+      const { error: dbError } = await supabase.from("employees").insert([
+        {
+          user_id: authData.user?.id, // Link to Supabase Auth user ID
+          name: data.name,
+          email: data.email,
+          employee_id: data.employeeId,
+          designation: data.designation,
+        },
+      ]);
+
+      if (dbError) {
+        console.error("Database error:", dbError);
+        throw new Error(dbError.message);
+      }
+
+      // Step 3: Success handling
       toast({
         title: "Success",
         description: "Employee added successfully",
       });
-      
+
       form.reset();
       onEmployeeAdded();
     } catch (error) {
-      console.error("Error adding employee:", error);
+      // Step 4: Error handling
+      console.error("Error creating user:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to add employee",
