@@ -12,15 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { serviceRoleClient } from "@/integrations/supabase/client";
-
-interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  employee_id: string;
-  designation: string;
-  profile_photo?: string;
-}
+import { Employee } from "./types";
 
 interface EmployeeListProps {
   employees: Employee[];
