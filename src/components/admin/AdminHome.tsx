@@ -9,19 +9,19 @@ const AdminHome = () => {
   const [stats, setStats] = useState([
     {
       title: "Total Employees",
-      value: "9",
+      value: "10",
       icon: Users,
       description: "Active employees",
     },
     {
       title: "Present Today",
-      value: "8",
+      value: "0",
       icon: CheckCircle,
       description: "Attendance rate",
     },
     {
       title: "Absent Today",
-      value: "1",
+      value: "0",
       icon: XCircle,
       description: "Absence rate",
     },
@@ -35,29 +35,19 @@ const AdminHome = () => {
 
   useEffect(() => {
     const updateStats = () => {
-      const employees = localStorageService.getEmployees();
       const tasks = localStorageService.getTasks();
-      const leaveRequests = leaveRequestService.getAllRequests();
       const pendingTasks = tasks.filter(task => task.status === 'pending').length;
-      const totalEmployees = employees.length;
+      const totalEmployees = 10; // Constant value as requested
 
       // Get today's date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0];
       
-      // Count approved leave requests for today
-      const approvedLeavesToday = leaveRequests.filter(request => {
-        const startDate = new Date(request.startDate).toISOString().split('T')[0];
-        const endDate = new Date(request.endDate).toISOString().split('T')[0];
-        return (
-          request.status === 'approved' &&
-          today >= startDate &&
-          today <= endDate
-        );
-      }).length;
-
-      // Calculate present and absent counts
-      const absentToday = approvedLeavesToday;
-      const presentToday = totalEmployees - absentToday;
+      // Get attendance records for today
+      const attendanceRecords = document.dispatchEvent(new CustomEvent('fetch-attendance'));
+      const presentToday = attendanceRecords ? attendanceRecords.length : 0;
+      
+      // Calculate absent count
+      const absentToday = totalEmployees - presentToday;
       
       setStats([
         {
@@ -70,13 +60,13 @@ const AdminHome = () => {
           title: "Present Today",
           value: presentToday.toString(),
           icon: CheckCircle,
-          description: `${Math.round((presentToday/totalEmployees || 0) * 100)}% attendance`,
+          description: `${Math.round((presentToday/totalEmployees) * 100)}% attendance`,
         },
         {
           title: "Absent Today",
           value: absentToday.toString(),
           icon: XCircle,
-          description: `${Math.round((absentToday/totalEmployees || 0) * 100)}% absence rate`,
+          description: `${Math.round((absentToday/totalEmployees) * 100)}% absence rate`,
         },
         {
           title: "Pending Tasks",
