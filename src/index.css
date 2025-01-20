@@ -61,7 +61,7 @@
 /* Mobile-first responsive utilities */
 @layer utilities {
   .responsive-container {
-    @apply w-full px-4 sm:px-6 md:px-8 mx-auto;
+    @apply w-full px-4 sm:px-6 md:px-8 mx-auto max-w-7xl;
   }
   
   .responsive-grid {
@@ -74,6 +74,14 @@
   
   .responsive-padding {
     @apply p-4 sm:p-6 md:p-8;
+  }
+
+  .responsive-flex {
+    @apply flex flex-col sm:flex-row gap-4;
+  }
+
+  .responsive-width {
+    @apply w-full sm:w-auto;
   }
 }
 
@@ -88,6 +96,12 @@
     max-width: none !important;
     margin: 1rem auto !important;
   }
+
+  /* Improved touch targets */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 /* Improve form elements on mobile */
@@ -99,4 +113,27 @@
   .form-container {
     padding: 1rem !important;
   }
+
+  /* Stack form elements vertically */
+  .form-group {
+    @apply flex flex-col gap-2;
+  }
+}
+
+/* Improved table responsiveness */
+.table-container {
+  @apply w-full overflow-x-auto -mx-4 sm:mx-0;
+}
+
+.table-container table {
+  @apply min-w-full;
+}
+
+/* Card responsiveness */
+.card-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
+}
+
+.card-container {
+  @apply flex flex-col p-4 h-full;
 }

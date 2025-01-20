@@ -5,13 +5,13 @@
 
 @media (max-width: 640px) {
   #root {
-    padding: 1rem;
+    padding: 0;
   }
 }
 
 @media (min-width: 641px) {
   #root {
-    padding: 2rem;
+    padding: 0;
   }
 }
 
@@ -67,5 +67,61 @@
   
   .form-container {
     padding: 1rem;
+  }
+}
+
+/* Improved responsive layout */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.responsive-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Responsive text adjustments */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  p {
+    font-size: 0.875rem;
+  }
+}
+
+/* Responsive table adjustments */
+@media (max-width: 640px) {
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 100%;
+  }
+}
+
+/* Responsive form elements */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    width: 100%;
+  }
+  
+  button {
+    width: 100%;
+    margin: 0.5rem 0;
   }
 }

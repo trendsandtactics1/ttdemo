@@ -15,17 +15,19 @@ const AdminDashboard = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AdminSidebar />
-        <main className="flex-1 p-4 md:p-6 pt-16 md:pt-6">
-          <Routes>
-            <Route path="/" element={<AdminHome />} />
-            <Route path="/attendance" element={<AttendanceTable />} />
-            <Route path="/leave-requests" element={<LeaveRequests />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/tasks/:taskId/chat" element={<TaskChat />} />
-            <Route path="/employees" element={<Employees />} />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/announcements" element={<Announcements />} />
-          </Routes>
+        <main className="flex-1 overflow-auto">
+          <div className="px-4 md:px-6 py-16 md:py-6 max-w-7xl mx-auto">
+            <Routes>
+              <Route path="/" element={<AdminHome />} />
+              <Route path="/attendance" element={<AttendanceTable />} />
+              <Route path="/leave-requests" element={<LeaveRequests />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/tasks/:taskId/chat" element={<TaskChat />} />
+              <Route path="/employees" element={<Employees />} />
+              <Route path="/users" element={<UserManagement />} />
+              <Route path="/announcements" element={<Announcements />} />
+            </Routes>
+          </div>
         </main>
       </div>
     </SidebarProvider>
