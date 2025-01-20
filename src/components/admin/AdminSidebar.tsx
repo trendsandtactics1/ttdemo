@@ -51,37 +51,39 @@ const AdminSidebar = () => {
           </SidebarTrigger>
         </div>
       )}
-      <Sidebar className="bg-white dark:bg-gray-900 border-r">
+      <Sidebar className="bg-white border-r">
         <SidebarContent>
-          <div className="p-4 border-b">
+          <div className="p-4 border-b bg-white">
             <h1 className="text-xl font-bold">HR Admin</h1>
           </div>
           <SidebarGroup>
-            <SidebarGroupLabel className="px-4 py-2">Menu</SidebarGroupLabel>
+            <SidebarGroupLabel className="px-4 py-2 bg-white">Menu</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {menuItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       disabled={item.disabled}
-                      className={`w-full flex items-center gap-3 px-4 py-2 ${
-                        location.pathname === item.path ? "bg-gray-100 dark:bg-gray-800" : ""
+                      className={`w-full flex items-center gap-3 px-4 py-2 bg-white ${
+                        location.pathname === item.path ? "bg-gray-100" : ""
                       }`}
                       onClick={() => navigate(item.path)}
                     >
                       <item.icon className="h-4 w-4" />
                       <span className="truncate">{item.title}</span>
-                      {item.disabled && <span className="ml-2 text-xs text-muted-foreground">(Coming Soon)</span>}
+                      {item.disabled && (
+                        <span className="ml-2 text-xs text-muted-foreground">(Coming Soon)</span>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <div className="mt-auto p-4 border-t">
-            <SidebarMenuButton 
-              onClick={() => navigate("/login")} 
-              className="w-full flex items-center gap-3 px-4 py-2"
+          <div className="mt-auto p-4 border-t bg-white">
+            <SidebarMenuButton
+              onClick={() => navigate("/login")}
+              className="w-full flex items-center gap-3 px-4 py-2 bg-white"
             >
               <LogOut className="h-4 w-4" />
               <span>Logout</span>
