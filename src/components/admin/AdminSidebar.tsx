@@ -57,7 +57,7 @@ const AdminSidebar = () => {
             <h1 className="text-xl font-bold">HR Admin</h1>
           </div>
           <SidebarGroup>
-            <SidebarGroupLabel className="px-4 py-2 bg-white"></SidebarGroupLabel>
+            
             <SidebarGroupContent>
               <SidebarMenu>
                 {menuItems.map((item) => (
