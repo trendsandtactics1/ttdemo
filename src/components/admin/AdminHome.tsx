@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CheckCircle, XCircle, ClipboardList } from "lucide-react";
 import { localStorageService } from "@/services/localStorageService";
 import { leaveRequestService } from "@/services/leaveRequestService";
+import { attendanceService } from "@/services/attendanceService";
 import AttendanceTable from "./AttendanceTable";
 
 const AdminHome = () => {
@@ -34,7 +35,7 @@ const AdminHome = () => {
   ]);
 
   useEffect(() => {
-    const updateStats = () => {
+    const updateStats = async () => {
       const tasks = localStorageService.getTasks();
       const pendingTasks = tasks.filter(task => task.status === 'pending').length;
       const totalEmployees = 10; // Constant value as requested
@@ -43,8 +44,9 @@ const AdminHome = () => {
       const today = new Date().toISOString().split('T')[0];
       
       // Get attendance records for today
-      const attendanceRecords = document.dispatchEvent(new CustomEvent('fetch-attendance'));
-      const presentToday = attendanceRecords ? attendanceRecords.length : 0;
+      const allAttendanceLogs = await attendanceService.getAttendanceLogs();
+      const todayAttendance = allAttendanceLogs.filter(log => log.date === today);
+      const presentToday = todayAttendance.length;
       
       // Calculate absent count
       const absentToday = totalEmployees - presentToday;
