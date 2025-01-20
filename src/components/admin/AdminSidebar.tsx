@@ -44,7 +44,7 @@ const AdminSidebar = () => {
     <>
       {isMobile && (
         <div className="fixed top-4 left-4 z-50">
-          <SidebarTrigger asChild>
+          <SidebarTrigger>
             <Button variant="outline" size="icon">
               <Menu className="h-4 w-4" />
             </Button>
