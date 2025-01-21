@@ -20,10 +20,9 @@ const UserManagement = () => {
       setUsers(fetchedUsers || []);
     } catch (error) {
       console.error("Error fetching users:", error);
-      setUsers([]);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to fetch users",
+        description: error.message || "Failed to fetch users",
         variant: "destructive",
       });
     }
@@ -41,22 +40,13 @@ const UserManagement = () => {
       console.error("Error creating user:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create user",
+        description: error.message || "Failed to create user",
         variant: "destructive",
       });
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!userId) {
-      toast({
-        title: "Error",
-        description: "Invalid user ID",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       await deleteUser(userId);
       toast({
@@ -68,7 +58,7 @@ const UserManagement = () => {
       console.error("Error deleting user:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete user",
+        description: error.message || "Failed to delete user",
         variant: "destructive",
       });
     }
@@ -86,19 +76,7 @@ const UserManagement = () => {
             <UserForm onSubmit={handleSubmit} />
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>All Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {users.length === 0 ? (
-              <p className="text-muted-foreground">No users found.</p>
-            ) : (
-              <UserList users={users} onDeleteUser={handleDeleteUser} />
-            )}
-          </CardContent>
-        </Card>
+        <UserList users={users} onDeleteUser={handleDeleteUser} />
       </div>
     </div>
   );
