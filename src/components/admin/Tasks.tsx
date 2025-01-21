@@ -43,15 +43,6 @@ const Tasks = () => {
     fetchEmployees();
   }, [sortOrder]);
 
-  const filteredTasks = tasks
-    .filter((task) => {
-      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          task.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === "all" || task.status === statusFilter;
-      const matchesAssignee = assigneeFilter === "all" || task.assigned_to === assigneeFilter;
-      return matchesSearch && matchesStatus && matchesAssignee;
-    });
-
   const handleTaskCreated = async () => {
     const { data: updatedTasks } = await supabase
       .from("tasks")
@@ -61,6 +52,15 @@ const Tasks = () => {
       setTasks(updatedTasks as Task[]);
     }
   };
+
+  const filteredTasks = tasks
+    .filter((task) => {
+      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          task.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || task.status === statusFilter;
+      const matchesAssignee = assigneeFilter === "all" || task.assigned_to === assigneeFilter;
+      return matchesSearch && matchesStatus && matchesAssignee;
+    });
 
   return (
     <div className="space-y-6 p-4 md:p-6">
