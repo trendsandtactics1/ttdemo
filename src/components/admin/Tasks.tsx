@@ -23,7 +23,9 @@ const Tasks = () => {
         .select("*")
         .order("created_at", { ascending: sortOrder === "asc" });
       
-      if (tasksData) setTasks(tasksData);
+      if (tasksData) {
+        setTasks(tasksData as Task[]);
+      }
     };
 
     const fetchEmployees = async () => {
@@ -32,7 +34,9 @@ const Tasks = () => {
         .select("*")
         .eq("role", "employee");
       
-      if (employeesData) setEmployees(employeesData);
+      if (employeesData) {
+        setEmployees(employeesData);
+      }
     };
 
     fetchTasks();
@@ -54,7 +58,9 @@ const Tasks = () => {
       .from("tasks")
       .select("*")
       .order("created_at", { ascending: false });
-    if (updatedTasks) setTasks(updatedTasks);
+    if (updatedTasks) {
+      setTasks(updatedTasks as Task[]);
+    }
   };
 
   return (
