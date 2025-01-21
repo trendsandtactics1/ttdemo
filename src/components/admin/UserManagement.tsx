@@ -1,26 +1,11 @@
-import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { UserFormData, User } from "@/types/user";
-import UserForm from "./UserForm";
-import UserList from "./UserList";
-
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
+    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -28,7 +13,7 @@ const UserManagement = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      if (data) setUsers(data as User[]);
+      setUsers(data as User[]);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -36,6 +21,8 @@ const UserManagement = () => {
         description: "Failed to fetch users",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -44,14 +31,14 @@ const UserManagement = () => {
   }, []);
 
   const handleCreateUser = async (data: UserFormData) => {
+    setIsLoading(true);
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
-        password: 'defaultPassword123', // You might want to generate this or handle it differently
+        password: 'defaultPassword123',
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error('No user returned from auth signup');
 
       const { error } = await supabase
         .from('profiles')
@@ -61,7 +48,7 @@ const UserManagement = () => {
           name: data.name,
           employee_id: data.employee_id,
           designation: data.designation,
-          role: data.role
+          role: data.role,
         });
 
       if (error) throw error;
@@ -80,31 +67,8 @@ const UserManagement = () => {
         description: "Failed to create user",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "User deleted successfully",
-      });
-
-      fetchUsers();
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete user",
-        variant: "destructive",
-      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -114,7 +78,7 @@ const UserManagement = () => {
         <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled={isLoading}>
               <Plus className="h-4 w-4 mr-2" />
               Add User
             </Button>
@@ -131,9 +95,7 @@ const UserManagement = () => {
         </Dialog>
       </div>
 
-      <UserList users={users} onDeleteUser={handleDeleteUser} />
+      {isLoading ? <p>Loading...</p> : <UserList users={users} onDeleteUser={handleDeleteUser} />}
     </div>
   );
 };
-
-export default UserManagement;
