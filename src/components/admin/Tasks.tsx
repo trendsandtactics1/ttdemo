@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Task, Employee } from "@/types/employee";
+import { Task } from "@/types/task";
+import { Employee } from "@/types/employee";
 import CreateTaskModal from "./CreateTaskModal";
 import TaskCard from "./TaskCard";
 import TaskFilters from "./TaskFilters";
@@ -16,33 +17,26 @@ const Tasks = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const sortedTasks = localStorageService.getTasks().sort((a, b) => 
-      sortOrder === "desc" 
-        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-    setTasks(sortedTasks);
-    setEmployees(localStorageService.getEmployees());
-    
-    const handleTasksUpdate = () => {
-      const updatedTasks = localStorageService.getTasks().sort((a, b) => 
-        sortOrder === "desc"
-          ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-      setTasks(updatedTasks);
+    const fetchTasks = async () => {
+      const { data: tasksData } = await supabase
+        .from("tasks")
+        .select("*")
+        .order("created_at", { ascending: sortOrder === "asc" });
+      
+      if (tasksData) setTasks(tasksData);
     };
 
-    const handleEmployeesUpdate = () => {
-      setEmployees(localStorageService.getEmployees());
+    const fetchEmployees = async () => {
+      const { data: employeesData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("role", "employee");
+      
+      if (employeesData) setEmployees(employeesData);
     };
-    
-    window.addEventListener('tasks-updated', handleTasksUpdate);
-    window.addEventListener('employees-updated', handleEmployeesUpdate);
-    return () => {
-      window.removeEventListener('tasks-updated', handleTasksUpdate);
-      window.removeEventListener('employees-updated', handleEmployeesUpdate);
-    };
+
+    fetchTasks();
+    fetchEmployees();
   }, [sortOrder]);
 
   const filteredTasks = tasks
@@ -50,7 +44,7 @@ const Tasks = () => {
       const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           task.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || task.status === statusFilter;
-      const matchesAssignee = assigneeFilter === "all" || task.assignedTo === assigneeFilter;
+      const matchesAssignee = assigneeFilter === "all" || task.assigned_to === assigneeFilter;
       return matchesSearch && matchesStatus && matchesAssignee;
     });
 

@@ -43,13 +43,13 @@ const UserManagement = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .insert([{
+        .insert({
           email: data.email,
           name: data.name,
           employee_id: data.employee_id,
           designation: data.designation,
           role: data.role
-        }]);
+        });
 
       if (error) throw error;
 
@@ -68,30 +68,6 @@ const UserManagement = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", userId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "User deleted successfully",
-      });
-      loadUsers();
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete user",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
@@ -104,7 +80,7 @@ const UserManagement = () => {
             <UserForm onSubmit={handleSubmit} />
           </CardContent>
         </Card>
-        <UserList users={users} onDeleteUser={handleDeleteUser} />
+        <UserList users={users} onDeleteUser={loadUsers} />
       </div>
     </div>
   );

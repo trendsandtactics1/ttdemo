@@ -23,13 +23,9 @@ import { UserFormData } from "@/types/user";
 
 const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address").refine((email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }, "Invalid email format"),
-  employeeId: z.string().min(1, "Employee ID is required"),
+  email: z.string().email("Invalid email address"),
+  employee_id: z.string().min(1, "Employee ID is required"),
   designation: z.string().min(1, "Designation is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["admin", "manager", "employee"] as const),
 });
 
@@ -43,18 +39,14 @@ const UserForm = ({ onSubmit }: UserFormProps) => {
     defaultValues: {
       name: "",
       email: "",
-      employeeId: "",
+      employee_id: "",
       designation: "",
-      password: "",
       role: "employee",
     },
   });
 
   const handleSubmit = async (data: UserFormData) => {
     try {
-      if (!data) {
-        throw new Error("Form data is required");
-      }
       await onSubmit(data);
       form.reset();
     } catch (error) {
@@ -94,7 +86,7 @@ const UserForm = ({ onSubmit }: UserFormProps) => {
           />
           <FormField
             control={form.control}
-            name="employeeId"
+            name="employee_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Employee ID</FormLabel>
@@ -120,32 +112,12 @@ const UserForm = ({ onSubmit }: UserFormProps) => {
           />
           <FormField
             control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="Enter password"
-                    type="password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
             name="role"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Role</FormLabel>
                 <FormControl>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
