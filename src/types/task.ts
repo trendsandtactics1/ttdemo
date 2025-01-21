@@ -6,8 +6,8 @@ export interface Task {
   description: string;
   assigned_to: string | null;
   assigned_by: string | null;
-  due_date: string;
   assigned_date: string;
+  due_date: string;
   status: TaskStatus;
   created_at: string;
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Task } from "@/types/task";
-import { Employee } from "./types";
+import { Employee } from "@/types/employee";
 import CreateTaskModal from "./CreateTaskModal";
 import TaskCard from "./TaskCard";
 import TaskFilters from "./TaskFilters";
@@ -18,10 +18,15 @@ const Tasks = () => {
 
   useEffect(() => {
     const fetchTasks = async () => {
-      const { data: tasksData } = await supabase
+      const { data: tasksData, error } = await supabase
         .from("tasks")
         .select("*")
         .order("created_at", { ascending: sortOrder === "asc" });
+      
+      if (error) {
+        console.error("Error fetching tasks:", error);
+        return;
+      }
       
       if (tasksData) {
         setTasks(tasksData as Task[]);
@@ -29,10 +34,15 @@ const Tasks = () => {
     };
 
     const fetchEmployees = async () => {
-      const { data: employeesData } = await supabase
+      const { data: employeesData, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("role", "employee");
+      
+      if (error) {
+        console.error("Error fetching employees:", error);
+        return;
+      }
       
       if (employeesData) {
         setEmployees(employeesData);

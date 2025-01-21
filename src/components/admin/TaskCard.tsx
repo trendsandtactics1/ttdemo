@@ -1,10 +1,12 @@
-import { Task, Employee, localStorageService } from "@/services/localStorageService";
+import { Task } from "@/types/task";
+import { Employee } from "@/types/employee";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -22,27 +24,66 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleStatusUpdate = (taskId: string, newStatus: Task['status']) => {
-    localStorageService.updateTask(taskId, { status: newStatus });
+  const handleStatusUpdate = async (taskId: string, newStatus: Task['status']) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: newStatus })
+      .eq('id', taskId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
-      title: "Task Updated",
-      description: "Task status has been successfully updated.",
+      title: "Success",
+      description: "Task status has been updated",
     });
   };
 
-  const handleReassign = (taskId: string, newAssigneeId: string) => {
-    localStorageService.updateTask(taskId, { assignedTo: newAssigneeId });
+  const handleReassign = async (taskId: string, newAssigneeId: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ assigned_to: newAssigneeId })
+      .eq('id', taskId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reassign task",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
-      title: "Task Reassigned",
-      description: "Task has been successfully reassigned.",
+      title: "Success",
+      description: "Task has been reassigned",
     });
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    localStorageService.deleteTask(taskId);
+  const handleDeleteTask = async (taskId: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete task",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
-      title: "Task Deleted",
-      description: "Task has been successfully deleted.",
+      title: "Success",
+      description: "Task has been deleted",
     });
   };
 
@@ -74,19 +115,15 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-md">
           <div>
             <p className="text-sm font-medium text-gray-500">Due Date</p>
-            <p className="text-gray-800">{new Date(task.dueDate).toLocaleDateString()}</p>
+            <p className="text-gray-800">{new Date(task.due_date).toLocaleDateString()}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Assigned Date</p>
-            <p className="text-gray-800">{new Date(task.assignedDate).toLocaleDateString()}</p>
+            <p className="text-gray-800">{new Date(task.assigned_date).toLocaleDateString()}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Created At</p>
-            <p className="text-gray-800">{new Date(task.createdAt).toLocaleDateString()}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Last Updated</p>
-            <p className="text-gray-800">{new Date(task.updatedAt).toLocaleDateString()}</p>
+            <p className="text-gray-800">{new Date(task.created_at).toLocaleDateString()}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 pt-2">
@@ -114,7 +151,7 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
           </Select>
           <Select
             onValueChange={(value) => handleReassign(task.id, value)}
-            defaultValue={task.assignedTo}
+            defaultValue={task.assigned_to || undefined}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Reassign to..." />
