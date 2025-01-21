@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { supabase } from "@/integrations/supabase/client";
 
 const employeeSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -32,6 +33,8 @@ interface EmployeeFormProps {
 
 const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
@@ -45,20 +48,44 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
 
   const onSubmit = async (data: EmployeeFormData) => {
     try {
-      // TODO: Implement new employee creation logic
+      setIsSubmitting(true);
+      
+      // First, create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (authError) throw new Error(authError.message);
+      if (!authData.user) throw new Error("Failed to create user");
+
+      // Then call our database function to create the employee profile
+      const { data: employeeData, error: employeeError } = await supabase
+        .rpc('create_employee_with_auth', {
+          p_email: data.email,
+          p_name: data.name,
+          p_employee_id: data.employeeId,
+          p_designation: data.designation
+        });
+
+      if (employeeError) throw new Error(employeeError.message);
+
       toast({
         title: "Success",
         description: "Employee added successfully",
       });
+      
       form.reset();
       onEmployeeAdded();
     } catch (error) {
       console.error("Error creating employee:", error);
       toast({
         title: "Error",
-        description: "Failed to add employee",
+        description: error instanceof Error ? error.message : "Failed to add employee",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -141,9 +168,9 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
                 )}
               />
             </div>
-            <Button type="submit">
+            <Button type="submit" disabled={isSubmitting}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Employee
+              {isSubmitting ? "Adding Employee..." : "Add Employee"}
             </Button>
           </form>
         </Form>

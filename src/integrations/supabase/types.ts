@@ -90,34 +90,43 @@ export type Database = {
       }
       profiles: {
         Row: {
+          bank_account: string | null
           created_at: string
           designation: string | null
           email: string
           employee_id: string | null
           id: string
+          joining_date: string | null
           name: string | null
           profile_photo: string | null
           role: Database["public"]["Enums"]["user_role"]
+          salary: number | null
         }
         Insert: {
+          bank_account?: string | null
           created_at?: string
           designation?: string | null
           email: string
           employee_id?: string | null
           id: string
+          joining_date?: string | null
           name?: string | null
           profile_photo?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          salary?: number | null
         }
         Update: {
+          bank_account?: string | null
           created_at?: string
           designation?: string | null
           email?: string
           employee_id?: string | null
           id?: string
+          joining_date?: string | null
           name?: string | null
           profile_photo?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          salary?: number | null
         }
         Relationships: []
       }
