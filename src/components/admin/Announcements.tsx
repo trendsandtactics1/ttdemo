@@ -24,11 +24,20 @@ const Announcements = () => {
   const [content, setContent] = useState("");
   const [image, setImage] = useState<string>("");
   const { toast } = useToast();
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAnnouncements();
     setupRealtimeSubscription();
+    getCurrentUser();
   }, []);
+
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+    }
+  };
 
   const fetchAnnouncements = async () => {
     try {
@@ -107,6 +116,15 @@ const Announcements = () => {
       return;
     }
 
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create announcements",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       if (editingAnnouncement) {
         const { error } = await supabase
@@ -126,6 +144,7 @@ const Announcements = () => {
             title,
             content,
             image_url: image,
+            created_by: userId
           });
 
         if (error) throw error;
