@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Task, Employee, localStorageService } from "@/services/localStorageService";
+import { Task, Employee } from "@/types/employee";
 import CreateTaskModal from "./CreateTaskModal";
 import TaskCard from "./TaskCard";
 import TaskFilters from "./TaskFilters";
+import { supabase } from "@/integrations/supabase/client";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -12,6 +13,7 @@ const Tasks = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const sortedTasks = localStorageService.getTasks().sort((a, b) => 
@@ -52,11 +54,24 @@ const Tasks = () => {
       return matchesSearch && matchesStatus && matchesAssignee;
     });
 
+  const handleTaskCreated = async () => {
+    // Refresh tasks list
+    const { data: updatedTasks } = await supabase
+      .from("tasks")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (updatedTasks) setTasks(updatedTasks);
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-3xl font-bold tracking-tight">Tasks</h2>
-        <CreateTaskModal />
+        <CreateTaskModal 
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          onTaskCreated={handleTaskCreated}
+        />
       </div>
 
       <TaskFilters

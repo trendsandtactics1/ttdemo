@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import UserForm from "./UserForm";
 import UserList from "./UserList";
-import { User } from "@/types/user";
+import { User, UserFormData } from "@/types/user";
 import { supabase } from "@/integrations/supabase/client";
 
 const UserManagement = () => {
@@ -25,7 +25,8 @@ const UserManagement = () => {
       const formattedUsers = data.map(user => ({
         ...user,
         employee_id: user.employee_id || '',
-      }));
+        role: user.role || 'employee'
+      })) as User[];
 
       setUsers(formattedUsers);
     } catch (error) {
@@ -38,11 +39,17 @@ const UserManagement = () => {
     }
   };
 
-  const handleSubmit = async (data: Omit<User, 'id'>) => {
+  const handleSubmit = async (data: UserFormData) => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .insert([data]);
+        .insert([{
+          email: data.email,
+          name: data.name,
+          employee_id: data.employee_id,
+          designation: data.designation,
+          role: data.role
+        }]);
 
       if (error) throw error;
 
