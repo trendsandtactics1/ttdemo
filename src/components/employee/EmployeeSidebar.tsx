@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import ProfileUpdateModal from "./ProfileUpdateModal";
 
 interface MenuItem {
   title: string;
@@ -75,11 +74,6 @@ const EmployeeSidebar = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
-                <SidebarMenuItem>
-                  <div className="px-4 py-2">
-                    <ProfileUpdateModal />
-                  </div>
-                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

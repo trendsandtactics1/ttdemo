@@ -11,6 +11,7 @@ import { Plus, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Employee {
   id: string;
@@ -32,8 +33,13 @@ const CreateTaskModal = () => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        // TODO: Implement new employee fetching logic
-        setEmployees([]);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, email, name, designation')
+          .eq('role', 'employee');
+        
+        if (error) throw error;
+        setEmployees(data || []);
       } catch (error) {
         console.error("Error fetching employees:", error);
         toast({
@@ -59,7 +65,23 @@ const CreateTaskModal = () => {
     }
 
     try {
-      // TODO: Implement new task creation logic
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+
+      const { error } = await supabase
+        .from('tasks')
+        .insert({
+          title,
+          description,
+          assigned_to: assignedTo,
+          assigned_by: userData.user.id,
+          due_date: dueDate.toISOString(),
+          assigned_date: assignedDate.toISOString(),
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Task created successfully",
@@ -123,7 +145,7 @@ const CreateTaskModal = () => {
               </SelectTrigger>
               <SelectContent>
                 {employees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.email}>
+                  <SelectItem key={employee.id} value={employee.id}>
                     {employee.name} - {employee.designation}
                   </SelectItem>
                 ))}
