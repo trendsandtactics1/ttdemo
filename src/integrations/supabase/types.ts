@@ -180,6 +180,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_employee_with_auth: {
+        Args: {
+          p_email: string
+          p_name: string
+          p_employee_id: string
+          p_designation: string
+        }
+        Returns: string
+      }
       insert_employee_data: {
         Args: {
           p_email: string
