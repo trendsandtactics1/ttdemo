@@ -53,7 +53,6 @@ const Tasks = () => {
     });
 
   const handleTaskCreated = async () => {
-    // Refresh tasks list
     const { data: updatedTasks } = await supabase
       .from("tasks")
       .select("*")

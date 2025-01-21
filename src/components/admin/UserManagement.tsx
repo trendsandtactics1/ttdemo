@@ -47,13 +47,13 @@ const UserManagement = () => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .insert({
+        .insert([{
           email: data.email,
           name: data.name,
           employee_id: data.employee_id,
           designation: data.designation,
           role: data.role
-        });
+        }]);
 
       if (error) throw error;
 
