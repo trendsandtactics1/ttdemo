@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import UserForm from "./UserForm";
 import UserList from "./UserList";
-import { createUser, fetchUsers, deleteUser } from "@/services/userService";
-import type { User, UserFormData } from "@/types/user";
+import { User } from "@/types/user";
+import { supabase } from "@/integrations/supabase/client";
 
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -16,21 +16,36 @@ const UserManagement = () => {
 
   const loadUsers = async () => {
     try {
-      const fetchedUsers = await fetchUsers();
-      setUsers(fetchedUsers || []);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*");
+
+      if (error) throw error;
+
+      const formattedUsers = data.map(user => ({
+        ...user,
+        employee_id: user.employee_id || '',
+      }));
+
+      setUsers(formattedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to fetch users",
+        description: "Failed to fetch users",
         variant: "destructive",
       });
     }
   };
 
-  const handleSubmit = async (data: UserFormData) => {
+  const handleSubmit = async (data: Omit<User, 'id'>) => {
     try {
-      await createUser(data);
+      const { error } = await supabase
+        .from("profiles")
+        .insert([data]);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "User created successfully",
@@ -40,7 +55,7 @@ const UserManagement = () => {
       console.error("Error creating user:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create user",
+        description: "Failed to create user",
         variant: "destructive",
       });
     }
@@ -48,7 +63,13 @@ const UserManagement = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      await deleteUser(userId);
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "User deleted successfully",
@@ -58,7 +79,7 @@ const UserManagement = () => {
       console.error("Error deleting user:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete user",
+        description: "Failed to delete user",
         variant: "destructive",
       });
     }

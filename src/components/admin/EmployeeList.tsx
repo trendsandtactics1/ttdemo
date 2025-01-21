@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Employee } from "./types";
+import { Employee } from "@/types/employee";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmployeeListProps {
@@ -26,9 +26,9 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
   const handleDeleteEmployee = async (employeeId: string) => {
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from("profiles")
         .delete()
-        .eq('id', employeeId);
+        .eq("id", employeeId);
 
       if (error) throw error;
 

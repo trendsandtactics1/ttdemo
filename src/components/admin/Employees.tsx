@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import EmployeeList from "./EmployeeList";
-import { Employee } from "./types";
+import { Employee } from "@/types/employee";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,9 +16,9 @@ const EmployeePage = () => {
     setLoading(true);
     try {
       let query = supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'employee');
+        .from("profiles")
+        .select("*")
+        .eq("role", "employee");
 
       if (searchTerm) {
         query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
@@ -26,7 +26,7 @@ const EmployeePage = () => {
 
       const { data, error } = await query
         .range((page - 1) * pageSize, page * pageSize - 1)
-        .order('created_at', { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
