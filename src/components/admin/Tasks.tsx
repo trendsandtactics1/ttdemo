@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Task } from "@/types/task";
-import { Employee } from "@/types/employee";
+import { Employee } from "./types";
 import CreateTaskModal from "./CreateTaskModal";
 import TaskCard from "./TaskCard";
 import TaskFilters from "./TaskFilters";
