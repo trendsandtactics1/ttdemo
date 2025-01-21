@@ -45,9 +45,18 @@ const UserManagement = () => {
 
   const handleCreateUser = async (data: UserFormData) => {
     try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: 'defaultPassword123', // You might want to generate this or handle it differently
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('No user returned from auth signup');
+
       const { error } = await supabase
         .from('profiles')
         .insert({
+          id: authData.user.id,
           email: data.email,
           name: data.name,
           employee_id: data.employee_id,
