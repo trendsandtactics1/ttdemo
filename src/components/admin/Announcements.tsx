@@ -25,6 +25,7 @@ const Announcements = () => {
   const [image, setImage] = useState<string>("");
   const { toast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -36,6 +37,9 @@ const Announcements = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setUserId(user.id);
+      console.log("Current user ID:", user.id); // Debug log
+    } else {
+      console.log("No authenticated user found"); // Debug log
     }
   };
 
@@ -77,31 +81,59 @@ const Announcements = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
+    if (!file) return;
 
-        const { error: uploadError } = await supabase.storage
-          .from('announcements')
-          .upload(filePath, file);
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to upload images",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        if (uploadError) throw uploadError;
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('announcements')
-          .getPublicUrl(filePath);
+      console.log("Attempting to upload file:", filePath); // Debug log
 
-        setImage(publicUrl);
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        toast({
-          title: "Error",
-          description: "Failed to upload image",
-          variant: "destructive",
+      const { error: uploadError, data } = await supabase.storage
+        .from('announcements')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
         });
+
+      if (uploadError) {
+        console.error('Upload error details:', uploadError); // Debug log
+        throw uploadError;
       }
+
+      console.log("Upload successful, getting public URL"); // Debug log
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('announcements')
+        .getPublicUrl(filePath);
+
+      console.log("Public URL obtained:", publicUrl); // Debug log
+
+      setImage(publicUrl);
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+    } catch (error) {
+      console.error('Detailed upload error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -240,9 +272,14 @@ const Announcements = () => {
               </div>
               <div>
                 <label className="block mb-2">
-                  <Button type="button" variant="outline" onClick={() => document.getElementById('image-upload')?.click()}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => document.getElementById('image-upload')?.click()}
+                    disabled={isUploading}
+                  >
                     <Image className="h-4 w-4 mr-2" />
-                    Upload Image (Optional)
+                    {isUploading ? "Uploading..." : "Upload Image (Optional)"}
                   </Button>
                   <input
                     id="image-upload"
@@ -250,13 +287,14 @@ const Announcements = () => {
                     accept="image/*"
                     className="hidden"
                     onChange={handleImageUpload}
+                    disabled={isUploading}
                   />
                 </label>
                 {image && (
                   <img src={image} alt="Preview" className="mt-2 max-h-40 rounded" />
                 )}
               </div>
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={isUploading}>
                 {editingAnnouncement ? "Update" : "Create"}
               </Button>
             </form>
