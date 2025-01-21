@@ -6,13 +6,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Image } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Announcement {
   id: string;
   title: string;
   content: string;
-  image?: string;
-  createdAt: string;
+  image_url?: string;
+  created_at: string;
 }
 
 const Announcements = () => {
@@ -25,28 +26,77 @@ const Announcements = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const stored = localStorage.getItem("announcements");
-    if (stored) {
-      // Sort announcements in descending order by createdAt
-      const sortedAnnouncements = JSON.parse(stored).sort((a: Announcement, b: Announcement) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setAnnouncements(sortedAnnouncements);
-    }
+    fetchAnnouncements();
+    setupRealtimeSubscription();
   }, []);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  const fetchAnnouncements = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAnnouncements(data || []);
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch announcements",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const setupRealtimeSubscription = () => {
+    const channel = supabase
+      .channel('announcements-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'announcements' },
+        () => {
+          fetchAnnouncements();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('announcements')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('announcements')
+          .getPublicUrl(filePath);
+
+        setImage(publicUrl);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast({
+          title: "Error",
+          description: "Failed to upload image",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !content) {
       toast({
@@ -57,57 +107,79 @@ const Announcements = () => {
       return;
     }
 
-    const newAnnouncements = [...announcements];
-    
-    if (editingAnnouncement) {
-      const index = newAnnouncements.findIndex(a => a.id === editingAnnouncement.id);
-      newAnnouncements[index] = {
-        ...editingAnnouncement,
-        title,
-        content,
-        image: image || editingAnnouncement.image,
-      };
-    } else {
-      newAnnouncements.push({
-        id: crypto.randomUUID(),
-        title,
-        content,
-        image,
-        createdAt: new Date().toISOString(),
+    try {
+      if (editingAnnouncement) {
+        const { error } = await supabase
+          .from('announcements')
+          .update({
+            title,
+            content,
+            image_url: image || editingAnnouncement.image_url,
+          })
+          .eq('id', editingAnnouncement.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('announcements')
+          .insert({
+            title,
+            content,
+            image_url: image,
+          });
+
+        if (error) throw error;
+      }
+
+      setTitle("");
+      setContent("");
+      setImage("");
+      setEditingAnnouncement(null);
+      setIsOpen(false);
+
+      toast({
+        title: "Success",
+        description: `Announcement ${editingAnnouncement ? 'updated' : 'created'} successfully`,
+      });
+    } catch (error) {
+      console.error('Error saving announcement:', error);
+      toast({
+        title: "Error",
+        description: `Failed to ${editingAnnouncement ? 'update' : 'create'} announcement`,
+        variant: "destructive",
       });
     }
-
-    setAnnouncements(newAnnouncements);
-    localStorage.setItem("announcements", JSON.stringify(newAnnouncements));
-    
-    setTitle("");
-    setContent("");
-    setImage("");
-    setEditingAnnouncement(null);
-    setIsOpen(false);
-    
-    toast({
-      title: "Success",
-      description: `Announcement ${editingAnnouncement ? 'updated' : 'created'} successfully`,
-    });
   };
 
   const handleEdit = (announcement: Announcement) => {
     setEditingAnnouncement(announcement);
     setTitle(announcement.title);
     setContent(announcement.content);
-    setImage(announcement.image || "");
+    setImage(announcement.image_url || "");
     setIsOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    const newAnnouncements = announcements.filter(a => a.id !== id);
-    setAnnouncements(newAnnouncements);
-    localStorage.setItem("announcements", JSON.stringify(newAnnouncements));
-    toast({
-      title: "Success",
-      description: "Announcement deleted successfully",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Announcement deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete announcement",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -206,15 +278,15 @@ const Announcements = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p>{announcement.content}</p>
-                {announcement.image && (
+                {announcement.image_url && (
                   <img
-                    src={announcement.image}
+                    src={announcement.image_url}
                     alt={announcement.title}
                     className="rounded-lg max-h-60 object-cover"
                   />
                 )}
                 <p className="text-sm text-muted-foreground">
-                  Posted on {new Date(announcement.createdAt).toLocaleDateString()}
+                  Posted on {new Date(announcement.created_at).toLocaleDateString()}
                 </p>
               </CardContent>
             </Card>
