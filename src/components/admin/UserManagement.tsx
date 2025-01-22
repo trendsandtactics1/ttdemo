@@ -1,3 +1,20 @@
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
+import { User, UserFormData } from "@/types/user";
+import UserForm from "./UserForm";
+import UserList from "./UserList";
+
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -43,7 +60,7 @@ const UserManagement = () => {
       const { error } = await supabase
         .from('profiles')
         .insert({
-          id: authData.user.id,
+          id: authData.user?.id,
           email: data.email,
           name: data.name,
           employee_id: data.employee_id,
@@ -65,6 +82,34 @@ const UserManagement = () => {
       toast({
         title: "Error",
         description: "Failed to create user",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User deleted successfully",
+      });
+
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
         variant: "destructive",
       });
     } finally {
@@ -99,3 +144,5 @@ const UserManagement = () => {
     </div>
   );
 };
+
+export default UserManagement;
