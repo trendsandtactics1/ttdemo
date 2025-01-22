@@ -152,6 +152,16 @@ export type Database = {
         }
         Returns: string
       }
+      create_user_with_profile: {
+        Args: {
+          p_email: string
+          p_password: string
+          p_name: string
+          p_employee_id: string
+          p_role?: string
+        }
+        Returns: string
+      }
       insert_employee_data: {
         Args: {
           p_email: string

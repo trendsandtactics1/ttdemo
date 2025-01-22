@@ -54,12 +54,25 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            employee_id: data.employeeId,
+            designation: data.designation,
+          },
+        },
       });
 
-      if (authError) throw new Error(authError.message);
-      if (!authData.user) throw new Error("Failed to create user");
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw new Error(authError.message);
+      }
 
-      // Then call our database function to create the employee profile
+      if (!authData.user) {
+        throw new Error("Failed to create user");
+      }
+
+      // Then create the employee profile using our database function
       const { data: employeeData, error: employeeError } = await supabase
         .rpc('create_employee_with_auth', {
           p_email: data.email,
@@ -68,7 +81,10 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
           p_designation: data.designation
         });
 
-      if (employeeError) throw new Error(employeeError.message);
+      if (employeeError) {
+        console.error("Employee creation error:", employeeError);
+        throw new Error(employeeError.message);
+      }
 
       toast({
         title: "Success",
