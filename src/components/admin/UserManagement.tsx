@@ -14,21 +14,22 @@ const UserManagement = () => {
     loadUsers();
   }, []);
 
+  // Load users from Supabase
   const loadUsers = async () => {
     try {
       const fetchedUsers = await fetchUsers();
       setUsers(fetchedUsers || []);
     } catch (error) {
       console.error("Error fetching users:", error);
-      setUsers([]);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to fetch users",
+        description: error.message || "Failed to fetch users",
         variant: "destructive",
       });
     }
   };
 
+  // Handle user creation
   const handleSubmit = async (data: UserFormData) => {
     try {
       await createUser(data);
@@ -41,22 +42,14 @@ const UserManagement = () => {
       console.error("Error creating user:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create user",
+        description: error.message || "Failed to create user",
         variant: "destructive",
       });
     }
   };
 
+  // Handle user deletion
   const handleDeleteUser = async (userId: string) => {
-    if (!userId) {
-      toast({
-        title: "Error",
-        description: "Invalid user ID",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       await deleteUser(userId);
       toast({
@@ -68,7 +61,7 @@ const UserManagement = () => {
       console.error("Error deleting user:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete user",
+        description: error.message || "Failed to delete user",
         variant: "destructive",
       });
     }
@@ -78,6 +71,7 @@ const UserManagement = () => {
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
       <div className="space-y-6">
+        {/* Form for adding users */}
         <Card>
           <CardHeader>
             <CardTitle>Add New User</CardTitle>
@@ -87,6 +81,7 @@ const UserManagement = () => {
           </CardContent>
         </Card>
 
+        {/* User list table */}
         <Card>
           <CardHeader>
             <CardTitle>All Users</CardTitle>
