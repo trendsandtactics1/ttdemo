@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -16,9 +43,9 @@ export type Database = {
           email: string
           employee_id: string | null
           id: string
-          name: string | null
+          name: string
           profile_photo: string | null
-          role: Database["public"]["Enums"]["user_role"]
+          role: string | null
         }
         Insert: {
           created_at?: string
@@ -26,9 +53,9 @@ export type Database = {
           email: string
           employee_id?: string | null
           id: string
-          name?: string | null
+          name: string
           profile_photo?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
+          role?: string | null
         }
         Update: {
           created_at?: string
@@ -36,9 +63,78 @@ export type Database = {
           email?: string
           employee_id?: string | null
           id?: string
-          name?: string | null
+          name?: string
           profile_photo?: string | null
-          role?: Database["public"]["Enums"]["user_role"]
+          role?: string | null
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assigned_by: string | null
+          assigned_date: string
+          assigned_to: string | null
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_date: string
+          assigned_to?: string | null
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_date?: string
+          assigned_to?: string | null
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          designation: string | null
+          email: string
+          employeeId: string | null
+          id: number
+          name: string
+          password: string | null
+          role: string | null
+        }
+        Insert: {
+          created_at?: string
+          designation?: string | null
+          email: string
+          employeeId?: string | null
+          id?: number
+          name: string
+          password?: string | null
+          role?: string | null
+        }
+        Update: {
+          created_at?: string
+          designation?: string | null
+          email?: string
+          employeeId?: string | null
+          id?: number
+          name?: string
+          password?: string | null
+          role?: string | null
         }
         Relationships: []
       }
@@ -47,6 +143,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_employee_with_auth: {
+        Args: {
+          p_email: string
+          p_name: string
+          p_employee_id: string
+          p_designation: string
+        }
+        Returns: string
+      }
+      create_user_with_profile: {
+        Args: {
+          p_email: string
+          p_password: string
+          p_name: string
+          p_employee_id: string
+          p_role?: string
+        }
+        Returns: string
+      }
       insert_employee_data: {
         Args: {
           p_email: string
