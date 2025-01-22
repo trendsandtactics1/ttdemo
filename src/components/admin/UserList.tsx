@@ -1,53 +1,44 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/client";
-import { UserFormData } from "@/types/user";
+import { User } from "@/types/user";
+import { Button } from "@/components/ui/button";
 
-const UserList: React.FC = () => {
-  const [users, setUsers] = useState<UserFormData[]>([]);
+interface UserListProps {
+  users: User[];
+  onDeleteUser: (userId: string) => void;
+}
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const { data, error } = await supabase.from("users").select("*");
-      if (error) {
-        console.error("Error fetching users:", error);
-        return;
-      }
-      setUsers(data || []);
-    };
-
-    fetchUsers();
-  }, []);
-
+const UserList: React.FC<UserListProps> = ({ users, onDeleteUser }) => {
   return (
-    <div className="mt-8">
-      <h2 className="text-xl font-bold">Users</h2>
-      <table className="w-full mt-4 border-collapse border border-gray-300">
-        <thead>
-          <tr>
-            <th className="border border-gray-300 px-4 py-2">Name</th>
-            <th className="border border-gray-300 px-4 py-2">Email</th>
-            <th className="border border-gray-300 px-4 py-2">Employee ID</th>
-            <th className="border border-gray-300 px-4 py-2">Designation</th>
-            <th className="border border-gray-300 px-4 py-2">Role</th>
+    <table className="w-full border-collapse border border-gray-300">
+      <thead>
+        <tr>
+          <th className="border px-4 py-2">Name</th>
+          <th className="border px-4 py-2">Email</th>
+          <th className="border px-4 py-2">Employee ID</th>
+          <th className="border px-4 py-2">Designation</th>
+          <th className="border px-4 py-2">Role</th>
+          <th className="border px-4 py-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {users.map((user) => (
+          <tr key={user.id}>
+            <td className="border px-4 py-2">{user.name}</td>
+            <td className="border px-4 py-2">{user.email}</td>
+            <td className="border px-4 py-2">{user.employeeId}</td>
+            <td className="border px-4 py-2">{user.designation}</td>
+            <td className="border px-4 py-2">{user.role}</td>
+            <td className="border px-4 py-2">
+              <Button
+                variant="destructive"
+                onClick={() => onDeleteUser(user.id)}
+              >
+                Delete
+              </Button>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.employeeId}>
-              <td className="border border-gray-300 px-4 py-2">{user.name}</td>
-              <td className="border border-gray-300 px-4 py-2">{user.email}</td>
-              <td className="border border-gray-300 px-4 py-2">
-                {user.employeeId}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                {user.designation}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">{user.role}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </table>
   );
 };
 
