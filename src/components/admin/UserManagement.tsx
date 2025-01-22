@@ -8,7 +8,6 @@ import type { User, UserFormData } from "@/types/user";
 
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(false); // Added loading state
   const { toast } = useToast();
 
   useEffect(() => {
@@ -16,7 +15,6 @@ const UserManagement = () => {
   }, []);
 
   const loadUsers = async () => {
-    setLoading(true); // Set loading to true
     try {
       const fetchedUsers = await fetchUsers();
       setUsers(fetchedUsers || []);
@@ -28,8 +26,6 @@ const UserManagement = () => {
         description: error instanceof Error ? error.message : "Failed to fetch users",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false); // Set loading to false
     }
   };
 
@@ -96,9 +92,7 @@ const UserManagement = () => {
             <CardTitle>All Users</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? ( // Show loading state
-              <p>Loading users...</p> // Replace with a spinner if desired
-            ) : users.length === 0 ? (
+            {users.length === 0 ? (
               <p className="text-muted-foreground">No users found.</p>
             ) : (
               <UserList users={users} onDeleteUser={handleDeleteUser} />
