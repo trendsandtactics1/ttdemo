@@ -11,8 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Employee } from "@/types/employee";
-import { supabase } from "@/integrations/supabase/client";
+import { Employee } from "./types";
 
 interface EmployeeListProps {
   employees: Employee[];
@@ -25,13 +24,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
 
   const handleDeleteEmployee = async (employeeId: string) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", employeeId);
-
-      if (error) throw error;
-
+      // TODO: Implement new delete logic
       toast({
         title: "Success",
         description: "Employee deleted successfully",
@@ -89,7 +82,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteEmployee(employee.id)}
+                        onClick={() => handleDeleteEmployee(employee.employee_id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

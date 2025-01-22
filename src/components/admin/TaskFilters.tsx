@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Employee } from "@/types/employee";
+import { Employee } from "@/services/localStorageService";
 
 interface TaskFiltersProps {
   searchTerm: string;

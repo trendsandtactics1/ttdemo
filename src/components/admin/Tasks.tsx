@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Task } from "@/types/task";
-import { Employee } from "@/types/employee";
+import { Task, Employee, localStorageService } from "@/services/localStorageService";
 import CreateTaskModal from "./CreateTaskModal";
 import TaskCard from "./TaskCard";
 import TaskFilters from "./TaskFilters";
-import { supabase } from "@/integrations/supabase/client";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -14,61 +12,43 @@ const Tasks = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      const { data: tasksData, error } = await supabase
-        .from("tasks")
-        .select("*")
-        .order("created_at", { ascending: sortOrder === "asc" });
-      
-      if (error) {
-        console.error("Error fetching tasks:", error);
-        return;
-      }
-      
-      if (tasksData) {
-        setTasks(tasksData as Task[]);
-      }
+    const sortedTasks = localStorageService.getTasks().sort((a, b) => 
+      sortOrder === "desc" 
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    setTasks(sortedTasks);
+    setEmployees(localStorageService.getEmployees());
+    
+    const handleTasksUpdate = () => {
+      const updatedTasks = localStorageService.getTasks().sort((a, b) => 
+        sortOrder === "desc"
+          ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      setTasks(updatedTasks);
     };
 
-    const fetchEmployees = async () => {
-      const { data: employeesData, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("role", "employee");
-      
-      if (error) {
-        console.error("Error fetching employees:", error);
-        return;
-      }
-      
-      if (employeesData) {
-        setEmployees(employeesData);
-      }
+    const handleEmployeesUpdate = () => {
+      setEmployees(localStorageService.getEmployees());
     };
-
-    fetchTasks();
-    fetchEmployees();
+    
+    window.addEventListener('tasks-updated', handleTasksUpdate);
+    window.addEventListener('employees-updated', handleEmployeesUpdate);
+    return () => {
+      window.removeEventListener('tasks-updated', handleTasksUpdate);
+      window.removeEventListener('employees-updated', handleEmployeesUpdate);
+    };
   }, [sortOrder]);
-
-  const handleTaskCreated = async () => {
-    const { data: updatedTasks } = await supabase
-      .from("tasks")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (updatedTasks) {
-      setTasks(updatedTasks as Task[]);
-    }
-  };
 
   const filteredTasks = tasks
     .filter((task) => {
       const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           task.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || task.status === statusFilter;
-      const matchesAssignee = assigneeFilter === "all" || task.assigned_to === assigneeFilter;
+      const matchesAssignee = assigneeFilter === "all" || task.assignedTo === assigneeFilter;
       return matchesSearch && matchesStatus && matchesAssignee;
     });
 
@@ -76,11 +56,7 @@ const Tasks = () => {
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-3xl font-bold tracking-tight">Tasks</h2>
-        <CreateTaskModal 
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          onTaskCreated={handleTaskCreated}
-        />
+        <CreateTaskModal />
       </div>
 
       <TaskFilters
