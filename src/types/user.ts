@@ -1,20 +1,18 @@
-export type UserRole = 'admin' | 'manager' | 'employee';
-
 export interface User {
   id: string;
   email: string;
   name: string;
-  employee_id: string;
-  designation: string;
-  created_at?: string;
+  employee_id?: string;
+  designation?: string;
+  role?: string;
   profile_photo?: string;
-  role: UserRole;
+  created_at?: string;
 }
 
 export interface UserFormData {
-  email: string;
   name: string;
+  email: string;
   employee_id: string;
   designation: string;
-  role: UserRole;
+  role: 'admin' | 'manager' | 'employee';
 }
