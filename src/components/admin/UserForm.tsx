@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { UserFormData } from "@/types/user";
+import { supabase } from "@/utils/supabaseClient";
 
 const userSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -37,7 +38,7 @@ interface UserFormProps {
   onSubmit: (data: UserFormData) => Promise<void>;
 }
 
-const UserForm = ({ onSubmit }: UserFormProps) => {
+const UserForm: React.FC<UserFormProps> = ({ onSubmit }) => {
   const form = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -52,11 +53,13 @@ const UserForm = ({ onSubmit }: UserFormProps) => {
 
   const handleSubmit = async (data: UserFormData) => {
     try {
-      if (!data) {
-        throw new Error("Form data is required");
+      const { error } = await supabase.from("users").insert([data]);
+      if (error) {
+        console.error("Error adding user:", error);
+        return;
       }
-      await onSubmit(data);
       form.reset();
+      alert("User added successfully!");
     } catch (error) {
       console.error("Error submitting form:", error);
     }
