@@ -6,34 +6,38 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Image } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface Announcement {
   id: string;
   title: string;
   content: string;
   image?: string;
-  createdAt: string;
+  created_at: string;
 }
 
 const Announcements = () => {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [image, setImage] = useState<string>("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const stored = localStorage.getItem("announcements");
-    if (stored) {
-      // Sort announcements in descending order by createdAt
-      const sortedAnnouncements = JSON.parse(stored).sort((a: Announcement, b: Announcement) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setAnnouncements(sortedAnnouncements);
+  const { data: announcements = [] } = useQuery({
+    queryKey: ['announcements'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
     }
-  }, []);
+  });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -46,7 +50,7 @@ const Announcements = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !content) {
       toast({
@@ -57,39 +61,49 @@ const Announcements = () => {
       return;
     }
 
-    const newAnnouncements = [...announcements];
-    
-    if (editingAnnouncement) {
-      const index = newAnnouncements.findIndex(a => a.id === editingAnnouncement.id);
-      newAnnouncements[index] = {
-        ...editingAnnouncement,
-        title,
-        content,
-        image: image || editingAnnouncement.image,
-      };
-    } else {
-      newAnnouncements.push({
-        id: crypto.randomUUID(),
-        title,
-        content,
-        image,
-        createdAt: new Date().toISOString(),
+    try {
+      if (editingAnnouncement) {
+        const { error } = await supabase
+          .from('announcements')
+          .update({
+            title,
+            content,
+            image: image || editingAnnouncement.image,
+          })
+          .eq('id', editingAnnouncement.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('announcements')
+          .insert({
+            title,
+            content,
+            image,
+          });
+
+        if (error) throw error;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      setTitle("");
+      setContent("");
+      setImage("");
+      setEditingAnnouncement(null);
+      setIsOpen(false);
+      
+      toast({
+        title: "Success",
+        description: `Announcement ${editingAnnouncement ? 'updated' : 'created'} successfully`,
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save announcement",
+        variant: "destructive",
       });
     }
-
-    setAnnouncements(newAnnouncements);
-    localStorage.setItem("announcements", JSON.stringify(newAnnouncements));
-    
-    setTitle("");
-    setContent("");
-    setImage("");
-    setEditingAnnouncement(null);
-    setIsOpen(false);
-    
-    toast({
-      title: "Success",
-      description: `Announcement ${editingAnnouncement ? 'updated' : 'created'} successfully`,
-    });
   };
 
   const handleEdit = (announcement: Announcement) => {
@@ -100,14 +114,28 @@ const Announcements = () => {
     setIsOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    const newAnnouncements = announcements.filter(a => a.id !== id);
-    setAnnouncements(newAnnouncements);
-    localStorage.setItem("announcements", JSON.stringify(newAnnouncements));
-    toast({
-      title: "Success",
-      description: "Announcement deleted successfully",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      toast({
+        title: "Success",
+        description: "Announcement deleted successfully",
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete announcement",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

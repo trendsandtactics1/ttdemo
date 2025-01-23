@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,30 +7,59 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
-import { leaveRequestService } from "@/services/leaveRequestService";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const LeaveRequest = () => {
-  const [requests, setRequests] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     type: "",
-    startDate: "",
-    endDate: "",
+    start_date: "",
+    end_date: "",
     reason: ""
   });
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    // In a real app, we'd get the employee ID from auth
-    const employeeRequests = leaveRequestService.getAllRequests();
-    setRequests(employeeRequests);
-  }, []);
+  const { data: requests = [] } = useQuery({
+    queryKey: ['leave-requests'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
 
-  const handleSubmit = (e: React.FormEvent) => {
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select('*')
+        .eq('employee_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newRequest = leaveRequestService.addRequest(formData);
-    setRequests(prev => [...prev, newRequest]);
-    setFormData({ type: "", startDate: "", endDate: "", reason: "" });
-    toast.success("Leave request submitted successfully");
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const { error } = await supabase
+        .from('leave_requests')
+        .insert({
+          ...formData,
+          employee_id: user.id,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['leave-requests'] });
+      setFormData({ type: "", start_date: "", end_date: "", reason: "" });
+      toast.success("Leave request submitted successfully");
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Failed to submit leave request");
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

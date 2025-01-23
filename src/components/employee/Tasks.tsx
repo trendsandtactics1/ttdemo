@@ -4,33 +4,69 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Task, localStorageService } from "@/services/localStorageService";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  due_date: string;
+  assigned_date: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const Tasks = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    setTasks(localStorageService.getTasks());
-    const handleTasksUpdate = () => {
-      setTasks(localStorageService.getTasks());
-    };
-    window.addEventListener('tasks-updated', handleTasksUpdate);
-    return () => window.removeEventListener('tasks-updated', handleTasksUpdate);
-  }, []);
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['employee-tasks'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
 
-  const handleStatusUpdate = (taskId: string, newStatus: Task['status']) => {
-    localStorageService.updateTask(taskId, { status: newStatus });
-    toast({
-      title: "Success",
-      description: "Task status updated successfully",
-    });
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('assigned_to', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const handleStatusUpdate = async (taskId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ status: newStatus })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['employee-tasks'] });
+      toast({
+        title: "Success",
+        description: "Task status updated successfully",
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    }
   };
 
-  const getStatusColor = (status: Task['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
         return 'bg-green-500 hover:bg-green-600';
@@ -69,19 +105,19 @@ const Tasks = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-md">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Due Date</p>
-                    <p className="text-gray-800">{new Date(task.dueDate).toLocaleDateString()}</p>
+                    <p className="text-gray-800">{new Date(task.due_date).toLocaleDateString()}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Assigned Date</p>
-                    <p className="text-gray-800">{new Date(task.assignedDate).toLocaleDateString()}</p>
+                    <p className="text-gray-800">{new Date(task.assigned_date).toLocaleDateString()}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Created At</p>
-                    <p className="text-gray-800">{new Date(task.createdAt).toLocaleDateString()}</p>
+                    <p className="text-gray-800">{new Date(task.created_at).toLocaleDateString()}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-500">Last Updated</p>
-                    <p className="text-gray-800">{new Date(task.updatedAt).toLocaleDateString()}</p>
+                    <p className="text-gray-800">{new Date(task.updated_at).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pt-2">
