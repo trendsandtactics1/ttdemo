@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { User } from "@/types/user";
 import ProfileUpdateModal from "./ProfileUpdateModal";
 
@@ -11,6 +11,7 @@ const EmployeeDashboard = () => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const { toast } = useToast();
   const [profile, setProfile] = useState<User | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -129,7 +130,7 @@ const EmployeeDashboard = () => {
       supabase.removeChannel(leaveRequestsChannel);
       supabase.removeChannel(announcementsChannel);
     };
-  }, [currentUser?.id]);
+  }, [currentUser?.id, queryClient]);
 
   return (
     <div className="space-y-6 p-6">
