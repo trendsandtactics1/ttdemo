@@ -15,6 +15,7 @@ interface Announcement {
   content: string;
   image?: string;
   created_at: string;
+  created_by?: string;
 }
 
 const Announcements = () => {
@@ -62,6 +63,17 @@ const Announcements = () => {
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to create announcements",
+          variant: "destructive",
+        });
+        return;
+      }
+
       if (editingAnnouncement) {
         const { error } = await supabase
           .from('announcements')
@@ -80,6 +92,7 @@ const Announcements = () => {
             title,
             content,
             image,
+            created_by: user.id
           });
 
         if (error) throw error;
