@@ -10,34 +10,46 @@ export const fetchUsers = async () => {
 
 // Create a new user
 export const createUser = async (userData: UserFormData) => {
-  // First create the user in auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: userData.email,
-    password: userData.password,
-    options: {
-      data: {
-        role: userData.role,
+  try {
+    // First create the user in auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+      options: {
+        data: {
+          role: userData.role,
+        },
       },
-    },
-  });
+    });
 
-  if (authError) throw authError;
+    if (authError) {
+      // Check if user already exists
+      if (authError.message.includes("User already registered")) {
+        throw new Error("User with this email already exists");
+      }
+      throw authError;
+    }
 
-  if (authData.user) {
-    // Then create the profile
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: authData.user.id,
-        name: userData.name,
-        email: userData.email,
-        employee_id: userData.employeeId,
-        designation: userData.designation,
-        password: userdata.password,
-        role: userData.role,
-      });
+    if (authData.user) {
+      // Then create the profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          id: authData.user.id,
+          name: userData.name,
+          email: userData.email,
+          employee_id: userData.employeeId,
+          designation: userData.designation,
+          role: userData.role,
+        });
 
-    if (profileError) throw profileError;
+      if (profileError) throw profileError;
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+    throw error;
   }
 };
 

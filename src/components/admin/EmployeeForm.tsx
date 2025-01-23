@@ -51,11 +51,15 @@ const EmployeeForm = ({ onSubmit }: EmployeeFormProps) => {
       setIsLoading(true);
       await onSubmit(data);
       form.reset();
+      toast({
+        title: "Success",
+        description: "Employee added successfully",
+      });
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({
         title: "Error",
-        description: "Failed to add employee",
+        description: error instanceof Error ? error.message : "Failed to add employee",
         variant: "destructive",
       });
     } finally {
