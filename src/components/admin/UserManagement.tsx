@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import UserForm from "./UserForm";
+import EmployeeForm from "./EmployeeForm";
 import UserList from "./UserList";
 import { createUser, fetchUsers, deleteUser } from "@/services/userService";
 import type { User, UserFormData } from "@/types/user";
@@ -14,7 +14,6 @@ const UserManagement = () => {
     loadUsers();
   }, []);
 
-  // Load users from Supabase
   const loadUsers = async () => {
     try {
       const fetchedUsers = await fetchUsers();
@@ -23,13 +22,12 @@ const UserManagement = () => {
       console.error("Error fetching users:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to fetch users",
+        description: "Failed to fetch users",
         variant: "destructive",
       });
     }
   };
 
-  // Handle user creation
   const handleSubmit = async (data: UserFormData) => {
     try {
       await createUser(data);
@@ -42,13 +40,12 @@ const UserManagement = () => {
       console.error("Error creating user:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create user",
+        description: "Failed to create user",
         variant: "destructive",
       });
     }
   };
 
-  // Handle user deletion
   const handleDeleteUser = async (userId: string) => {
     try {
       await deleteUser(userId);
@@ -61,7 +58,7 @@ const UserManagement = () => {
       console.error("Error deleting user:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete user",
+        description: "Failed to delete user",
         variant: "destructive",
       });
     }
@@ -71,27 +68,13 @@ const UserManagement = () => {
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
       <div className="space-y-6">
-        {/* Form for adding users */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New User</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UserForm onSubmit={handleSubmit} />
-          </CardContent>
-        </Card>
-
-        {/* User list table */}
+        <EmployeeForm onSubmit={handleSubmit} />
         <Card>
           <CardHeader>
             <CardTitle>All Users</CardTitle>
           </CardHeader>
           <CardContent>
-            {users.length === 0 ? (
-              <p className="text-muted-foreground">No users found.</p>
-            ) : (
-              <UserList users={users} onDeleteUser={handleDeleteUser} />
-            )}
+            <UserList users={users} onDeleteUser={handleDeleteUser} />
           </CardContent>
         </Card>
       </div>

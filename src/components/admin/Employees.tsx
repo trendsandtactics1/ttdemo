@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import EmployeeList from "./EmployeeList";
-import { Employee } from "./types";
-import { useToast } from "@/components/ui/use-toast";
+import { User } from "@/types/user";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const EmployeePage = () => {
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
@@ -14,8 +15,13 @@ const EmployeePage = () => {
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      // TODO: Implement new data fetching logic
-      setEmployees([]);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'employee');
+      
+      if (error) throw error;
+      setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees:", error);
       toast({

@@ -11,10 +11,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { UserFormData } from "@/types/user";
 
 const employeeSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -22,17 +23,18 @@ const employeeSchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required"),
   designation: z.string().min(1, "Designation is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  role: z.enum(["admin", "employee", "manager"]).default("employee"),
 });
 
-type EmployeeFormData = z.infer<typeof employeeSchema>;
-
 interface EmployeeFormProps {
-  onEmployeeAdded: () => void;
+  onSubmit: (data: UserFormData) => Promise<void>;
 }
 
-const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
+const EmployeeForm = ({ onSubmit }: EmployeeFormProps) => {
   const { toast } = useToast();
-  const form = useForm<EmployeeFormData>({
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const form = useForm<UserFormData>({
     resolver: zodResolver(employeeSchema),
     defaultValues: {
       name: "",
@@ -40,25 +42,24 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
       employeeId: "",
       designation: "",
       password: "",
+      role: "employee",
     },
   });
 
-  const onSubmit = async (data: EmployeeFormData) => {
+  const handleSubmit = async (data: UserFormData) => {
     try {
-      // TODO: Implement new employee creation logic
-      toast({
-        title: "Success",
-        description: "Employee added successfully",
-      });
+      setIsLoading(true);
+      await onSubmit(data);
       form.reset();
-      onEmployeeAdded();
     } catch (error) {
-      console.error("Error creating employee:", error);
+      console.error("Error submitting form:", error);
       toast({
         title: "Error",
         description: "Failed to add employee",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -69,7 +70,7 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -141,9 +142,9 @@ const EmployeeForm = ({ onEmployeeAdded }: EmployeeFormProps) => {
                 )}
               />
             </div>
-            <Button type="submit">
+            <Button type="submit" disabled={isLoading}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Employee
+              {isLoading ? "Adding Employee..." : "Add Employee"}
             </Button>
           </form>
         </Form>
