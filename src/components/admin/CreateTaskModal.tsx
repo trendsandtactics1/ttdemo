@@ -107,11 +107,11 @@ const CreateTaskModal = () => {
           Add New Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] w-[95%] mx-auto">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 px-1">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
@@ -119,7 +119,6 @@ const CreateTaskModal = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter task title"
-              className="w-full"
             />
           </div>
           <div className="space-y-2">
@@ -132,11 +131,10 @@ const CreateTaskModal = () => {
               className="min-h-[100px]"
             />
           </div>
-          
           <div className="space-y-2">
             <Label htmlFor="assignedTo">Assign To</Label>
             <Select onValueChange={setAssignedTo} value={assignedTo}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger>
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
               <SelectContent>
@@ -147,33 +145,6 @@ const CreateTaskModal = () => {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Assigned Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !assignedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {assignedDate ? format(assignedDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={assignedDate}
-                  onSelect={(date) => date && setAssignedDate(date)}
-                  initialFocus
-                  disabled={(date) => date < new Date()}
-                />
-              </PopoverContent>
-            </Popover>
           </div>
           <div className="space-y-2">
             <Label>Due Date</Label>
@@ -196,7 +167,6 @@ const CreateTaskModal = () => {
                   selected={dueDate}
                   onSelect={(date) => date && setDueDate(date)}
                   initialFocus
-                  disabled={(date) => date < new Date()}
                 />
               </PopoverContent>
             </Popover>

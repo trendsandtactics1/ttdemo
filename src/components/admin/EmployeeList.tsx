@@ -11,10 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Employee } from "./types";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@/types/user";
 
 interface EmployeeListProps {
-  employees: Employee[];
+  employees: User[];
   onEmployeeDeleted: () => void;
   loading: boolean;
 }
@@ -22,9 +23,15 @@ interface EmployeeListProps {
 const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListProps) => {
   const { toast } = useToast();
 
-  const handleDeleteEmployee = async (employeeId: string) => {
+  const handleDeleteEmployee = async (userId: string) => {
     try {
-      // TODO: Implement new delete logic
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Employee deleted successfully",
@@ -71,7 +78,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
                     <TableCell>
                       <Avatar>
                         <AvatarImage src={employee.profile_photo} />
-                        <AvatarFallback>{employee.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{employee.name?.charAt(0)}</AvatarFallback>
                       </Avatar>
                     </TableCell>
                     <TableCell>{employee.name}</TableCell>
@@ -82,7 +89,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => handleDeleteEmployee(employee.employee_id)}
+                        onClick={() => employee.id && handleDeleteEmployee(employee.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
