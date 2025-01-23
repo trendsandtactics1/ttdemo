@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import supabase from "@/integration/supabase/client"; // Adjust the path as needed
 
 interface Announcement {
   id: string;
@@ -12,38 +11,21 @@ interface Announcement {
 
 const ViewAnnouncements = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        // Fetch announcements from Supabase
-        const { data, error } = await supabase
-          .from("announcement")
-          .select("*")
-          .order("createdAt", { ascending: false }); // Sort by createdAt descending
-
-        if (error) {
-          console.error("Error fetching announcements:", error);
-        } else {
-          setAnnouncements(data || []);
-        }
-      } catch (error) {
-        console.error("Unexpected error fetching announcements:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnnouncements();
+    const stored = localStorage.getItem("announcements");
+    if (stored) {
+      const sortedAnnouncements = JSON.parse(stored).sort((a: Announcement, b: Announcement) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setAnnouncements(sortedAnnouncements);
+    }
   }, []);
 
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Announcements</h2>
-      {loading ? (
-        <p>Loading...</p>
-      ) : announcements.length === 0 ? (
+      {announcements.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Latest Announcements</CardTitle>
@@ -64,7 +46,7 @@ const ViewAnnouncements = () => {
                 {announcement.image && (
                   <img
                     src={announcement.image}
-                    alt={`Image for ${announcement.title}`}
+                    alt={announcement.title}
                     className="rounded-lg max-h-60 object-cover"
                   />
                 )}
