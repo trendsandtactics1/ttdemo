@@ -16,7 +16,7 @@ const Dashboard = () => {
         <EmployeeSidebar />
         <main className="flex-1">
           <Routes>
-            <Route path="/" element={<EmployeeDashboard />} />
+            <Route path="/dashboard" element={<EmployeeDashboard />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/profile" element={<EmployeeProfile />} />
             <Route path="/attendance" element={<EmployeeAttendance />} />
