@@ -27,7 +27,7 @@ const Announcements = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: announcements = [] } = useQuery({
+  const { data: announcements = [], isError } = useQuery({
     queryKey: ['announcements'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -35,7 +35,10 @@ const Announcements = () => {
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching announcements:', error);
+        throw error;
+      }
       return data;
     }
   });
@@ -69,6 +72,31 @@ const Announcements = () => {
         toast({
           title: "Error",
           description: "You must be logged in to create announcements",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get user's role from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profileData) {
+        toast({
+          title: "Error",
+          description: "Failed to verify admin permissions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (profileData.role !== 'admin') {
+        toast({
+          title: "Error",
+          description: "Only admins can manage announcements",
           variant: "destructive",
         });
         return;
