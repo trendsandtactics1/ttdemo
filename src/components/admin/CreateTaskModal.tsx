@@ -12,13 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-
-interface Employee {
-  id: string;
-  email: string;
-  name: string;
-  designation: string;
-}
+import { User } from "@/types/user";
 
 const CreateTaskModal = () => {
   const [open, setOpen] = useState(false);
@@ -27,7 +21,7 @@ const CreateTaskModal = () => {
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState<Date>();
   const [assignedDate, setAssignedDate] = useState<Date>(new Date());
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [employees, setEmployees] = useState<User[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,7 +29,7 @@ const CreateTaskModal = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, email, name, designation')
+          .select('*')
           .eq('role', 'employee');
         
         if (error) throw error;
