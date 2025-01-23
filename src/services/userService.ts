@@ -33,7 +33,7 @@ export const createUser = async (userData: UserFormData) => {
         email: userData.email,
         employee_id: userData.employeeId,
         designation: userData.designation,
-        password: userdata.designation,
+        password: userdata.password,
         role: userData.role,
       });
 
