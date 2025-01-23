@@ -98,22 +98,22 @@ const LeaveRequest = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
+                <Label htmlFor="start_date">Start Date</Label>
                 <Input 
-                  id="startDate" 
+                  id="start_date" 
                   type="date" 
                   required 
-                  value={formData.startDate}
+                  value={formData.start_date}
                   onChange={handleInputChange}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
+                <Label htmlFor="end_date">End Date</Label>
                 <Input 
-                  id="endDate" 
+                  id="end_date" 
                   type="date" 
                   required 
-                  value={formData.endDate}
+                  value={formData.end_date}
                   onChange={handleInputChange}
                 />
               </div>
@@ -155,8 +155,8 @@ const LeaveRequest = () => {
                 {requests.map((request) => (
                   <TableRow key={request.id}>
                     <TableCell>{request.type}</TableCell>
-                    <TableCell>{request.startDate}</TableCell>
-                    <TableCell>{request.endDate}</TableCell>
+                    <TableCell>{request.start_date}</TableCell>
+                    <TableCell>{request.end_date}</TableCell>
                     <TableCell>{request.reason}</TableCell>
                     <TableCell>{getStatusBadge(request.status)}</TableCell>
                   </TableRow>
