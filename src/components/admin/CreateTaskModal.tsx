@@ -8,11 +8,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Calendar as CalendarIcon } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Task } from "@/types/user";
+import { User } from "@/types/user";
 
 const CreateTaskModal = () => {
   const [open, setOpen] = useState(false);
@@ -62,19 +62,17 @@ const CreateTaskModal = () => {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
-      const taskData: Partial<Task> = {
-        title,
-        description,
-        assigned_to: assignedTo,
-        assigned_by: userData.user.id,
-        due_date: dueDate.toISOString(),
-        assigned_date: assignedDate.toISOString(),
-        status: 'pending'
-      };
-
       const { error } = await supabase
         .from('tasks')
-        .insert(taskData);
+        .insert({
+          title,
+          description,
+          assigned_to: assignedTo,
+          assigned_by: userData.user.id,
+          due_date: dueDate.toISOString(),
+          assigned_date: assignedDate.toISOString(),
+          status: 'pending'
+        });
 
       if (error) throw error;
 

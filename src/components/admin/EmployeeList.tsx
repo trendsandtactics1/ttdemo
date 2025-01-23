@@ -1,8 +1,8 @@
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -77,7 +77,6 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
                   <TableRow key={employee.id}>
                     <TableCell>
                       <Avatar>
-                        <AvatarImage src={employee.profile_photo} />
                         <AvatarFallback>{employee.name?.charAt(0)}</AvatarFallback>
                       </Avatar>
                     </TableCell>
