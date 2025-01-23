@@ -7,26 +7,7 @@ import { createUser, fetchUsers, deleteUser } from "@/services/userService";
 import type { User, UserFormData } from "@/types/user";
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<User[]>([]);
   const { toast } = useToast();
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    try {
-      const fetchedUsers = await fetchUsers();
-      setUsers(fetchedUsers || []);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch users",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleSubmit = async (data: UserFormData) => {
     try {
@@ -35,7 +16,6 @@ const UserManagement = () => {
         title: "Success",
         description: "User created successfully",
       });
-      loadUsers();
     } catch (error) {
       console.error("Error creating user:", error);
       toast({
@@ -53,7 +33,6 @@ const UserManagement = () => {
         title: "Success",
         description: "User deleted successfully",
       });
-      loadUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
       toast({
@@ -74,7 +53,7 @@ const UserManagement = () => {
             <CardTitle>All Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <UserList users={users} onDeleteUser={handleDeleteUser} />
+            <UserList onDeleteUser={handleDeleteUser} />
           </CardContent>
         </Card>
       </div>
