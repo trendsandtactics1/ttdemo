@@ -10,14 +10,14 @@ export const fetchUsers = async () => {
 
 // Create a new user
 export const createUser = async (userData: UserFormData) => {
-  const { error } = await supabase.from("profiles").insert([{
+  const { error } = await supabase.from("profiles").insert({
     name: userData.name,
     email: userData.email,
     employee_id: userData.employeeId,
     designation: userData.designation,
     password: userData.password,
     role: userData.role
-  }]);
+  });
   if (error) throw new Error(error.message);
 };
 

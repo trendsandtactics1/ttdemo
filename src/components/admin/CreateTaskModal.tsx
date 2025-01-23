@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "@/types/user";
+import { User, Task } from "@/types/user";
 
 const CreateTaskModal = () => {
   const [open, setOpen] = useState(false);
@@ -62,17 +62,19 @@ const CreateTaskModal = () => {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
 
+      const taskData: Partial<Task> = {
+        title,
+        description,
+        assigned_to: assignedTo,
+        assigned_by: userData.user.id,
+        due_date: dueDate.toISOString(),
+        assigned_date: assignedDate.toISOString(),
+        status: 'pending'
+      };
+
       const { error } = await supabase
         .from('tasks')
-        .insert({
-          title,
-          description,
-          assigned_to: assignedTo,
-          assigned_by: userData.user.id,
-          due_date: dueDate.toISOString(),
-          assigned_date: assignedDate.toISOString(),
-          status: 'pending'
-        });
+        .insert(taskData);
 
       if (error) throw error;
 

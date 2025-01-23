@@ -16,3 +16,16 @@ export interface UserFormData {
   password: string;
   role: "admin" | "manager" | "employee";
 }
+
+export interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  assigned_to: string | null;
+  assigned_by: string | null;
+  due_date: string | null;
+  assigned_date: string | null;
+  status: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
