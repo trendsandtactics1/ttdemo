@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -242,7 +242,7 @@ const Announcements = () => {
                   />
                 )}
                 <p className="text-sm text-muted-foreground">
-                  Posted on {new Date(announcement.createdAt).toLocaleDateString()}
+                  Posted on {new Date(announcement.created_at).toLocaleDateString()}
                 </p>
               </CardContent>
             </Card>
