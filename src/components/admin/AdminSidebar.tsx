@@ -1,6 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   ClipboardList,
   Users,
   Calendar,
@@ -9,6 +8,7 @@ import {
   LogOut,
   UserPlus,
   Menu,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -54,14 +54,15 @@ const AdminSidebar = () => {
         <div className="fixed top-4 left-4 z-50">
           <SidebarTrigger>
             <Button variant="outline" size="icon" className="bg-white shadow-md hover:bg-gray-100">
-              <Menu className="h-4 w-4" />
+              <img src="/logo.png" alt="Company Logo" className="h-4 w-4 object-contain" />
             </Button>
           </SidebarTrigger>
         </div>
       )}
-      <Sidebar className="bg-white border-r dark:bg-gray-900 dark:border-gray-800">
+      <Sidebar className="bg-white border-r shadow-sm dark:bg-gray-900 dark:border-gray-800">
         <SidebarContent>
-          <div className="p-4 border-b dark:border-gray-800">
+          <div className="p-4 border-b dark:border-gray-800 flex items-center gap-3">
+            <img src="/logo.png" alt="Company Logo" className="h-8 w-8 object-contain" />
             <h1 className="text-xl font-bold dark:text-white">HR Admin</h1>
           </div>
           <SidebarGroup>

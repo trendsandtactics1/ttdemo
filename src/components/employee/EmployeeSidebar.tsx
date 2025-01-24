@@ -1,12 +1,12 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   ClipboardList,
   Calendar,
   Bell,
   LogOut,
   Menu,
   User,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -80,18 +80,21 @@ const EmployeeSidebar = () => {
         <div className="fixed top-4 left-4 z-50">
           <SidebarTrigger>
             <Button variant="outline" size="icon" className="bg-white shadow-md hover:bg-gray-100">
-              <Menu className="h-4 w-4" />
+              <img src="/logo.png" alt="Company Logo" className="h-4 w-4 object-contain" />
             </Button>
           </SidebarTrigger>
         </div>
       )}
-      <Sidebar className="bg-white dark:bg-gray-900 border-r">
+      <Sidebar className="bg-white border-r shadow-sm dark:bg-gray-900 dark:border-gray-800">
         <SidebarContent>
-          <div className="p-4 border-b">
-            <h1 className="text-xl font-bold">Employee Portal</h1>
-            {profile?.name && (
-              <p className="text-sm text-muted-foreground mt-1 truncate">{profile.name}</p>
-            )}
+          <div className="p-4 border-b flex items-center gap-3">
+            <img src="/logo.png" alt="Company Logo" className="h-8 w-8 object-contain" />
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold truncate dark:text-white">Employee Portal</h1>
+              {profile?.name && (
+                <p className="text-sm text-muted-foreground truncate mt-1">{profile.name}</p>
+              )}
+            </div>
           </div>
           <SidebarGroup>
             <SidebarGroupContent>
@@ -106,7 +109,7 @@ const EmployeeSidebar = () => {
                       }`}
                       onClick={() => handleNavigation(item.path)}
                     >
-                      <item.icon className={`h-5 w-5 ${
+                      <item.icon className={`h-5 w-5 flex-shrink-0 ${
                         location.pathname === item.path 
                           ? "text-primary" 
                           : "text-gray-500 dark:text-gray-400"
@@ -123,7 +126,7 @@ const EmployeeSidebar = () => {
               onClick={() => handleNavigation("/login")}
               className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors duration-200"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4 flex-shrink-0" />
               <span>Logout</span>
             </SidebarMenuButton>
           </div>
