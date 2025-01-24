@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList, Calendar, Bell } from "lucide-react";
+import { StatCard } from "./dashboard/StatCard";
+import { TasksList } from "./dashboard/TasksList";
+import { LeaveRequestsList } from "./dashboard/LeaveRequestsList";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const EmployeeDashboard = () => {
   const { toast } = useToast();
@@ -20,7 +23,7 @@ const EmployeeDashboard = () => {
     getCurrentUser();
   }, []);
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading: isProfileLoading } = useQuery({
     queryKey: ['profile', userId],
     queryFn: async () => {
       if (!userId) return null;
@@ -43,7 +46,7 @@ const EmployeeDashboard = () => {
     enabled: !!userId
   });
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [], isLoading: isTasksLoading } = useQuery({
     queryKey: ['employee-tasks', userId],
     queryFn: async () => {
       if (!userId) return [];
@@ -66,7 +69,7 @@ const EmployeeDashboard = () => {
     enabled: !!userId
   });
 
-  const { data: leaveRequests = [] } = useQuery({
+  const { data: leaveRequests = [], isLoading: isLeaveRequestsLoading } = useQuery({
     queryKey: ['employee-leave-requests', userId],
     queryFn: async () => {
       if (!userId) return [];
@@ -116,8 +119,17 @@ const EmployeeDashboard = () => {
     };
   }, [userId, queryClient]);
 
-  if (!profile) {
-    return <div className="p-6">Loading...</div>;
+  if (isProfileLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid gap-6 md:grid-cols-3">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -125,101 +137,35 @@ const EmployeeDashboard = () => {
       <h1 className="text-3xl font-bold">Welcome, {profile?.name || 'Employee'}</h1>
       
       <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {tasks.filter(task => task.status === 'pending').length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Leave Requests</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {leaveRequests.filter(request => request.status === 'pending').length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed Tasks</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {tasks.filter(task => task.status === 'completed').length}
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Pending Tasks"
+          value={tasks.filter(task => task.status === 'pending').length}
+          icon={ClipboardList}
+        />
+        <StatCard
+          title="Leave Requests"
+          value={leaveRequests.filter(request => request.status === 'pending').length}
+          icon={Calendar}
+        />
+        <StatCard
+          title="Completed Tasks"
+          value={tasks.filter(task => task.status === 'completed').length}
+          icon={Bell}
+        />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Tasks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {tasks.slice(0, 5).map((task) => (
-                <div key={task.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{task.title}</p>
-                    <p className="text-sm text-muted-foreground">Due: {new Date(task.due_date).toLocaleDateString()}</p>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    task.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    task.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {task.status}
-                  </span>
-                </div>
-              ))}
-              {tasks.length === 0 && (
-                <p className="text-muted-foreground">No tasks assigned yet.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Leave Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {leaveRequests.slice(0, 5).map((request) => (
-                <div key={request.id} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{request.type}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(request.start_date).toLocaleDateString()} - {new Date(request.end_date).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    request.status === 'approved' ? 'bg-green-100 text-green-800' :
-                    request.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {request.status}
-                  </span>
-                </div>
-              ))}
-              {leaveRequests.length === 0 && (
-                <p className="text-muted-foreground">No leave requests found.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {isTasksLoading ? (
+          <Skeleton className="h-[400px]" />
+        ) : (
+          <TasksList tasks={tasks} />
+        )}
+        
+        {isLeaveRequestsLoading ? (
+          <Skeleton className="h-[400px]" />
+        ) : (
+          <LeaveRequestsList requests={leaveRequests} />
+        )}
       </div>
     </div>
   );
