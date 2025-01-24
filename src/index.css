@@ -83,6 +83,19 @@
   .responsive-width {
     @apply w-full sm:w-auto;
   }
+
+  /* Sidebar specific utilities */
+  .sidebar-content {
+    @apply h-screen overflow-y-auto;
+  }
+
+  .sidebar-menu-item {
+    @apply px-2 py-1.5 text-sm font-medium text-gray-700 rounded-md hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800;
+  }
+
+  .sidebar-active {
+    @apply bg-primary/10 text-primary dark:bg-primary/20;
+  }
 }
 
 /* Ensure proper modal display on mobile */
@@ -114,7 +127,6 @@
     padding: 1rem !important;
   }
 
-  /* Stack form elements vertically */
   .form-group {
     @apply flex flex-col gap-2;
   }
@@ -136,4 +148,13 @@
 
 .card-container {
   @apply flex flex-col p-4 h-full;
+}
+
+/* Dark mode improvements */
+.dark .sidebar-menu-item {
+  @apply text-gray-300 hover:bg-gray-800;
+}
+
+.dark .sidebar-active {
+  @apply bg-primary/20 text-primary-foreground;
 }
