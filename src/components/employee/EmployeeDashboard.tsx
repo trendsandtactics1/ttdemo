@@ -30,7 +30,14 @@ const EmployeeDashboard = () => {
         .eq('id', userId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch profile data",
+          variant: "destructive",
+        });
+        throw error;
+      }
       return data;
     },
     enabled: !!userId
@@ -46,7 +53,14 @@ const EmployeeDashboard = () => {
         .eq('assigned_to', userId)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch tasks",
+          variant: "destructive",
+        });
+        throw error;
+      }
       return data;
     },
     enabled: !!userId
@@ -62,13 +76,22 @@ const EmployeeDashboard = () => {
         .eq('employee_id', userId)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch leave requests",
+          variant: "destructive",
+        });
+        throw error;
+      }
       return data;
     },
     enabled: !!userId
   });
 
   useEffect(() => {
+    if (!userId) return;
+
     const channel = supabase.channel('db-changes')
       .on('postgres_changes', { 
         event: '*', 
@@ -92,6 +115,10 @@ const EmployeeDashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [userId, queryClient]);
+
+  if (!profile) {
+    return <div className="p-6">Loading...</div>;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -157,6 +184,9 @@ const EmployeeDashboard = () => {
                   </span>
                 </div>
               ))}
+              {tasks.length === 0 && (
+                <p className="text-muted-foreground">No tasks assigned yet.</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -184,6 +214,9 @@ const EmployeeDashboard = () => {
                   </span>
                 </div>
               ))}
+              {leaveRequests.length === 0 && (
+                <p className="text-muted-foreground">No leave requests found.</p>
+              )}
             </div>
           </CardContent>
         </Card>
