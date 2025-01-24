@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import {
+  LayoutDashboard,
   ClipboardList,
   Calendar,
   Bell,
@@ -11,7 +12,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -33,8 +33,9 @@ const EmployeeSidebar = () => {
   const isMobile = useIsMobile();
 
   const menuItems: MenuItem[] = [
-    { title: "Attendance", path: "/employee/attendance", icon: Calendar },
+    { title: "Dashboard", path: "/employee/dashboard", icon: LayoutDashboard },
     { title: "Tasks", path: "/employee", icon: ClipboardList },
+    { title: "Attendance", path: "/employee/attendance", icon: Calendar },
     { title: "Leave Request", path: "/employee/leave-request", icon: ClipboardList },
     { title: "Announcements", path: "/employee/announcements", icon: Bell },
   ];
@@ -56,7 +57,6 @@ const EmployeeSidebar = () => {
             <h1 className="text-xl font-bold">Employee Portal</h1>
           </div>
           <SidebarGroup>
-            <SidebarGroupLabel className="px-4 py-2">Menu</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {menuItems.map((item) => (
