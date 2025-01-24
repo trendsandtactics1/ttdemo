@@ -9,7 +9,7 @@ import TaskChat from "@/components/employee/TaskChat";
 import EmployeeAttendance from "@/components/employee/EmployeeAttendance";
 import EmployeeDashboard from "@/components/employee/EmployeeDashboard";
 
-const EmployeeDashboard = () => {
+const EmployeeDashboardPage = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -30,4 +30,4 @@ const EmployeeDashboard = () => {
   );
 };
 
-export default EmployeeDashboard;
+export default EmployeeDashboardPage;
