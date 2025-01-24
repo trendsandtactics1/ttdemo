@@ -84,9 +84,26 @@
     @apply w-full sm:w-auto;
   }
 
+  /* Dashboard specific utilities */
+  .dashboard-title {
+    @apply text-2xl font-bold mb-4 truncate;
+  }
+
+  .dashboard-subtitle {
+    @apply text-lg font-semibold mb-2 truncate;
+  }
+
+  .dashboard-card {
+    @apply p-4 rounded-lg border bg-card text-card-foreground shadow-sm;
+  }
+
+  .dashboard-stat {
+    @apply text-2xl font-bold;
+  }
+
   /* Sidebar specific utilities */
   .sidebar-content {
-    @apply h-screen overflow-y-auto;
+    @apply h-screen overflow-y-auto bg-white dark:bg-gray-900;
   }
 
   .sidebar-menu-item {

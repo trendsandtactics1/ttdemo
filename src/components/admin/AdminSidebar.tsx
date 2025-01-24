@@ -15,7 +15,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -23,11 +22,13 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const AdminSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
 
   const menuItems = [
     { title: "Dashboard", path: "/admin", icon: LayoutDashboard },
@@ -39,6 +40,13 @@ const AdminSidebar = () => {
     { title: "Payroll", path: "/admin/payroll", icon: DollarSign, disabled: true },
     { title: "Announcements", path: "/admin/announcements", icon: Bell },
   ];
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <>
@@ -68,7 +76,7 @@ const AdminSidebar = () => {
                           ? "bg-gray-100 dark:bg-gray-800 text-primary" 
                           : "hover:bg-gray-50 dark:hover:bg-gray-800"
                       }`}
-                      onClick={() => navigate(item.path)}
+                      onClick={() => handleNavigation(item.path)}
                     >
                       <item.icon className={`h-5 w-5 ${
                         location.pathname === item.path 
@@ -87,7 +95,7 @@ const AdminSidebar = () => {
           </SidebarGroup>
           <div className="mt-auto p-4 border-t dark:border-gray-800">
             <SidebarMenuButton
-              onClick={() => navigate("/login")}
+              onClick={() => handleNavigation("/login")}
               className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors duration-200"
             >
               <LogOut className="h-5 w-5" />
