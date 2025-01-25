@@ -76,12 +76,15 @@ const EmployeeSidebar = () => {
   return (
     <>
       {isMobile && (
-        <div className="fixed top-4 left-4 z-50">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-b p-4 flex justify-between items-center">
           <SidebarTrigger>
-            <Button variant="outline" size="icon" className="bg-white shadow-md hover:bg-gray-100">
-              <img src="/logo.png" alt="Company Logo" className="h-4 w-4 object-contain" />
+            <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+              <img src="/logo.png" alt="Company Logo" className="h-6 w-6 object-contain" />
             </Button>
           </SidebarTrigger>
+          <h1 className="text-lg font-semibold truncate flex-1 text-center">
+            {menuItems.find(item => item.path === location.pathname)?.title || 'Employee Portal'}
+          </h1>
         </div>
       )}
       <Sidebar className="bg-white border-r shadow-md dark:bg-gray-900 dark:border-gray-800 fixed inset-y-0 left-0">
@@ -131,6 +134,7 @@ const EmployeeSidebar = () => {
           </div>
         </SidebarContent>
       </Sidebar>
+      {isMobile && <div className="h-16" />} {/* Spacer for mobile header */}
     </>
   );
 };
