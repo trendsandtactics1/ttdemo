@@ -4,7 +4,6 @@ import {
   Calendar,
   Bell,
   LogOut,
-  Menu,
   User,
   LayoutDashboard,
 } from "lucide-react";
@@ -85,8 +84,8 @@ const EmployeeSidebar = () => {
           </SidebarTrigger>
         </div>
       )}
-      <Sidebar className="bg-white border-r shadow-sm dark:bg-gray-900 dark:border-gray-800">
-        <SidebarContent>
+      <Sidebar className="bg-white border-r shadow-md dark:bg-gray-900 dark:border-gray-800 fixed inset-y-0 left-0">
+        <SidebarContent className="bg-white dark:bg-gray-900">
           <div className="p-4 border-b flex items-center gap-3">
             <img src="/logo.png" alt="Company Logo" className="h-8 w-8 object-contain" />
             <div className="flex-1 min-w-0">

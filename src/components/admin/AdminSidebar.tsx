@@ -7,7 +7,6 @@ import {
   Bell,
   LogOut,
   UserPlus,
-  Menu,
   LayoutDashboard,
 } from "lucide-react";
 import {
@@ -59,8 +58,8 @@ const AdminSidebar = () => {
           </SidebarTrigger>
         </div>
       )}
-      <Sidebar className="bg-white border-r shadow-sm dark:bg-gray-900 dark:border-gray-800">
-        <SidebarContent>
+      <Sidebar className="bg-white border-r shadow-md dark:bg-gray-900 dark:border-gray-800 fixed inset-y-0 left-0">
+        <SidebarContent className="bg-white dark:bg-gray-900">
           <div className="p-4 border-b dark:border-gray-800 flex items-center gap-3">
             <img src="/logo.png" alt="Company Logo" className="h-8 w-8 object-contain" />
             <h1 className="text-xl font-bold dark:text-white">HR Admin</h1>
@@ -79,7 +78,7 @@ const AdminSidebar = () => {
                       }`}
                       onClick={() => handleNavigation(item.path)}
                     >
-                      <item.icon className={`h-5 w-5 ${
+                      <item.icon className={`h-5 w-5 flex-shrink-0 ${
                         location.pathname === item.path 
                           ? "text-primary" 
                           : "text-gray-500 dark:text-gray-400"
