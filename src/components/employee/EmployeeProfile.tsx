@@ -15,7 +15,7 @@ interface Profile {
   employee_id: string | null;
   designation: string | null;
   role: string | null;
-  profile_photo?: string | null;
+  profile_photo: string | null;
 }
 
 const EmployeeProfile = () => {
@@ -54,19 +54,21 @@ const EmployeeProfile = () => {
       if (error) throw error;
       return data as Profile;
     },
-    enabled: !!userId,
-    onSettled: (data) => {
-      if (data) {
-        setFormData({
-          name: data.name || "",
-          email: data.email || "",
-          employeeId: data.employee_id || "",
-          designation: data.designation || "",
-          profilePhoto: data.profile_photo || "",
-        });
-      }
-    }
+    enabled: !!userId
   });
+
+  // Update form data when profile is loaded
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || "",
+        email: profile.email || "",
+        employeeId: profile.employee_id || "",
+        designation: profile.designation || "",
+        profilePhoto: profile.profile_photo || "",
+      });
+    }
+  }, [profile]);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
