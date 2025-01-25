@@ -8,6 +8,16 @@ import { Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+interface Profile {
+  id: string;
+  name: string | null;
+  email: string | null;
+  employee_id: string | null;
+  designation: string | null;
+  role: string | null;
+  profile_photo?: string | null;
+}
+
 const EmployeeProfile = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -42,10 +52,10 @@ const EmployeeProfile = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as Profile;
     },
     enabled: !!userId,
-    onSuccess: (data) => {
+    onSettled: (data) => {
       if (data) {
         setFormData({
           name: data.name || "",
@@ -109,6 +119,7 @@ const EmployeeProfile = () => {
         .update({
           name: formData.name,
           designation: formData.designation,
+          profile_photo: formData.profilePhoto
         })
         .eq('id', userId);
 
