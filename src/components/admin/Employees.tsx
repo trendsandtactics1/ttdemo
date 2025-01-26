@@ -3,6 +3,7 @@ import EmployeeList from "./EmployeeList";
 import { User } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 const EmployeePage = () => {
   const [employees, setEmployees] = useState<User[]>([]);
@@ -15,12 +16,23 @@ const EmployeePage = () => {
   const fetchEmployees = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      console.log('Fetching employees...');
+      let query = supabase
         .from('profiles')
-        .select('*')
-        .eq('role', 'employee');
+        .select('*');
       
-      if (error) throw error;
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching employees:', error);
+        throw error;
+      }
+      
+      console.log('Fetched employees:', data);
       setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees:", error);
@@ -44,10 +56,10 @@ const EmployeePage = () => {
 
   return (
     <div className="space-y-4">
-      <input
+      <Input
         type="text"
         placeholder="Search employees..."
-        className="w-full p-2 border rounded"
+        className="w-full"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/types/user";
+import { useEffect } from "react";
 
 interface EmployeeListProps {
   employees: User[];
@@ -23,19 +24,39 @@ interface EmployeeListProps {
 const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListProps) => {
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Set up real-time subscription for employee updates
+    const channel = supabase
+      .channel('public:profiles')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          console.log('Profiles updated, refreshing...');
+          onEmployeeDeleted(); // Refresh the list
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [onEmployeeDeleted]);
+
   const handleDeleteEmployee = async (userId: string) => {
     try {
-      // Delete from auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      if (authError) throw authError;
-
+      console.log('Deleting employee:', userId);
+      
       // Delete from profiles (this should cascade due to foreign key)
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
         .eq('id', userId);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+        throw profileError;
+      }
 
       onEmployeeDeleted();
       
