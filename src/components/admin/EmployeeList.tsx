@@ -38,6 +38,11 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
       if (profileError) throw profileError;
 
       onEmployeeDeleted();
+      
+      toast({
+        title: "Success",
+        description: "Employee deleted successfully",
+      });
     } catch (error) {
       console.error("Error deleting employee:", error);
       toast({
