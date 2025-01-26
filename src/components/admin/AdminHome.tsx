@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CheckCircle, XCircle, ClipboardList } from "lucide-react";
-import { localStorageService } from "@/services/localStorageService";
-import { leaveRequestService } from "@/services/leaveRequestService";
 import { attendanceService } from "@/services/attendanceService";
+import { supabase } from "@/integrations/supabase/client";
 import AttendanceTable from "./AttendanceTable";
 
 const AdminHome = () => {
@@ -36,8 +35,13 @@ const AdminHome = () => {
 
   useEffect(() => {
     const updateStats = async () => {
-      const tasks = localStorageService.getTasks();
-      const pendingTasks = tasks.filter(task => task.status === 'pending').length;
+      // Get pending tasks count from Supabase
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('status', 'pending');
+      
+      const pendingTasks = tasks?.length || 0;
       const totalEmployees = 10; // Constant value as requested
 
       // Get today's date in YYYY-MM-DD format
@@ -80,14 +84,25 @@ const AdminHome = () => {
     };
 
     updateStats();
-    window.addEventListener('employees-updated', updateStats);
-    window.addEventListener('tasks-updated', updateStats);
-    window.addEventListener('leave-requests-updated', updateStats);
+
+    // Set up real-time subscription for tasks
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          updateStats();
+        }
+      )
+      .subscribe();
     
     return () => {
-      window.removeEventListener('employees-updated', updateStats);
-      window.removeEventListener('tasks-updated', updateStats);
-      window.removeEventListener('leave-requests-updated', updateStats);
+      supabase.removeChannel(channel);
     };
   }, []);
 
