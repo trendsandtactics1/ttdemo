@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 const LeaveRequest = () => {
   const [formData, setFormData] = useState({
@@ -19,8 +20,8 @@ const LeaveRequest = () => {
   });
   const queryClient = useQueryClient();
 
-  const { data: requests = [] } = useQuery({
-    queryKey: ['leave-requests'],
+  const { data: requests = [], isLoading } = useQuery({
+    queryKey: ['my-leave-requests'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
@@ -35,6 +36,27 @@ const LeaveRequest = () => {
       return data;
     }
   });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leave_requests'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['my-leave-requests'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +75,6 @@ const LeaveRequest = () => {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['leave-requests'] });
       setFormData({ type: "", start_date: "", end_date: "", reason: "" });
       toast.success("Leave request submitted successfully");
     } catch (error) {
@@ -75,6 +96,10 @@ const LeaveRequest = () => {
     };
     return <Badge className={styles[status as keyof typeof styles]}>{status}</Badge>;
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -155,8 +180,8 @@ const LeaveRequest = () => {
                 {requests.map((request) => (
                   <TableRow key={request.id}>
                     <TableCell>{request.type}</TableCell>
-                    <TableCell>{request.start_date}</TableCell>
-                    <TableCell>{request.end_date}</TableCell>
+                    <TableCell>{new Date(request.start_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(request.end_date).toLocaleDateString()}</TableCell>
                     <TableCell>{request.reason}</TableCell>
                     <TableCell>{getStatusBadge(request.status)}</TableCell>
                   </TableRow>

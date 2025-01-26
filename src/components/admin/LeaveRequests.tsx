@@ -4,22 +4,65 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
-import { leaveRequestService } from "@/services/leaveRequestService";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const LeaveRequests = () => {
-  const [requests, setRequests] = useState<any[]>([]);
+  const queryClient = useQueryClient();
+
+  const { data: requests = [], isLoading } = useQuery({
+    queryKey: ['leave-requests'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select(`
+          *,
+          profiles:employee_id (
+            name,
+            employee_id
+          )
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   useEffect(() => {
-    const allRequests = leaveRequestService.getAllRequests().sort((a, b) => 
-      new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-    );
-    setRequests(allRequests);
-  }, []);
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leave_requests'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['leave-requests'] });
+        }
+      )
+      .subscribe();
 
-  const handleStatusUpdate = (id: number, newStatus: "approved" | "rejected") => {
-    const updatedRequests = leaveRequestService.updateRequestStatus(id, newStatus);
-    setRequests(updatedRequests);
-    toast.success(`Leave request ${newStatus}`);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  const handleStatusUpdate = async (id: string, newStatus: "approved" | "rejected") => {
+    try {
+      const { error } = await supabase
+        .from('leave_requests')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast.success(`Leave request ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Failed to update leave request status');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -30,6 +73,10 @@ const LeaveRequests = () => {
     };
     return <Badge className={styles[status as keyof typeof styles]}>{status}</Badge>;
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -57,10 +104,10 @@ const LeaveRequests = () => {
               <TableBody>
                 {requests.map((request) => (
                   <TableRow key={request.id}>
-                    <TableCell>{request.employee}</TableCell>
+                    <TableCell>{request.profiles?.name || 'Unknown'}</TableCell>
                     <TableCell>{request.type}</TableCell>
-                    <TableCell>{request.startDate}</TableCell>
-                    <TableCell>{request.endDate}</TableCell>
+                    <TableCell>{new Date(request.start_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(request.end_date).toLocaleDateString()}</TableCell>
                     <TableCell>{request.reason}</TableCell>
                     <TableCell>{getStatusBadge(request.status)}</TableCell>
                     <TableCell className="space-x-2">
