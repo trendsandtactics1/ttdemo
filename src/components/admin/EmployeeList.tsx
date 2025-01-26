@@ -2,7 +2,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -25,17 +25,18 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
 
   const handleDeleteEmployee = async (userId: string) => {
     try {
-      const { error } = await supabase
+      // Delete from auth
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      if (authError) throw authError;
+
+      // Delete from profiles (this should cascade due to foreign key)
+      const { error: profileError } = await supabase
         .from('profiles')
         .delete()
         .eq('id', userId);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      toast({
-        title: "Success",
-        description: "Employee deleted successfully",
-      });
       onEmployeeDeleted();
     } catch (error) {
       console.error("Error deleting employee:", error);
@@ -48,7 +49,18 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
   };
 
   if (loading) {
-    return <p>Loading employees...</p>;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>All Employees</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center p-4">
+            <p>Loading employees...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -69,6 +81,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
                   <TableHead>Email</TableHead>
                   <TableHead>Employee ID</TableHead>
                   <TableHead>Designation</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -77,6 +90,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
                   <TableRow key={employee.id}>
                     <TableCell>
                       <Avatar>
+                        <AvatarImage src={employee.profile_photo || undefined} />
                         <AvatarFallback>{employee.name?.charAt(0)}</AvatarFallback>
                       </Avatar>
                     </TableCell>
@@ -84,6 +98,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
                     <TableCell>{employee.email}</TableCell>
                     <TableCell>{employee.employee_id}</TableCell>
                     <TableCell>{employee.designation}</TableCell>
+                    <TableCell>{employee.role}</TableCell>
                     <TableCell>
                       <Button
                         variant="destructive"

@@ -2,45 +2,85 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import EmployeeForm from "./EmployeeForm";
-import UserList from "./UserList";
-import { createUser, fetchUsers, deleteUser } from "@/services/userService";
+import EmployeeList from "./EmployeeList";
+import { supabase } from "@/integrations/supabase/client";
 import type { User, UserFormData } from "@/types/user";
+import { useQuery } from "@tanstack/react-query";
 
 const UserManagement = () => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const { data: employees = [], refetch } = useQuery({
+    queryKey: ['employees'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as User[];
+    }
+  });
 
   const handleSubmit = async (data: UserFormData) => {
     try {
-      await createUser(data);
-      toast({
-        title: "Success",
-        description: "User created successfully",
+      setLoading(true);
+      
+      // First create the user in auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            role: data.role,
+          },
+        },
       });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Then create the profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            name: data.name,
+            email: data.email,
+            employee_id: data.employeeId,
+            designation: data.designation,
+            role: data.role,
+          });
+
+        if (profileError) throw profileError;
+
+        toast({
+          title: "Success",
+          description: "Employee created successfully",
+        });
+        
+        refetch(); // Refresh the employee list
+      }
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error("Error creating employee:", error);
       toast({
         title: "Error",
-        description: "Failed to create user",
+        description: error instanceof Error ? error.message : "Failed to create employee",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      await deleteUser(userId);
-      toast({
-        title: "Success",
-        description: "User deleted successfully",
-      });
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete user",
-        variant: "destructive",
-      });
-    }
+  const handleEmployeeDeleted = async () => {
+    await refetch();
+    toast({
+      title: "Success",
+      description: "Employee deleted successfully",
+    });
   };
 
   return (
@@ -48,14 +88,11 @@ const UserManagement = () => {
       <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
       <div className="space-y-6">
         <EmployeeForm onSubmit={handleSubmit} />
-        <Card>
-          <CardHeader>
-            <CardTitle>All Users</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UserList onDeleteUser={handleDeleteUser} />
-          </CardContent>
-        </Card>
+        <EmployeeList 
+          employees={employees} 
+          onEmployeeDeleted={handleEmployeeDeleted}
+          loading={loading}
+        />
       </div>
     </div>
   );
