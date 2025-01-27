@@ -13,43 +13,66 @@ import { AttendanceRecord } from "@/services/attendance/types";
 import { formatHoursToHHMM } from "@/utils/timeFormat";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AttendanceTableProps {
-  attendanceLogs: AttendanceRecord[];
-  onViewDetails: (log: AttendanceRecord) => void;
+  showTodayOnly?: boolean;
 }
 
-const AttendanceTable = ({ attendanceLogs, onViewDetails }: AttendanceTableProps) => {
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
-  const [filteredLogs, setFilteredLogs] = useState<AttendanceRecord[]>(attendanceLogs);
+const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
+  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    const fetchEmployeeId = async () => {
+    const fetchUserProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('employee_id')
+          .select('*')
           .eq('id', user.id)
           .single();
-        
-        if (profile) {
-          setEmployeeId(profile.employee_id);
-        }
+        setUserProfile(profile);
       }
     };
-
-    fetchEmployeeId();
+    fetchUserProfile();
   }, []);
 
   useEffect(() => {
-    if (employeeId) {
-      const filtered = attendanceLogs.filter(log => log.employeeId === employeeId);
-      setFilteredLogs(filtered);
-    } else {
-      setFilteredLogs(attendanceLogs);
-    }
-  }, [attendanceLogs, employeeId]);
+    const fetchLogs = async () => {
+      if (!userProfile) return;
+      
+      setLoading(true);
+      try {
+        const logs = await attendanceService.getAttendanceLogs();
+        
+        // Filter logs by employee ID
+        let filteredLogs = logs.filter(log => 
+          log.employeeId === userProfile.employee_id
+        );
+        
+        if (showTodayOnly) {
+          const today = new Date().toISOString().split('T')[0];
+          filteredLogs = filteredLogs.filter(log => log.date === today);
+        }
+        
+        const sortedLogs = filteredLogs.sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        
+        setAttendanceLogs(sortedLogs);
+      } catch (error) {
+        console.error("Error fetching attendance logs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogs();
+  }, [showTodayOnly, userProfile]);
 
   const formatTime = (dateTimeString: string) => {
     try {
@@ -80,6 +103,14 @@ const AttendanceTable = ({ attendanceLogs, onViewDetails }: AttendanceTableProps
     return <Badge className="bg-red-500">Absent</Badge>;
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-x-auto rounded-md border">
       <Table>
@@ -95,7 +126,7 @@ const AttendanceTable = ({ attendanceLogs, onViewDetails }: AttendanceTableProps
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredLogs.map((log, index) => (
+          {attendanceLogs.map((log, index) => (
             <TableRow key={index}>
               <TableCell className="whitespace-nowrap">{formatDate(log.date)}</TableCell>
               <TableCell className="whitespace-nowrap">{formatTime(log.checkIn)}</TableCell>

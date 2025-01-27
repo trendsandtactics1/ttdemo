@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { User } from "@/types/user";
 
 interface TaskCardProps {
   task: {
@@ -39,6 +41,18 @@ interface TaskCardProps {
 const TaskCard = ({ task }: TaskCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [employees, setEmployees] = useState<User[]>([]);
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'employee');
+      setEmployees(data || []);
+    };
+    fetchEmployees();
+  }, []);
 
   const handleStatusUpdate = async (taskId: string, newStatus: string) => {
     const { error } = await supabase
@@ -156,6 +170,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
             <MessageSquare className="h-4 w-4 mr-2" />
             Chat
           </Button>
+          
           <Select
             onValueChange={(value) => handleStatusUpdate(task.id, value)}
             defaultValue={task.status || 'pending'}
@@ -169,14 +184,22 @@ const TaskCard = ({ task }: TaskCardProps) => {
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="hover:bg-red-600"
-            onClick={() => handleDeleteTask(task.id)}
+
+          <Select
+            onValueChange={(value) => handleReassign(task.id, value)}
+            defaultValue={task.assigned_to || ''}
           >
-            Delete
-          </Button>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Reassign Task" />
+            </SelectTrigger>
+            <SelectContent>
+              {employees.map((employee) => (
+                <SelectItem key={employee.id} value={employee.id}>
+                  {employee.name} - {employee.designation}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>
