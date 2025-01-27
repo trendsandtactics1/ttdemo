@@ -2,74 +2,56 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    let employeeId;
+    setIsLoading(true);
 
-if (email === "karthikjungleemara@gmail.com") {
-  employeeId = "TT012";
-} else if (email === "sonukrishnan1313@gmail.com") {
-  employeeId = "TT009";
-} else if (email === "sristar.live@gmail.com") {
-  employeeId = "TT004";
-} else if (email === "shinujeopoulose@gmail.com") {
-  employeeId = "TT006";
-} else if (email === "unnihari2332@gmail.com") {
-  employeeId = "TT013";
-} else if (email === "vinodvinod18696@gmail.com") {
-  employeeId = "TT001";
-} else if (email === "tnmani.manikandan11@gmail.com") {
-  employeeId = "TT010";
-} else if (email === "kandhan87selvaraj@gmail.com") {
-  employeeId = "TT002";
-} else if (email === "sathiyamoorthytt005@gmail.com") {
-  employeeId = "TT003";
-} else if (email.includes("admin")) {
-  const adminIds = ["ADMIN001", "ADMIN002", "ADMIN003"];
-  employeeId = adminIds[Math.floor(Math.random() * adminIds.length)];
-} else if (email.includes("manager")) {
-  const managerIds = ["MGR001", "MGR002", "MGR003"];
-  employeeId = managerIds[Math.floor(Math.random() * managerIds.length)];
-} else {
-  employeeId = `TT${Math.floor(Math.random() * 100)}`;
-}
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
+      if (error) throw error;
 
-    let userData = {
-      id: crypto.randomUUID(),
-      name: email.split('@')[0],
-      email: email,
-      employeeId: employeeId,
-      designation: "Employee",
-      password: password
-    };
+      if (data.user) {
+        // Fetch user profile to get role
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
 
-    if (email.includes("admin")) {
-      userData.designation = "Admin";
-      navigate("/admin");
-    } else if (email.includes("manager")) {
-      userData.designation = "Manager";
-      navigate("/manager");
-    } else {
-      userData.designation = "Employee";
-      navigate("/employee");
+        if (profileError) throw profileError;
+
+        // Route based on user role
+        if (profileData?.role === 'admin') {
+          navigate("/admin");
+        } else {
+          navigate("/employee");
+        }
+
+        toast.success("Logged in successfully", {
+          description: `Welcome back, ${email}!`,
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error("Login failed", {
+        description: error instanceof Error ? error.message : "Please check your credentials and try again",
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    localStorage.setItem('workstream_current_user', JSON.stringify(userData));
-    
-    toast({
-      title: "Logged in successfully",
-      description: `Welcome back, ${userData.name}!`,
-    });
   };
 
   return (
@@ -99,6 +81,7 @@ if (email === "karthikjungleemara@gmail.com") {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -112,13 +95,15 @@ if (email === "karthikjungleemara@gmail.com") {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
+                disabled={isLoading}
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md transition-colors disabled:opacity-50"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? "Signing in..." : "Sign In"}
             </button>
           </form>
         </CardContent>
