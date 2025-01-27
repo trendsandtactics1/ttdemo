@@ -1,4 +1,3 @@
-import { Task, Employee, localStorageService } from "@/services/localStorageService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,41 +11,99 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaskCardProps {
-  task: Task;
-  employees: Employee[];
+  task: {
+    id: string;
+    title: string;
+    description: string | null;
+    status: string | null;
+    due_date: string | null;
+    assigned_date: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+    assigned_to: string | null;
+    assigned_by: string | null;
+    assigned_to_profile: {
+      name: string | null;
+      employee_id: string | null;
+    } | null;
+    assigned_by_profile: {
+      name: string | null;
+      employee_id: string | null;
+    } | null;
+  };
 }
 
-const TaskCard = ({ task, employees }: TaskCardProps) => {
+const TaskCard = ({ task }: TaskCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleStatusUpdate = (taskId: string, newStatus: Task['status']) => {
-    localStorageService.updateTask(taskId, { status: newStatus });
+  const handleStatusUpdate = async (taskId: string, newStatus: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: newStatus })
+      .eq('id', taskId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update task status.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Task Updated",
       description: "Task status has been successfully updated.",
     });
   };
 
-  const handleReassign = (taskId: string, newAssigneeId: string) => {
-    localStorageService.updateTask(taskId, { assignedTo: newAssigneeId });
+  const handleReassign = async (taskId: string, newAssigneeId: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .update({ assigned_to: newAssigneeId })
+      .eq('id', taskId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reassign task.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Task Reassigned",
       description: "Task has been successfully reassigned.",
     });
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    localStorageService.deleteTask(taskId);
+  const handleDeleteTask = async (taskId: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete task.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Task Deleted",
       description: "Task has been successfully deleted.",
     });
   };
 
-  const getStatusColor = (status: Task['status']) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'completed':
         return 'bg-green-500 hover:bg-green-600';
@@ -65,7 +122,7 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
           <Badge 
             className={`${getStatusColor(task.status)} text-white`}
           >
-            {task.status}
+            {task.status || 'pending'}
           </Badge>
         </div>
       </CardHeader>
@@ -74,19 +131,19 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-md">
           <div>
             <p className="text-sm font-medium text-gray-500">Due Date</p>
-            <p className="text-gray-800">{new Date(task.dueDate).toLocaleDateString()}</p>
+            <p className="text-gray-800">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Not set'}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Assigned Date</p>
-            <p className="text-gray-800">{new Date(task.assignedDate).toLocaleDateString()}</p>
+            <p className="text-gray-800">{task.assigned_date ? new Date(task.assigned_date).toLocaleDateString() : 'Not set'}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Created At</p>
-            <p className="text-gray-800">{new Date(task.createdAt).toLocaleDateString()}</p>
+            <p className="text-gray-800">{task.created_at ? new Date(task.created_at).toLocaleDateString() : 'Not set'}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Last Updated</p>
-            <p className="text-gray-800">{new Date(task.updatedAt).toLocaleDateString()}</p>
+            <p className="text-gray-800">{task.updated_at ? new Date(task.updated_at).toLocaleDateString() : 'Not set'}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 pt-2">
@@ -100,8 +157,8 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
             Chat
           </Button>
           <Select
-            onValueChange={(value) => handleStatusUpdate(task.id, value as Task['status'])}
-            defaultValue={task.status}
+            onValueChange={(value) => handleStatusUpdate(task.id, value)}
+            defaultValue={task.status || 'pending'}
           >
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Update Status" />
@@ -110,21 +167,6 @@ const TaskCard = ({ task, employees }: TaskCardProps) => {
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="in-progress">In Progress</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            onValueChange={(value) => handleReassign(task.id, value)}
-            defaultValue={task.assignedTo}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Reassign to..." />
-            </SelectTrigger>
-            <SelectContent>
-              {employees.map((employee) => (
-                <SelectItem key={employee.id} value={employee.id}>
-                  {employee.name}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
           <Button

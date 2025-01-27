@@ -5,7 +5,6 @@ import TaskCard from "./TaskCard";
 import TaskFilters from "./TaskFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Task } from "@/types/user";
 
 const Tasks = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,14 +20,14 @@ const Tasks = () => {
         .from('tasks')
         .select(`
           *,
-          assigned_to_profile:assigned_to(name, employee_id),
-          assigned_by_profile:assigned_by(name, employee_id)
+          assigned_to_profile:profiles!tasks_assigned_to_fkey(name, employee_id),
+          assigned_by_profile:profiles!tasks_assigned_by_fkey(name, employee_id)
         `)
         .order('created_at', { ascending: sortOrder === 'asc' });
 
       if (error) throw error;
       console.log('Fetched tasks:', data);
-      return data as Task[];
+      return data;
     }
   });
 

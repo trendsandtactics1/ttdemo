@@ -8,7 +8,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Employee } from "@/services/localStorageService";
 
 interface TaskFiltersProps {
   searchTerm: string;
@@ -17,7 +16,6 @@ interface TaskFiltersProps {
   setStatusFilter: (status: string) => void;
   assigneeFilter: string;
   setAssigneeFilter: (assigneeId: string) => void;
-  employees: Employee[];
   sortOrder: "asc" | "desc";
   setSortOrder: (order: "asc" | "desc") => void;
 }
@@ -29,7 +27,6 @@ const TaskFilters = ({
   setStatusFilter,
   assigneeFilter,
   setAssigneeFilter,
-  employees,
   sortOrder,
   setSortOrder
 }: TaskFiltersProps) => {
@@ -85,11 +82,6 @@ const TaskFilters = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Employees</SelectItem>
-            {employees.map((employee) => (
-              <SelectItem key={employee.id} value={employee.id}>
-                {employee.name}
-              </SelectItem>
-            ))}
           </SelectContent>
         </Select>
       </div>
