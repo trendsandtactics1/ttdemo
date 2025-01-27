@@ -9,6 +9,7 @@ export const getSampleData = (): AttendanceRecord[] => {
     {
       employeeId: "EMP001",
       employeeName: "John Doe",
+      email: "john.doe@example.com",
       date: today.toISOString(),
       checkIn: new Date(today.setHours(9, 0)).toISOString(),
       checkOut: new Date(today.setHours(17, 30)).toISOString(),
@@ -17,11 +18,13 @@ export const getSampleData = (): AttendanceRecord[] => {
         new Date(today.setHours(13, 0)).toISOString()
       ],
       totalBreakHours: 1,
-      effectiveHours: 7.5
+      effectiveHours: 7.5,
+      status: "Present"
     },
     {
       employeeId: "EMP002",
       employeeName: "Jane Smith",
+      email: "jane.smith@example.com",
       date: yesterday.toISOString(),
       checkIn: new Date(yesterday.setHours(8, 45)).toISOString(),
       checkOut: new Date(yesterday.setHours(17, 15)).toISOString(),
@@ -30,7 +33,8 @@ export const getSampleData = (): AttendanceRecord[] => {
         new Date(yesterday.setHours(13, 15)).toISOString()
       ],
       totalBreakHours: 1,
-      effectiveHours: 7.5
+      effectiveHours: 7.5,
+      status: "Present"
     }
   ];
 };

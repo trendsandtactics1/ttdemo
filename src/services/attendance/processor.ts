@@ -61,15 +61,25 @@ export const processAttendanceLogs = (logs: CheckInLog[]): AttendanceRecord[] =>
     // Calculate effective hours (total hours - break hours)
     const effectiveHours = Math.max(0, totalHours - totalBreakHours);
 
+    // Determine status based on effective hours
+    let status = 'Absent';
+    if (effectiveHours >= 8) {
+      status = 'Present';
+    } else if (effectiveHours > 0) {
+      status = 'Half Day';
+    }
+
     return {
       employeeId: firstLog.employeeId,
       employeeName: firstLog.employeeName,
+      email: firstLog.emailId, // Add email from the log
       date: date,
       checkIn: firstLog.timestamp,
       checkOut: lastLog.timestamp,
       breaks: breaks,
       totalBreakHours: Math.round(totalBreakHours * 100) / 100,
-      effectiveHours: Math.round(effectiveHours * 100) / 100
+      effectiveHours: Math.round(effectiveHours * 100) / 100,
+      status: status // Add status based on effective hours
     };
   });
 
