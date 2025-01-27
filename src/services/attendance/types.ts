@@ -10,12 +10,14 @@ export interface CheckInLog {
 export interface AttendanceRecord {
   employeeId: string;
   employeeName: string;
+  email: string;
   date: string;
   checkIn: string;
   checkOut: string;
   breaks: string[];
   totalBreakHours: number;
   effectiveHours: number;
+  status: string;
 }
 
 export interface SheetRow {

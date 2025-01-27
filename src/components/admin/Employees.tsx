@@ -37,6 +37,10 @@ const EmployeePage = () => {
     }
   });
 
+  const handleEmployeeDeleted = () => {
+    queryClient.invalidateQueries({ queryKey: ['employees'] });
+  };
+
   useEffect(() => {
     const channel = supabase
       .channel('schema-db-changes')
@@ -70,6 +74,7 @@ const EmployeePage = () => {
       <EmployeeList
         employees={employees}
         loading={isLoading}
+        onEmployeeDeleted={handleEmployeeDeleted}
       />
       <div className="flex justify-between items-center mt-4">
         <button
