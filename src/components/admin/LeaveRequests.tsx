@@ -20,7 +20,8 @@ const LeaveRequests = () => {
           profiles:employee_id (
             name,
             employee_id,
-            designation
+            designation,
+            email
           )
         `)
         .order('created_at', { ascending: false });
@@ -110,10 +111,16 @@ const LeaveRequests = () => {
                       <TableCell className="whitespace-nowrap">
                         {request.profiles?.name || 'Unknown'} 
                         {request.profiles?.designation && ` - ${request.profiles.designation}`}
+                        <br />
+                        <span className="text-sm text-gray-500">{request.profiles?.email}</span>
                       </TableCell>
                       <TableCell className="whitespace-nowrap">{request.type}</TableCell>
-                      <TableCell className="whitespace-nowrap">{new Date(request.start_date).toLocaleDateString()}</TableCell>
-                      <TableCell className="whitespace-nowrap">{new Date(request.end_date).toLocaleDateString()}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {new Date(request.start_date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {new Date(request.end_date).toLocaleDateString()}
+                      </TableCell>
                       <TableCell>{request.reason}</TableCell>
                       <TableCell className="whitespace-nowrap">{getStatusBadge(request.status)}</TableCell>
                       <TableCell className="space-x-2 whitespace-nowrap">

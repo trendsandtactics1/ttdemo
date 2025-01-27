@@ -29,8 +29,7 @@ const CreateTaskModal = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
-          .eq('role', 'employee');
+          .select('*');
         
         if (error) throw error;
         setEmployees(data || []);
@@ -163,7 +162,7 @@ const CreateTaskModal = () => {
                 <Calendar
                   mode="single"
                   selected={dueDate}
-                  onSelect={(date) => date && setDueDate(date)}
+                  onSelect={setDueDate}
                   initialFocus
                 />
               </PopoverContent>

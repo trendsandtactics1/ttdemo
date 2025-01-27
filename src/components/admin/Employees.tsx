@@ -58,10 +58,6 @@ const EmployeePage = () => {
     };
   }, [queryClient]);
 
-  const handleEmployeeDeleted = () => {
-    queryClient.invalidateQueries({ queryKey: ['employees'] });
-  };
-
   return (
     <div className="space-y-4">
       <Input
@@ -73,7 +69,6 @@ const EmployeePage = () => {
       />
       <EmployeeList
         employees={employees}
-        onEmployeeDeleted={handleEmployeeDeleted}
         loading={isLoading}
       />
       <div className="flex justify-between items-center mt-4">
