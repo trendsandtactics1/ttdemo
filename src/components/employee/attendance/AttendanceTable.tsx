@@ -15,12 +15,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { attendanceService } from "@/services/attendanceService";
 
 interface AttendanceTableProps {
   showTodayOnly?: boolean;
+  onViewDetails: (log: AttendanceRecord) => void;
 }
 
-const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
+const AttendanceTable = ({ showTodayOnly = false, onViewDetails }: AttendanceTableProps) => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
