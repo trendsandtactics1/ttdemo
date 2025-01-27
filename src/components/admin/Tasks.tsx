@@ -5,13 +5,26 @@ import TaskCard from "./TaskCard";
 import TaskFilters from "./TaskFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { User } from "@/types/user";
 
 const Tasks = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [employees, setEmployees] = useState<User[]>([]);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'employee');
+      setEmployees(data || []);
+    };
+    fetchEmployees();
+  }, []);
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['admin-tasks'],
@@ -80,6 +93,7 @@ const Tasks = () => {
         setAssigneeFilter={setAssigneeFilter}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
+        employees={employees}
       />
 
       <div className="grid gap-4">

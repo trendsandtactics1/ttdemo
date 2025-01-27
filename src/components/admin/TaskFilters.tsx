@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { User } from "@/types/user";
 
 interface TaskFiltersProps {
   searchTerm: string;
@@ -18,6 +19,7 @@ interface TaskFiltersProps {
   setAssigneeFilter: (assigneeId: string) => void;
   sortOrder: "asc" | "desc";
   setSortOrder: (order: "asc" | "desc") => void;
+  employees: User[];
 }
 
 const TaskFilters = ({ 
@@ -28,7 +30,8 @@ const TaskFilters = ({
   assigneeFilter,
   setAssigneeFilter,
   sortOrder,
-  setSortOrder
+  setSortOrder,
+  employees = []
 }: TaskFiltersProps) => {
   return (
     <div className="flex flex-col gap-4">
@@ -82,6 +85,11 @@ const TaskFilters = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Employees</SelectItem>
+            {employees.map((employee) => (
+              <SelectItem key={employee.id} value={employee.id}>
+                {employee.name} - {employee.designation}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
