@@ -19,12 +19,14 @@ const LeaveRequests = () => {
           *,
           profiles:employee_id (
             name,
-            employee_id
+            employee_id,
+            designation
           )
         `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
+      console.log('Leave requests with profiles:', data);
       return data;
     }
   });
@@ -89,51 +91,56 @@ const LeaveRequests = () => {
           {requests.length === 0 ? (
             <p className="text-muted-foreground">No leave requests found.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>{request.profiles?.name || 'Unknown'}</TableCell>
-                    <TableCell>{request.type}</TableCell>
-                    <TableCell>{new Date(request.start_date).toLocaleDateString()}</TableCell>
-                    <TableCell>{new Date(request.end_date).toLocaleDateString()}</TableCell>
-                    <TableCell>{request.reason}</TableCell>
-                    <TableCell>{getStatusBadge(request.status)}</TableCell>
-                    <TableCell className="space-x-2">
-                      {request.status === "pending" && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="default"
-                            onClick={() => handleStatusUpdate(request.id, "approved")}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleStatusUpdate(request.id, "rejected")}
-                          >
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="whitespace-nowrap">Employee</TableHead>
+                    <TableHead className="whitespace-nowrap">Type</TableHead>
+                    <TableHead className="whitespace-nowrap">Start Date</TableHead>
+                    <TableHead className="whitespace-nowrap">End Date</TableHead>
+                    <TableHead className="whitespace-nowrap">Reason</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="whitespace-nowrap">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {requests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell className="whitespace-nowrap">
+                        {request.profiles?.name || 'Unknown'} 
+                        {request.profiles?.designation && ` - ${request.profiles.designation}`}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{request.type}</TableCell>
+                      <TableCell className="whitespace-nowrap">{new Date(request.start_date).toLocaleDateString()}</TableCell>
+                      <TableCell className="whitespace-nowrap">{new Date(request.end_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{request.reason}</TableCell>
+                      <TableCell className="whitespace-nowrap">{getStatusBadge(request.status)}</TableCell>
+                      <TableCell className="space-x-2 whitespace-nowrap">
+                        {request.status === "pending" && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleStatusUpdate(request.id, "approved")}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleStatusUpdate(request.id, "rejected")}
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

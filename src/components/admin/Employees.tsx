@@ -4,18 +4,18 @@ import { User } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const EmployeePage = () => {
-  const [employees, setEmployees] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const fetchEmployees = async () => {
-    setLoading(true);
-    try {
+  const { data: employees = [], isLoading } = useQuery({
+    queryKey: ['employees', searchTerm, page],
+    queryFn: async () => {
       console.log('Fetching employees...');
       let query = supabase
         .from('profiles')
@@ -33,25 +33,33 @@ const EmployeePage = () => {
       }
       
       console.log('Fetched employees:', data);
-      setEmployees(data || []);
-    } catch (error) {
-      console.error("Error fetching employees:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch employees",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      return data as User[];
     }
-  };
+  });
 
   useEffect(() => {
-    fetchEmployees();
-  }, [searchTerm, page]);
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['employees'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const handleEmployeeDeleted = () => {
-    fetchEmployees();
+    queryClient.invalidateQueries({ queryKey: ['employees'] });
   };
 
   return (
@@ -66,7 +74,7 @@ const EmployeePage = () => {
       <EmployeeList
         employees={employees}
         onEmployeeDeleted={handleEmployeeDeleted}
-        loading={loading}
+        loading={isLoading}
       />
       <div className="flex justify-between items-center mt-4">
         <button
