@@ -6,7 +6,6 @@ import { AttendanceRecord } from "@/services/attendance/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { attendanceService } from "@/services/attendanceService";
-import { useToast } from "@/components/ui/use-toast";
 
 interface AttendanceTableProps {
   showTodayOnly?: boolean;
@@ -17,23 +16,15 @@ interface AttendanceTableProps {
 const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail }: AttendanceTableProps) => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchAttendanceLogs = async () => {
       try {
-        setLoading(true);
-        setError(null);
         const logs = await attendanceService.getAttendanceLogs();
-        console.log('Fetched logs:', logs);
-        console.log('User email:', userEmail);
-        
         const filteredLogs = logs.filter(log => 
           log.email?.toLowerCase() === userEmail?.toLowerCase()
         );
-        console.log('Filtered logs:', filteredLogs);
 
         if (showTodayOnly) {
           const today = new Date().toDateString();
@@ -46,12 +37,6 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail }: At
         }
       } catch (error) {
         console.error('Error fetching attendance logs:', error);
-        setError('Failed to load attendance records');
-        toast({
-          title: "Error",
-          description: "Failed to load attendance records. Please try again later.",
-          variant: "destructive",
-        });
       } finally {
         setLoading(false);
       }
@@ -60,18 +45,14 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail }: At
     if (userEmail) {
       fetchAttendanceLogs();
     }
-  }, [userEmail, showTodayOnly, toast]);
+  }, [userEmail, showTodayOnly]);
 
   if (loading) {
-    return <div className="text-center py-4">Loading attendance records...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center text-red-500 py-4">{error}</div>;
+    return <div>Loading attendance records...</div>;
   }
 
   if (attendanceLogs.length === 0) {
-    return <div className="text-center text-muted-foreground py-4">No attendance records found.</div>;
+    return <div>No attendance records found.</div>;
   }
 
   return (

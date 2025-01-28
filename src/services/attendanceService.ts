@@ -26,30 +26,26 @@ const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
     return logs;
   } catch (error) {
     console.error('Error fetching attendance data:', error);
-    throw error; // Propagate error for better error handling in UI
+    return [];
   }
 };
 
 export const attendanceService = {
   getAttendanceLogs: async () => {
-    try {
-      const logs = await fetchCheckInLogs();
-      console.log('Total fetched logs:', logs.length);
-      
-      if (logs.length === 0) {
-        console.log('No logs found');
-        return [];
-      }
-      
-      const processedLogs = processAttendanceLogs(logs);
-      console.log('Processed logs:', processedLogs);
-      return processedLogs;
-    } catch (error) {
-      console.error('Error in getAttendanceLogs:', error);
-      throw error; // Propagate error for UI handling
+    const logs = await fetchCheckInLogs();
+    console.log('Total fetched logs:', logs.length);
+    
+    if (logs.length === 0) {
+      console.log('No logs found');
+      return [];
     }
+    
+    const processedLogs = processAttendanceLogs(logs);
+    console.log('Processed logs:', processedLogs);
+    return processedLogs;
   },
 
+  // Add methods for managing script URL
   getScriptUrl: () => {
     return localStorage.getItem(SCRIPT_URL_KEY) || '';
   },
@@ -58,6 +54,7 @@ export const attendanceService = {
     localStorage.setItem(SCRIPT_URL_KEY, url);
   },
 
+  // Add methods for managing sheet ID
   getSheetId: () => {
     return localStorage.getItem(SHEET_ID_KEY) || DEFAULT_SHEET_ID;
   },
