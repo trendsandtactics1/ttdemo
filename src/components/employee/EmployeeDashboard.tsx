@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList, Calendar, Bell } from "lucide-react";
@@ -8,6 +8,7 @@ import { TasksList } from "./dashboard/TasksList";
 import { LeaveRequestsList } from "./dashboard/LeaveRequestsList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NotificationHandler } from "../notifications/NotificationHandler";
 
 const EmployeeDashboard = () => {
   const { toast } = useToast();
@@ -156,6 +157,7 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {userId && <NotificationHandler userId={userId} />}
       <h1 className="text-3xl font-bold">Welcome, {profile?.name || 'Employee'}</h1>
       
       <div className="grid gap-6 md:grid-cols-3">
