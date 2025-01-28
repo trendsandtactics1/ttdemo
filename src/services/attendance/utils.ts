@@ -21,43 +21,49 @@ export const parseGoogleSheetJson = (text: string): CheckInLog[] => {
     return data.table.rows.map((row: any) => {
       const cols = row.c || [];
       
-      // Parse date from Google Sheets format
-      const dateObj = cols[0]?.v;
-      const timeStr = cols[1]?.v || '';
+      // Parse date and time from Google Sheets
+      const dateValue = cols[0]?.v;
+      const timeValue = cols[1]?.v;
       
-      // Extract the date components from the "Date(year,month,day)" string
-      const dateMatch = dateObj?.match(/Date\((\d+),(\d+),(\d+)\)/);
-      if (!dateMatch) {
-        console.error('Invalid date format:', dateObj);
+      if (!dateValue || !timeValue) {
+        console.error('Missing date or time value:', { dateValue, timeValue });
         return null;
       }
-      
-      const [_, year, month, day] = dateMatch;
-      
-      // Parse time (assuming format like "03.44 AM")
-      const [hours, minutes] = timeStr.split(' ')[0].split('.').map(Number);
-      const isPM = timeStr.includes('PM');
-      
-      // Create date object
-      const date = new Date(
-        Number(year),
-        Number(month),
-        Number(day),
-        isPM ? (hours === 12 ? 12 : hours + 12) : (hours === 12 ? 0 : hours),
-        minutes
-      );
 
-      // Convert punch type to standardized format
-      const punchType = cols[6]?.v?.toString()?.toUpperCase().includes('OUT') ? 'OUT' : 'IN';
-
-      return {
-        employeeId: cols[2]?.v?.toString() || '',
-        employeeName: cols[3]?.v?.toString() || '',
-        emailId: cols[4]?.v?.toString() || '',
-        position: cols[5]?.v?.toString() || '',
-        punchType: punchType,
-        timestamp: date.toISOString()
-      };
+      try {
+        // Convert Google Sheets date (days since Dec 30, 1899) to JavaScript date
+        const date = new Date(Date.UTC(1899, 11, 30));
+        date.setDate(date.getDate() + Math.floor(dateValue));
+        
+        // Parse time (assuming format like "03:44 AM" or "03.44 AM")
+        const [timeStr, period] = timeValue.split(' ');
+        let [hours, minutes] = timeStr.includes('.') 
+          ? timeStr.split('.')
+          : timeStr.split(':');
+        
+        hours = parseInt(hours);
+        minutes = parseInt(minutes);
+        
+        if (period === 'PM' && hours !== 12) {
+          hours += 12;
+        } else if (period === 'AM' && hours === 12) {
+          hours = 0;
+        }
+        
+        date.setUTCHours(hours, minutes);
+        
+        return {
+          employeeId: cols[2]?.v?.toString() || '',
+          employeeName: cols[3]?.v?.toString() || '',
+          emailId: cols[4]?.v?.toString() || '',
+          position: cols[5]?.v?.toString() || '',
+          punchType: cols[6]?.v?.toString()?.toUpperCase().includes('OUT') ? 'OUT' : 'IN',
+          timestamp: date.toISOString()
+        };
+      } catch (error) {
+        console.error('Error parsing date/time:', error, { dateValue, timeValue });
+        return null;
+      }
     }).filter((log: CheckInLog | null): log is CheckInLog => 
       log !== null && Boolean(log.employeeId) && Boolean(log.timestamp)
     );
