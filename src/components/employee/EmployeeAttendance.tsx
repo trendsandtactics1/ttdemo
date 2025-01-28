@@ -8,32 +8,45 @@ import AttendanceDetailsModal from "./attendance/AttendanceDetailsModal";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 const EmployeeAttendance = () => {
   const [loading, setLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const currentUser = localStorageService.getCurrentUser();
+  const [userProfile, setUserProfile] = useState<any>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!currentUser) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to view attendance records",
-        variant: "destructive",
-      });
-      navigate("/login");
-    }
-  }, [currentUser, navigate, toast]);
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        setUserProfile(data);
+        setLoading(false);
+      } else {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to view attendance records",
+          variant: "destructive",
+        });
+        navigate("/login");
+      }
+    };
+    getCurrentUser();
+  }, [navigate, toast]);
 
   const handleViewDetails = (log: AttendanceRecord) => {
     setSelectedLog(log);
     setShowModal(true);
   };
 
-  if (!currentUser) {
+  if (!userProfile) {
     return null;
   }
 
@@ -51,6 +64,7 @@ const EmployeeAttendance = () => {
         <AttendanceTable
           showTodayOnly={false}
           onViewDetails={handleViewDetails}
+          userEmail={userProfile.email}
         />
 
         <AttendanceDetailsModal

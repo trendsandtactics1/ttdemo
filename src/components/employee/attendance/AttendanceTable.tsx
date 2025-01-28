@@ -3,7 +3,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { AttendanceRecord } from "@/services/attendance/types";
-import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { attendanceService } from "@/services/attendanceService";
@@ -11,39 +10,20 @@ import { attendanceService } from "@/services/attendanceService";
 interface AttendanceTableProps {
   showTodayOnly?: boolean;
   onViewDetails: (log: AttendanceRecord) => void;
+  userEmail: string;
 }
 
-const AttendanceTable = ({ showTodayOnly = false, onViewDetails }: AttendanceTableProps) => {
+const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail }: AttendanceTableProps) => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<any>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        setUserProfile(data);
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
-
-  useEffect(() => {
     const fetchAttendanceLogs = async () => {
-      if (!userProfile?.email) return;
-
       try {
         const logs = await attendanceService.getAttendanceLogs();
         const filteredLogs = logs.filter(log => 
-          log.email?.toLowerCase() === userProfile.email.toLowerCase() ||
-          log.employeeId === userProfile.employee_id
+          log.email?.toLowerCase() === userEmail?.toLowerCase()
         );
 
         if (showTodayOnly) {
@@ -62,8 +42,10 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails }: AttendanceTab
       }
     };
 
-    fetchAttendanceLogs();
-  }, [userProfile, showTodayOnly]);
+    if (userEmail) {
+      fetchAttendanceLogs();
+    }
+  }, [userEmail, showTodayOnly]);
 
   if (loading) {
     return <div>Loading attendance records...</div>;

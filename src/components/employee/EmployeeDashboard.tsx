@@ -7,6 +7,7 @@ import { StatCard } from "./dashboard/StatCard";
 import { TasksList } from "./dashboard/TasksList";
 import { LeaveRequestsList } from "./dashboard/LeaveRequestsList";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const EmployeeDashboard = () => {
   const { toast } = useToast();
@@ -92,6 +93,27 @@ const EmployeeDashboard = () => {
     enabled: !!userId
   });
 
+  const { data: announcements = [], isLoading: isAnnouncementsLoading } = useQuery({
+    queryKey: ['announcements'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch announcements",
+          variant: "destructive",
+        });
+        throw error;
+      }
+      return data;
+    }
+  });
+
   useEffect(() => {
     if (!userId) return;
 
@@ -152,6 +174,37 @@ const EmployeeDashboard = () => {
           value={tasks.filter(task => task.status === 'completed').length}
           icon={Bell}
         />
+      </div>
+
+      {/* Daily Announcements Section */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold mb-4">Latest Announcements</h2>
+        {isAnnouncementsLoading ? (
+          <Skeleton className="h-[200px]" />
+        ) : (
+          <div className="grid gap-4">
+            {announcements.map((announcement) => (
+              <Card key={announcement.id}>
+                <CardHeader>
+                  <CardTitle>{announcement.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p>{announcement.content}</p>
+                  {announcement.image && (
+                    <img
+                      src={announcement.image}
+                      alt={announcement.title}
+                      className="mt-4 rounded-lg max-h-40 object-cover"
+                    />
+                  )}
+                  <p className="text-sm text-muted-foreground mt-4">
+                    Posted on {new Date(announcement.created_at || '').toLocaleDateString()}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
