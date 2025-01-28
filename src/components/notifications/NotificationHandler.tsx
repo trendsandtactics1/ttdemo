@@ -21,9 +21,13 @@ export const NotificationHandler = ({ userId }: { userId: string }) => {
         },
         (payload) => {
           toast({
-            title: "New Task Assigned",
+            title: (
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                <span>New Task Assigned</span>
+              </div>
+            ),
             description: `${payload.new.title}`,
-            icon: <Bell className="h-4 w-4" />,
           });
         }
       )
@@ -38,9 +42,13 @@ export const NotificationHandler = ({ userId }: { userId: string }) => {
         (payload) => {
           if (payload.old.status !== payload.new.status) {
             toast({
-              title: "Task Status Updated",
+              title: (
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  <span>Task Status Updated</span>
+                </div>
+              ),
               description: `Task "${payload.new.title}" is now ${payload.new.status}`,
-              icon: <Bell className="h-4 w-4" />,
             });
           }
         }
@@ -58,9 +66,13 @@ export const NotificationHandler = ({ userId }: { userId: string }) => {
         },
         (payload) => {
           toast({
-            title: "Leave Request Updated",
+            title: (
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                <span>Leave Request Updated</span>
+              </div>
+            ),
             description: `Your leave request status is now ${payload.new.status}`,
-            icon: <Bell className="h-4 w-4" />,
           });
         }
       );
@@ -76,9 +88,13 @@ export const NotificationHandler = ({ userId }: { userId: string }) => {
         },
         (payload) => {
           toast({
-            title: "New Announcement",
+            title: (
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                <span>New Announcement</span>
+              </div>
+            ),
             description: payload.new.title,
-            icon: <Bell className="h-4 w-4" />,
           });
         }
       );
