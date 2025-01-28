@@ -21,13 +21,13 @@ export const NotificationHandler = ({ userId }: { userId: string }) => {
         },
         (payload) => {
           toast({
-            title: (
+            title: "New Task Assigned",
+            description: (
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4" />
-                <span>New Task Assigned</span>
+                <span>{payload.new.title}</span>
               </div>
-            ),
-            description: `${payload.new.title}`,
+            )
           });
         }
       )
@@ -42,13 +42,13 @@ export const NotificationHandler = ({ userId }: { userId: string }) => {
         (payload) => {
           if (payload.old.status !== payload.new.status) {
             toast({
-              title: (
+              title: "Task Status Updated",
+              description: (
                 <div className="flex items-center gap-2">
                   <Bell className="h-4 w-4" />
-                  <span>Task Status Updated</span>
+                  <span>Task "{payload.new.title}" is now {payload.new.status}</span>
                 </div>
-              ),
-              description: `Task "${payload.new.title}" is now ${payload.new.status}`,
+              )
             });
           }
         }
@@ -66,13 +66,13 @@ export const NotificationHandler = ({ userId }: { userId: string }) => {
         },
         (payload) => {
           toast({
-            title: (
+            title: "Leave Request Updated",
+            description: (
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4" />
-                <span>Leave Request Updated</span>
+                <span>Your leave request status is now {payload.new.status}</span>
               </div>
-            ),
-            description: `Your leave request status is now ${payload.new.status}`,
+            )
           });
         }
       );
@@ -88,13 +88,13 @@ export const NotificationHandler = ({ userId }: { userId: string }) => {
         },
         (payload) => {
           toast({
-            title: (
+            title: "New Announcement",
+            description: (
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4" />
-                <span>New Announcement</span>
+                <span>{payload.new.title}</span>
               </div>
-            ),
-            description: payload.new.title,
+            )
           });
         }
       );
