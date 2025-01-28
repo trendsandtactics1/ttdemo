@@ -108,12 +108,12 @@ const LeaveRequests = () => {
                 <TableBody>
                   {requests.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell className="whitespace-nowrap">
-                        {request.profiles?.name || 'Unknown'} 
-                        {request.profiles?.designation && ` - ${request.profiles.designation}`}
-                        <br />
-                        <span className="text-sm text-gray-500">{request.profiles?.email}</span>
-                      </TableCell>
+                     <TableCell className="whitespace-nowrap">
+  {request.profiles?.name || 'Unknown'}
+  {request.profiles?.designation && ` - ${request.profiles.designation}`}
+  <br />
+  <span className="text-sm text-gray-500">{request.profiles?.email}</span>
+</TableCell>
                       <TableCell className="whitespace-nowrap">{request.type}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         {new Date(request.start_date).toLocaleDateString()}
