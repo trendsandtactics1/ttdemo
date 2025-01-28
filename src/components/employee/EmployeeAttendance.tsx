@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { attendanceService } from "@/services/attendanceService";
-import { localStorageService } from "@/services/localStorageService";
 import { AttendanceRecord } from "@/services/attendance/types";
 import AttendanceLoading from "./attendance/AttendanceLoading";
 import AttendanceTable from "./attendance/AttendanceTable";
@@ -9,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 const EmployeeAttendance = () => {
   const [loading, setLoading] = useState(true);
@@ -20,22 +20,38 @@ const EmployeeAttendance = () => {
 
   useEffect(() => {
     const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        setUserProfile(data);
-        setLoading(false);
-      } else {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          if (data) {
+            console.log("User profile found:", data);
+            setUserProfile(data);
+          } else {
+            console.log("No user profile found");
+          }
+        } else {
+          toast({
+            title: "Authentication required",
+            description: "Please log in to view attendance records",
+            variant: "destructive",
+          });
+          navigate("/login");
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
         toast({
-          title: "Authentication required",
-          description: "Please log in to view attendance records",
+          title: "Error",
+          description: "Failed to load user profile",
           variant: "destructive",
         });
-        navigate("/login");
+      } finally {
+        setLoading(false);
       }
     };
     getCurrentUser();
@@ -46,12 +62,20 @@ const EmployeeAttendance = () => {
     setShowModal(true);
   };
 
-  if (!userProfile) {
-    return null;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
-  if (loading) {
-    return <AttendanceLoading />;
+  if (!userProfile) {
+    return (
+      <div className="p-4">
+        <p className="text-center text-muted-foreground">No user profile found.</p>
+      </div>
+    );
   }
 
   return (
