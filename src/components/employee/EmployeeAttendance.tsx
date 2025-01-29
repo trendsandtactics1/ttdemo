@@ -15,7 +15,6 @@ const EmployeeAttendance = () => {
   const [selectedLog, setSelectedLog] = useState<AttendanceRecord | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [logs, setLogs] = useState<AttendanceRecord[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -87,7 +86,7 @@ const EmployeeAttendance = () => {
         </h2>
 
         <AttendanceTable
-          logs={logs}
+          showTodayOnly={false}
           onViewDetails={handleViewDetails}
           userEmail={userProfile.email}
         />
