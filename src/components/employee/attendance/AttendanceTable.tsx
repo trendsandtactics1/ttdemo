@@ -11,9 +11,10 @@ interface AttendanceTableProps {
   logs: AttendanceRecord[];
   onViewDetails?: (log: AttendanceRecord) => void;
   userEmail?: string;
+  showTodayOnly?: boolean; // Added this prop
 }
 
-const AttendanceTable = ({ logs, onViewDetails, userEmail }: AttendanceTableProps) => {
+const AttendanceTable = ({ logs = [], onViewDetails, userEmail, showTodayOnly = false }: AttendanceTableProps) => {
   const isMobile = useIsMobile();
 
   const getStatusBadge = (status: string) => {
@@ -28,15 +29,28 @@ const AttendanceTable = ({ logs, onViewDetails, userEmail }: AttendanceTableProp
   };
 
   const formatTime = (time: string) => {
-    return format(new Date(time), "hh:mm a");
+    try {
+      return format(new Date(time), "hh:mm a");
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return 'Invalid time';
+    }
   };
 
   const formatDate = (date: string) => {
-    return format(new Date(date), "MMM dd, yyyy");
+    try {
+      return format(new Date(date), "MMM dd, yyyy");
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
   };
 
   const MobileAttendanceCard = ({ log }: { log: AttendanceRecord }) => (
-    <Card className="p-4 mb-4 hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => onViewDetails?.(log)}>
+    <Card 
+      className="p-4 mb-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer" 
+      onClick={() => onViewDetails?.(log)}
+    >
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <span className="font-medium">{formatDate(log.date)}</span>
@@ -64,7 +78,7 @@ const AttendanceTable = ({ logs, onViewDetails, userEmail }: AttendanceTableProp
     </Card>
   );
 
-  if (!logs.length) {
+  if (!logs || logs.length === 0) {
     return (
       <Card className="p-6">
         <p className="text-center text-muted-foreground">No attendance records found</p>
