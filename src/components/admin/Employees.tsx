@@ -19,10 +19,11 @@ const EmployeePage = () => {
       console.log('Fetching employees...');
       let query = supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (searchTerm) {
-        query = query.ilike('name', `%${searchTerm}%`);
+        query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,employee_id.ilike.%${searchTerm}%`);
       }
       
       const { data, error } = await query;

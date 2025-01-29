@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import EmployeeForm from "./EmployeeForm";
 import EmployeeList from "./EmployeeList";
@@ -14,11 +13,18 @@ const UserManagement = () => {
   const { data: employees = [], refetch } = useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
+      console.log('Fetching all profiles...');
       const { data, error } = await supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        throw error;
+      }
+      
+      console.log('Fetched profiles:', data);
       return data as User[];
     }
   });
