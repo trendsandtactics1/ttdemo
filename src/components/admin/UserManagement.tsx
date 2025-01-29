@@ -16,8 +16,7 @@ const UserManagement = () => {
       console.log('Fetching all profiles...');
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
       
       if (error) {
         console.error('Error fetching profiles:', error);
