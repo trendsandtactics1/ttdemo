@@ -3,17 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/types/user";
 import { useEffect } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface EmployeeListProps {
   employees: User[];
@@ -25,7 +19,6 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up real-time subscription for employee updates
     const channel = supabase
       .channel('public:profiles')
       .on(
@@ -33,7 +26,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
         { event: '*', schema: 'public', table: 'profiles' },
         () => {
           console.log('Profiles updated, refreshing...');
-          onEmployeeDeleted(); // Refresh the list
+          onEmployeeDeleted();
         }
       )
       .subscribe();
@@ -45,21 +38,14 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
 
   const handleDeleteEmployee = async (userId: string) => {
     try {
-      console.log('Deleting employee:', userId);
-      
-      // Delete from profiles (this should cascade due to foreign key)
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
         .eq('id', userId);
 
-      if (profileError) {
-        console.error('Error deleting profile:', profileError);
-        throw profileError;
-      }
+      if (profileError) throw profileError;
 
       onEmployeeDeleted();
-      
       toast({
         title: "Success",
         description: "Employee deleted successfully",
@@ -82,7 +68,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center p-4">
-            <p>Loading employees...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
         </CardContent>
       </Card>
@@ -92,53 +78,59 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>All Employees</CardTitle>
+        <CardTitle>All Employees ({employees.length})</CardTitle>
       </CardHeader>
       <CardContent>
         {employees.length === 0 ? (
-          <p className="text-muted-foreground">No employees found.</p>
+          <p className="text-muted-foreground text-center py-4">No employees found.</p>
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Profile</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Employee ID</TableHead>
-                  <TableHead>Designation</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employees.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell>
-                      <Avatar>
-                        <AvatarImage src={employee.profile_photo || undefined} />
-                        <AvatarFallback>{employee.name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell>{employee.name}</TableCell>
-                    <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.employee_id}</TableCell>
-                    <TableCell>{employee.designation}</TableCell>
-                    <TableCell>{employee.role}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => employee.id && handleDeleteEmployee(employee.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+          <ScrollArea className="h-[calc(100vh-16rem)]">
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-[50px]">Profile</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Employee ID</TableHead>
+                    <TableHead>Designation</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {employees.map((employee) => (
+                    <TableRow key={employee.id} className="hover:bg-muted/50">
+                      <TableCell>
+                        <Avatar>
+                          <AvatarImage src={employee.profile_photo || undefined} />
+                          <AvatarFallback>{employee.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className="font-medium">{employee.name}</TableCell>
+                      <TableCell>{employee.email}</TableCell>
+                      <TableCell>{employee.employee_id}</TableCell>
+                      <TableCell>{employee.designation}</TableCell>
+                      <TableCell>
+                        <Badge variant={employee.role === 'admin' ? 'default' : 'secondary'}>
+                          {employee.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => employee.id && handleDeleteEmployee(employee.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </ScrollArea>
         )}
       </CardContent>
     </Card>
