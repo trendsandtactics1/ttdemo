@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -92,7 +93,7 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
   return (
     <Card>
       <CardHeader>
-        <CardTitle>All Employees</CardTitle>
+        <CardTitle>All Employees ({employees.length})</CardTitle>
       </CardHeader>
       <CardContent>
         {employees.length === 0 ? (
@@ -124,7 +125,11 @@ const EmployeeList = ({ employees, onEmployeeDeleted, loading }: EmployeeListPro
                     <TableCell>{employee.email}</TableCell>
                     <TableCell>{employee.employee_id}</TableCell>
                     <TableCell>{employee.designation}</TableCell>
-                    <TableCell>{employee.role}</TableCell>
+                    <TableCell>
+                      <Badge variant={employee.role === 'admin' ? 'destructive' : 'default'}>
+                        {employee.role}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <Button
                         variant="destructive"
