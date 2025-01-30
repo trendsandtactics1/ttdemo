@@ -35,9 +35,10 @@ interface AttendanceRecord {
 
 interface AttendanceTableProps {
   showTodayOnly?: boolean;
+  userEmail?: string;
 }
 
-const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
+const AttendanceTable = ({ showTodayOnly = false, userEmail }: AttendanceTableProps) => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
@@ -49,11 +50,16 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
       try {
         const logs = await attendanceService.getAttendanceLogs();
         
-        // Filter logs if showTodayOnly is true
+        // Filter logs if userEmail is provided
         let filteredLogs = logs;
+        if (userEmail) {
+          filteredLogs = logs.filter(log => log.email?.toLowerCase() === userEmail.toLowerCase());
+        }
+        
+        // Filter logs if showTodayOnly is true
         if (showTodayOnly) {
           const today = new Date().toISOString().split('T')[0];
-          filteredLogs = logs.filter(log => log.date === today);
+          filteredLogs = filteredLogs.filter(log => log.date === today);
         }
         
         // Filter by selected employee
@@ -75,7 +81,7 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
     };
 
     fetchLogs();
-  }, [showTodayOnly, selectedEmployee]);
+  }, [showTodayOnly, selectedEmployee, userEmail]);
 
   const formatTime = (dateTimeString: string) => {
     try {
@@ -158,7 +164,7 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
 
   return (
     <div className="space-y-6">
-      {!showTodayOnly && (
+      {!showTodayOnly && !userEmail && (
         <div className="mb-4">
           <Select
             value={selectedEmployee}
