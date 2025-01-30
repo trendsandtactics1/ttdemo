@@ -9,6 +9,8 @@ import Employees from "@/components/admin/Employees";
 import UserManagement from "@/components/admin/UserManagement";
 import Announcements from "@/components/admin/Announcements";
 import AttendanceTable from "@/components/admin/AttendanceTable";
+import Payroll from "@/components/admin/Payroll";
+import EmployeePerformance from "@/components/admin/EmployeePerformance";
 
 const AdminDashboard = () => {
   return (
@@ -26,6 +28,8 @@ const AdminDashboard = () => {
               <Route path="/employees" element={<Employees />} />
               <Route path="/users" element={<UserManagement />} />
               <Route path="/announcements" element={<Announcements />} />
+              <Route path="/payroll" element={<Payroll />} />
+              <Route path="/payroll/:employeeId" element={<EmployeePerformance />} />
             </Routes>
           </div>
         </main>
