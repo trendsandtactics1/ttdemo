@@ -18,6 +18,7 @@ export interface AttendanceRecord {
   totalBreakHours: number;
   effectiveHours: number;
   status: string;
+  position: string;
 }
 
 export interface SheetRow {
