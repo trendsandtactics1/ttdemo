@@ -6,6 +6,8 @@ import { AttendanceRecord } from "@/services/attendance/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { attendanceService } from "@/services/attendanceService";
+import { Badge } from "@/components/ui/badge";
+import { format, parseISO } from "date-fns";
 
 interface AttendanceTableProps {
   showTodayOnly?: boolean;
@@ -47,12 +49,41 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail }: At
     }
   }, [userEmail, showTodayOnly]);
 
+  const formatTime = (dateTimeString: string) => {
+    try {
+      const date = parseISO(dateTimeString);
+      return format(date, "hh:mm a");
+    } catch (error) {
+      return "N/A";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return format(date, "MMM dd, yyyy");
+    } catch (error) {
+      return "Invalid date";
+    }
+  };
+
+  const getAttendanceStatus = (effectiveHours: number) => {
+    if (effectiveHours >= 8) {
+      return <Badge className="bg-green-500">Full Day</Badge>;
+    } else if (effectiveHours > 0) {
+      return <Badge className="bg-yellow-500">Partial Day</Badge>;
+    }
+    return <Badge className="bg-red-500">Absent</Badge>;
+  };
+
   if (loading) {
-    return <div>Loading attendance records...</div>;
+    return <div className="flex justify-center items-center h-[50vh]">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+    </div>;
   }
 
   if (attendanceLogs.length === 0) {
-    return <div>No attendance records found.</div>;
+    return <div className="text-center text-gray-500">No attendance records found.</div>;
   }
 
   return (
@@ -71,11 +102,11 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail }: At
         <TableBody>
           {attendanceLogs.map((log, index) => (
             <TableRow key={index}>
-              <TableCell>{new Date(log.date).toLocaleDateString()}</TableCell>
+              <TableCell>{formatDate(log.date)}</TableCell>
               {!isMobile && <TableCell>{log.employeeId}</TableCell>}
-              <TableCell>{log.checkIn || 'N/A'}</TableCell>
-              <TableCell>{log.checkOut || 'N/A'}</TableCell>
-              <TableCell>{log.status}</TableCell>
+              <TableCell>{formatTime(log.checkIn)}</TableCell>
+              <TableCell>{formatTime(log.checkOut)}</TableCell>
+              <TableCell>{getAttendanceStatus(log.effectiveHours)}</TableCell>
               <TableCell>
                 <Button
                   variant="ghost"

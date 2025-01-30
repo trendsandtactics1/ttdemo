@@ -14,6 +14,13 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AttendanceRecord {
   employeeId: string;
@@ -33,6 +40,7 @@ interface AttendanceTableProps {
 const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -46,6 +54,11 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
         if (showTodayOnly) {
           const today = new Date().toISOString().split('T')[0];
           filteredLogs = logs.filter(log => log.date === today);
+        }
+        
+        // Filter by selected employee
+        if (selectedEmployee !== "all") {
+          filteredLogs = filteredLogs.filter(log => log.employeeId === selectedEmployee);
         }
         
         // Sort logs by date in descending order
@@ -62,7 +75,7 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
     };
 
     fetchLogs();
-  }, [showTodayOnly]);
+  }, [showTodayOnly, selectedEmployee]);
 
   const formatTime = (dateTimeString: string) => {
     try {
@@ -91,6 +104,11 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
       return <Badge className="bg-yellow-500">Partial Day</Badge>;
     }
     return <Badge className="bg-red-500">Absent</Badge>;
+  };
+
+  const getUniqueEmployees = () => {
+    const employees = new Set(attendanceLogs.map(log => log.employeeId));
+    return Array.from(employees);
   };
 
   if (loading) {
@@ -140,6 +158,29 @@ const AttendanceTable = ({ showTodayOnly = false }: AttendanceTableProps) => {
 
   return (
     <div className="space-y-6">
+      {!showTodayOnly && (
+        <div className="mb-4">
+          <Select
+            value={selectedEmployee}
+            onValueChange={setSelectedEmployee}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by Employee" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Employees</SelectItem>
+              {getUniqueEmployees().map((employeeId) => {
+                const employee = attendanceLogs.find(log => log.employeeId === employeeId);
+                return (
+                  <SelectItem key={employeeId} value={employeeId}>
+                    {employee?.employeeName || employeeId}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <Card className="p-4">
         <ScrollArea className="h-[calc(100vh-12rem)]">
           {isMobile ? (
