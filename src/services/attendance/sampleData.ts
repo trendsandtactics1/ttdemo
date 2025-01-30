@@ -19,7 +19,8 @@ export const getSampleData = (): AttendanceRecord[] => {
       ],
       totalBreakHours: 1,
       effectiveHours: 7.5,
-      status: "Present"
+      status: "Present",
+      position: "Software Engineer" // Added position field
     },
     {
       employeeId: "EMP002",
@@ -34,7 +35,8 @@ export const getSampleData = (): AttendanceRecord[] => {
       ],
       totalBreakHours: 1,
       effectiveHours: 7.5,
-      status: "Present"
+      status: "Present",
+      position: "Product Manager" // Added position field
     }
   ];
 };
