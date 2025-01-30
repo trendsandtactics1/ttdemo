@@ -36,7 +36,7 @@ const AdminSidebar = () => {
     { title: "Tasks", path: "/admin/tasks", icon: ClipboardList },
     { title: "Employees", path: "/admin/employees", icon: Users },
     { title: "User Management", path: "/admin/users", icon: UserPlus },
-    { title: "Payroll", path: "/admin/payroll", icon: DollarSign, disabled: true },
+    { title: "Payroll", path: "/admin/payroll", icon: DollarSign },
     { title: "Announcements", path: "/admin/announcements", icon: Bell },
   ];
 
@@ -70,7 +70,6 @@ const AdminSidebar = () => {
                 {menuItems.map((item) => (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
-                      disabled={item.disabled}
                       className={`w-full flex items-center gap-3 px-4 py-3 transition-colors duration-200 ${
                         location.pathname === item.path 
                           ? "bg-gray-100 dark:bg-gray-800 text-primary" 
@@ -84,9 +83,6 @@ const AdminSidebar = () => {
                           : "text-gray-500 dark:text-gray-400"
                       }`} />
                       <span className="truncate font-medium">{item.title}</span>
-                      {item.disabled && (
-                        <span className="ml-2 text-xs text-muted-foreground">(Coming Soon)</span>
-                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
