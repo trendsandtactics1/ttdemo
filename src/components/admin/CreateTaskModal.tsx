@@ -159,14 +159,14 @@ const CreateTaskModal = () => {
                   {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 z-50" align="start">
                 <Calendar
                   mode="single"
                   selected={dueDate}
                   onSelect={setDueDate}
                   initialFocus
                   disabled={(date) => date < new Date()}
-                  className="rounded-md border"
+                  className="rounded-md border shadow-md"
                 />
               </PopoverContent>
             </Popover>
