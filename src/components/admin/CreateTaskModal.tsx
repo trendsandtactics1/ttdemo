@@ -20,7 +20,7 @@ const CreateTaskModal = () => {
   const [description, setDescription] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState<Date>();
-  const [assignedDate, setAssignedDate] = useState<Date>(new Date());
+  const [assignedDate] = useState<Date>(new Date());
   const [employees, setEmployees] = useState<User[]>([]);
   const { toast } = useToast();
 
@@ -29,7 +29,8 @@ const CreateTaskModal = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*');
+          .select('*')
+          .eq('role', 'employee');
         
         if (error) throw error;
         setEmployees(data || []);
@@ -48,7 +49,7 @@ const CreateTaskModal = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !description || !assignedTo || !dueDate || !assignedDate) {
+    if (!title || !description || !assignedTo || !dueDate) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -84,7 +85,6 @@ const CreateTaskModal = () => {
       setDescription("");
       setAssignedTo("");
       setDueDate(undefined);
-      setAssignedDate(new Date());
       setOpen(false);
     } catch (error) {
       console.error("Error creating task:", error);
@@ -164,6 +164,7 @@ const CreateTaskModal = () => {
                   selected={dueDate}
                   onSelect={setDueDate}
                   initialFocus
+                  disabled={(date) => date < new Date()}
                 />
               </PopoverContent>
             </Popover>

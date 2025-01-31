@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -11,6 +12,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { User } from "@/types/user";
+import { MessageSquare } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface TaskCardProps {
   task: {
@@ -37,6 +40,7 @@ interface TaskCardProps {
 
 const TaskCard = ({ task }: TaskCardProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState<User[]>([]);
 
   useEffect(() => {
@@ -120,11 +124,15 @@ const TaskCard = ({ task }: TaskCardProps) => {
             <p className="text-gray-800">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Not set'}</p>
           </div>
           <div className="col-span-2">
+            <p className="text-sm font-medium text-gray-500">Assigned Date</p>
+            <p className="text-gray-800">{task.assigned_date ? new Date(task.assigned_date).toLocaleDateString() : 'Not set'}</p>
+          </div>
+          <div className="col-span-1">
             <Badge className={`${getStatusColor(task.status)} text-white`}>
               {task.status || 'pending'}
             </Badge>
           </div>
-          <div className="col-span-3 flex gap-2">
+          <div className="col-span-2 flex gap-2">
             <Select
               onValueChange={(value) => handleStatusUpdate(task.id, value)}
               defaultValue={task.status || 'pending'}
@@ -154,6 +162,14 @@ const TaskCard = ({ task }: TaskCardProps) => {
                 ))}
               </SelectContent>
             </Select>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate(`/admin/tasks/${task.id}/chat`)}
+            >
+              <MessageSquare className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </CardContent>
