@@ -146,34 +146,36 @@ const CreateTaskModal = () => {
           </div>
           <div className="space-y-2">
             <Label>Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dueDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 z-50" align="start">
-               <Calendar
-               mode="single"
-               selected={dueDate}
-               onSelect={(date) => {
-               if (date) {
-               setDueDate(date); // Ensure state updates correctly
-               }
-               }}
-               initialFocus
-               disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-               className="rounded-md border shadow-md"
-               />
-              </PopoverContent>
-            </Popover>
+            <Popover open={openPopover} onOpenChange={setOpenPopover}>
+    <PopoverTrigger asChild>
+      <Button
+        variant={"outline"}
+        onClick={() => setOpenPopover(true)} // Ensures Popover opens on click
+        className={cn(
+          "w-full justify-start text-left font-normal",
+          !dueDate && "text-muted-foreground"
+        )}
+      >
+        <CalendarIcon className="mr-2 h-4 w-4" />
+        {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+      </Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-auto p-0 z-50" align="start">
+      <Calendar
+        mode="single"
+        selected={dueDate}
+        onSelect={(date) => {
+          if (date) {
+            setDueDate(date);
+            setOpenPopover(false); // Closes the Popover after selection
+          }
+        }}
+        initialFocus
+        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+        className="rounded-md border shadow-md"
+      />
+    </PopoverContent>
+  </Popover>
           </div>
           <Button type="submit" className="w-full">Create Task</Button>
         </form>
