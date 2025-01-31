@@ -20,6 +20,7 @@ const CreateTaskModal = () => {
   const [description, setDescription] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState<Date>();
+  const [dateOpen, setDateOpen] = useState(false);
   const [assignedDate] = useState<Date>(new Date());
   const [employees, setEmployees] = useState<User[]>([]);
   const { toast } = useToast();
@@ -145,7 +146,7 @@ const CreateTaskModal = () => {
           </div>
           <div className="space-y-2">
             <Label>Due Date</Label>
-            <Popover>
+            <Popover open={dateOpen} onOpenChange={setDateOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
@@ -153,6 +154,7 @@ const CreateTaskModal = () => {
                     "w-full justify-start text-left font-normal",
                     !dueDate && "text-muted-foreground"
                   )}
+                  onClick={() => setDateOpen(true)}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
@@ -163,22 +165,21 @@ const CreateTaskModal = () => {
                 align="start"
                 sideOffset={4}
               >
-                <div className="z-50 bg-background">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        setDueDate(date);
-                      }
-                    }}
-                    disabled={(date) => 
-                      date < new Date(new Date().setHours(0, 0, 0, 0))
+                <Calendar
+                  mode="single"
+                  selected={dueDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setDueDate(date);
+                      setDateOpen(false);  // Close the popover after selection
                     }
-                    initialFocus
-                    className="rounded-md border"
-                  />
-                </div>
+                  }}
+                  disabled={(date) => 
+                    date < new Date(new Date().setHours(0, 0, 0, 0))
+                  }
+                  initialFocus
+                  className="rounded-md border"
+                />
               </PopoverContent>
             </Popover>
           </div>
