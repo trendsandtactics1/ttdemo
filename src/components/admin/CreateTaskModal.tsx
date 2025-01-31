@@ -104,7 +104,7 @@ const CreateTaskModal = () => {
           Add New Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
@@ -116,6 +116,7 @@ const CreateTaskModal = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter task title"
+              className="w-full"
             />
           </div>
           <div className="space-y-2">
@@ -125,13 +126,13 @@ const CreateTaskModal = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter task description"
-              className="min-h-[100px]"
+              className="min-h-[100px] w-full"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="assignedTo">Assign To</Label>
             <Select onValueChange={setAssignedTo} value={assignedTo}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
               <SelectContent>
@@ -165,6 +166,7 @@ const CreateTaskModal = () => {
                   onSelect={setDueDate}
                   initialFocus
                   disabled={(date) => date < new Date()}
+                  className="rounded-md border"
                 />
               </PopoverContent>
             </Popover>

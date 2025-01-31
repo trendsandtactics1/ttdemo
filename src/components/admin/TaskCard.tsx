@@ -12,8 +12,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { User } from "@/types/user";
-import { MessageSquare } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface TaskCardProps {
   task: {
@@ -40,7 +38,6 @@ interface TaskCardProps {
 
 const TaskCard = ({ task }: TaskCardProps) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [employees, setEmployees] = useState<User[]>([]);
 
   useEffect(() => {
@@ -110,20 +107,20 @@ const TaskCard = ({ task }: TaskCardProps) => {
   return (
     <Card className="hover:shadow-lg transition-shadow duration-300">
       <CardContent className="p-4">
-        <div className="grid grid-cols-12 gap-4 items-center">
-          <div className="col-span-3">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          <div className="col-span-1 md:col-span-3">
             <h3 className="font-semibold text-gray-800">{task.title}</h3>
             <p className="text-sm text-gray-600 truncate">{task.description}</p>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <p className="text-sm font-medium text-gray-500">Assigned To</p>
             <p className="text-gray-800">{task.assigned_to_profile?.name}</p>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <p className="text-sm font-medium text-gray-500">Due Date</p>
             <p className="text-gray-800">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Not set'}</p>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             <p className="text-sm font-medium text-gray-500">Assigned Date</p>
             <p className="text-gray-800">{task.assigned_date ? new Date(task.assigned_date).toLocaleDateString() : 'Not set'}</p>
           </div>
@@ -132,12 +129,12 @@ const TaskCard = ({ task }: TaskCardProps) => {
               {task.status || 'pending'}
             </Badge>
           </div>
-          <div className="col-span-2 flex gap-2">
+          <div className="col-span-1 md:col-span-2 flex flex-col sm:flex-row gap-2">
             <Select
               onValueChange={(value) => handleStatusUpdate(task.id, value)}
               defaultValue={task.status || 'pending'}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue placeholder="Update Status" />
               </SelectTrigger>
               <SelectContent>
@@ -151,7 +148,7 @@ const TaskCard = ({ task }: TaskCardProps) => {
               onValueChange={(value) => handleReassign(task.id, value)}
               defaultValue={task.assigned_to || ''}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue placeholder="Reassign" />
               </SelectTrigger>
               <SelectContent>
@@ -162,14 +159,6 @@ const TaskCard = ({ task }: TaskCardProps) => {
                 ))}
               </SelectContent>
             </Select>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => navigate(`/admin/tasks/${task.id}/chat`)}
-            >
-              <MessageSquare className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </CardContent>
