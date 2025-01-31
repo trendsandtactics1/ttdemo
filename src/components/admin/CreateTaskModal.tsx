@@ -47,6 +47,23 @@ const CreateTaskModal = () => {
     fetchEmployees();
   }, []);
 
+  // Close calendar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const calendar = document.getElementById('calendar-popup');
+      const calendarButton = document.getElementById('calendar-button');
+      
+      if (calendar && calendarButton && 
+          !calendar.contains(event.target as Node) && 
+          !calendarButton.contains(event.target as Node)) {
+        setShowCalendar(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !assignedTo || !dueDate) {
@@ -155,6 +172,7 @@ const CreateTaskModal = () => {
             <div className="relative">
               <Button
                 type="button"
+                id="calendar-button"
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
@@ -166,17 +184,27 @@ const CreateTaskModal = () => {
                 {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
               </Button>
               {showCalendar && (
-                <div className="absolute top-full left-0 mt-1 bg-background border rounded-md shadow-lg z-50">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={handleDateSelect}
-                    disabled={(date) => 
-                      date < new Date(new Date().setHours(0, 0, 0, 0))
+                <div 
+                  id="calendar-popup"
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      setShowCalendar(false);
                     }
-                    initialFocus
-                    className="rounded-md"
-                  />
+                  }}
+                >
+                  <div className="bg-background p-4 rounded-lg shadow-lg">
+                    <Calendar
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={handleDateSelect}
+                      disabled={(date) => 
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
+                      initialFocus
+                      className="rounded-md"
+                    />
+                  </div>
                 </div>
               )}
             </div>
