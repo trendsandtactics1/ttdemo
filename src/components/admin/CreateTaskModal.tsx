@@ -97,6 +97,13 @@ const CreateTaskModal = () => {
     }
   };
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setDueDate(date);
+      setDateOpen(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -149,12 +156,12 @@ const CreateTaskModal = () => {
             <Popover open={dateOpen} onOpenChange={setDateOpen}>
               <PopoverTrigger asChild>
                 <Button
-                  variant={"outline"}
+                  type="button"
+                  variant="outline"
                   className={cn(
                     "w-full justify-start text-left font-normal",
                     !dueDate && "text-muted-foreground"
                   )}
-                  onClick={() => setDateOpen(true)}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
@@ -164,22 +171,22 @@ const CreateTaskModal = () => {
                 className="w-auto p-0" 
                 align="start"
                 sideOffset={4}
+                style={{ zIndex: 9999 }}
               >
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setDueDate(date);
-                      setDateOpen(false);  // Close the popover after selection
-                    }
-                  }}
-                  disabled={(date) => 
-                    date < new Date(new Date().setHours(0, 0, 0, 0))
-                  }
-                  initialFocus
+                <div 
                   className="rounded-md border"
-                />
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={handleDateSelect}
+                    disabled={(date) => 
+                      date < new Date(new Date().setHours(0, 0, 0, 0))
+                    }
+                    initialFocus
+                  />
+                </div>
               </PopoverContent>
             </Popover>
           </div>
