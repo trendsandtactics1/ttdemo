@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +19,7 @@ const CreateTaskModal = () => {
   const [description, setDescription] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
   const [dueDate, setDueDate] = useState<Date>();
-  const [dateOpen, setDateOpen] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [assignedDate] = useState<Date>(new Date());
   const [employees, setEmployees] = useState<User[]>([]);
   const { toast } = useToast();
@@ -100,7 +99,7 @@ const CreateTaskModal = () => {
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setDueDate(date);
-      setDateOpen(false);
+      setShowCalendar(false);
     }
   };
 
@@ -153,30 +152,21 @@ const CreateTaskModal = () => {
           </div>
           <div className="space-y-2">
             <Label>Due Date</Label>
-            <Popover open={dateOpen} onOpenChange={setDateOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dueDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent 
-                className="w-auto p-0" 
-                align="start"
-                sideOffset={4}
-                style={{ zIndex: 9999 }}
+            <div className="relative">
+              <Button
+                type="button"
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !dueDate && "text-muted-foreground"
+                )}
+                onClick={() => setShowCalendar(!showCalendar)}
               >
-                <div 
-                  className="rounded-md border"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+              </Button>
+              {showCalendar && (
+                <div className="absolute top-full left-0 mt-1 bg-background border rounded-md shadow-lg z-50">
                   <Calendar
                     mode="single"
                     selected={dueDate}
@@ -185,10 +175,11 @@ const CreateTaskModal = () => {
                       date < new Date(new Date().setHours(0, 0, 0, 0))
                     }
                     initialFocus
+                    className="rounded-md"
                   />
                 </div>
-              </PopoverContent>
-            </Popover>
+              )}
+            </div>
           </div>
           <Button type="submit" className="w-full">Create Task</Button>
         </form>
