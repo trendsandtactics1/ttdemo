@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,12 +14,9 @@ interface Task {
   status: string;
   due_date: string;
   assigned_date: string;
-  created_at: string;
-  updated_at: string;
 }
 
 const Tasks = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -35,7 +30,7 @@ const Tasks = () => {
         .from('tasks')
         .select('*')
         .eq('assigned_to', user.id)
-        .order('created_at', { ascending: false });
+        .order('due_date', { ascending: true });
       
       if (error) throw error;
       return data;
@@ -102,7 +97,7 @@ const Tasks = () => {
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
                 <p className="text-gray-600">{task.description}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-md">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md">
                   <div>
                     <p className="text-sm font-medium text-gray-500">Due Date</p>
                     <p className="text-gray-800">{new Date(task.due_date).toLocaleDateString()}</p>
@@ -111,27 +106,10 @@ const Tasks = () => {
                     <p className="text-sm font-medium text-gray-500">Assigned Date</p>
                     <p className="text-gray-800">{new Date(task.assigned_date).toLocaleDateString()}</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Created At</p>
-                    <p className="text-gray-800">{new Date(task.created_at).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Last Updated</p>
-                    <p className="text-gray-800">{new Date(task.updated_at).toLocaleDateString()}</p>
-                  </div>
                 </div>
                 <div className="flex items-center gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="hover:bg-primary/10"
-                    onClick={() => navigate(`/employee/tasks/${task.id}/chat`)}
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Chat with Manager
-                  </Button>
                   <Select
-                    onValueChange={(value) => handleStatusUpdate(task.id, value as Task['status'])}
+                    onValueChange={(value) => handleStatusUpdate(task.id, value)}
                     defaultValue={task.status}
                   >
                     <SelectTrigger className="w-[140px]">

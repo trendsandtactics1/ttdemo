@@ -104,7 +104,7 @@ const CreateTaskModal = () => {
           Add New Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] p-4 sm:p-6">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
@@ -116,7 +116,6 @@ const CreateTaskModal = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter task title"
-              className="w-full"
             />
           </div>
           <div className="space-y-2">
@@ -126,13 +125,13 @@ const CreateTaskModal = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter task description"
-              className="min-h-[100px] w-full"
+              className="min-h-[100px]"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="assignedTo">Assign To</Label>
             <Select onValueChange={setAssignedTo} value={assignedTo}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger>
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
               <SelectContent>
@@ -159,17 +158,27 @@ const CreateTaskModal = () => {
                   {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start" side="bottom" sideOffset={4}>
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={(date) => {
-                    setDueDate(date);
-                  }}
-                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  initialFocus
-                  className="rounded-md border shadow-md"
-                />
+              <PopoverContent 
+                className="w-auto p-0" 
+                align="start"
+                sideOffset={4}
+              >
+                <div className="z-50 bg-background">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setDueDate(date);
+                      }
+                    }}
+                    disabled={(date) => 
+                      date < new Date(new Date().setHours(0, 0, 0, 0))
+                    }
+                    initialFocus
+                    className="rounded-md border"
+                  />
+                </div>
               </PopoverContent>
             </Popover>
           </div>
