@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/employee/dashboard/StatCard";
 import { CalendarDays, CheckCircle2, Clock, XCircle } from "lucide-react";
-import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
+import { startOfMonth, endOfMonth, format, parseISO, getDay, getDaysInMonth } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const EmployeePerformance = () => {
@@ -36,6 +36,20 @@ const EmployeePerformance = () => {
       options.push({ value, label });
     }
     return options;
+  };
+
+  const calculateSundaysInMonth = (year: number, month: number) => {
+    const daysInMonth = getDaysInMonth(new Date(year, month - 1));
+    let sundays = 0;
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month - 1, day);
+      if (getDay(date) === 0) { // 0 represents Sunday
+        sundays++;
+      }
+    }
+    
+    return sundays;
   };
 
   useEffect(() => {
@@ -66,8 +80,11 @@ const EmployeePerformance = () => {
           });
 
           // Calculate attendance analytics
-          const presentDays = monthLogs.filter(log => log.effectiveHours >= 8).length;
-          const absentDays = monthLogs.filter(log => log.effectiveHours === 0).length;
+          const presentDays = monthLogs.filter(log => log.effectiveHours > 0).length; // Include both full and partial days
+          const daysInMonth = getDaysInMonth(selectedDate);
+          const sundaysCount = calculateSundaysInMonth(parseInt(year), parseInt(month));
+          const casualLeaveAllowance = 1; // One casual leave per month
+          const absentDays = Math.max(0, daysInMonth - presentDays - sundaysCount - casualLeaveAllowance);
 
           // Fetch month's tasks
           const { data: tasksData } = await supabase
@@ -140,7 +157,7 @@ const EmployeePerformance = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-4">
-            {employee.profile_photo && (
+            {employee?.profile_photo && (
               <img
                 src={employee.profile_photo}
                 alt={employee.name || ''}
@@ -148,9 +165,9 @@ const EmployeePerformance = () => {
               />
             )}
             <div>
-              <CardTitle>{employee.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">{employee.designation}</p>
-              <p className="text-sm text-muted-foreground">Employee ID: {employee.employee_id}</p>
+              <CardTitle>{employee?.name}</CardTitle>
+              <p className="text-sm text-muted-foreground">{employee?.designation}</p>
+              <p className="text-sm text-muted-foreground">Employee ID: {employee?.employee_id}</p>
             </div>
           </div>
         </CardHeader>
@@ -193,7 +210,7 @@ const EmployeePerformance = () => {
             <CardContent>
               <AttendanceTable 
                 showTodayOnly={false} 
-                userEmail={employee.email || ''} 
+                userEmail={employee?.email || ''} 
                 selectedMonth={selectedMonth}
               />
             </CardContent>
