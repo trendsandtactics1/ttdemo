@@ -10,19 +10,33 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/employee/dashboard/StatCard";
 import { CalendarDays, CheckCircle2, Clock, XCircle } from "lucide-react";
-import { startOfMonth, endOfMonth, format } from "date-fns";
+import { startOfMonth, endOfMonth, format, parseISO } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const EmployeePerformance = () => {
   const { employeeId } = useParams();
   const [employee, setEmployee] = useState<User | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState(() => format(new Date(), 'yyyy-MM'));
   const [analytics, setAnalytics] = useState({
     presentDays: 0,
     absentDays: 0,
     completedTasks: 0,
     pendingTasks: 0
   });
+
+  const getMonthOptions = () => {
+    const options = [];
+    const currentDate = new Date();
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const value = format(date, 'yyyy-MM');
+      const label = format(date, 'MMMM yyyy');
+      options.push({ value, label });
+    }
+    return options;
+  };
 
   useEffect(() => {
     const fetchEmployeeData = async () => {
@@ -37,12 +51,14 @@ const EmployeePerformance = () => {
         if (profileData) {
           setEmployee(profileData);
 
-          // Fetch current month's attendance logs
-          const logs = await attendanceService.getAttendanceLogs();
-          const currentMonth = new Date();
-          const startDate = startOfMonth(currentMonth);
-          const endDate = endOfMonth(currentMonth);
+          // Parse selected month
+          const [year, month] = selectedMonth.split('-');
+          const selectedDate = new Date(parseInt(year), parseInt(month) - 1);
+          const startDate = startOfMonth(selectedDate);
+          const endDate = endOfMonth(selectedDate);
 
+          // Fetch attendance logs
+          const logs = await attendanceService.getAttendanceLogs();
           const monthLogs = logs.filter(log => {
             const logDate = new Date(log.date);
             return logDate >= startDate && logDate <= endDate && 
@@ -53,7 +69,7 @@ const EmployeePerformance = () => {
           const presentDays = monthLogs.filter(log => log.effectiveHours >= 8).length;
           const absentDays = monthLogs.filter(log => log.effectiveHours === 0).length;
 
-          // Fetch current month's tasks
+          // Fetch month's tasks
           const { data: tasksData } = await supabase
             .from('tasks')
             .select('*')
@@ -86,7 +102,7 @@ const EmployeePerformance = () => {
     if (employeeId) {
       fetchEmployeeData();
     }
-  }, [employeeId]);
+  }, [employeeId, selectedMonth]);
 
   if (loading) {
     return (
@@ -100,12 +116,25 @@ const EmployeePerformance = () => {
     return <div>Employee not found</div>;
   }
 
-  const currentMonth = format(new Date(), 'MMMM yyyy');
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Employee Performance</h2>
+        <Select
+          value={selectedMonth}
+          onValueChange={setSelectedMonth}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select month" />
+          </SelectTrigger>
+          <SelectContent>
+            {getMonthOptions().map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
@@ -159,10 +188,14 @@ const EmployeePerformance = () => {
         <TabsContent value="attendance" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Attendance Records - {currentMonth}</CardTitle>
+              <CardTitle>Attendance Records - {format(parseISO(`${selectedMonth}-01`), 'MMMM yyyy')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <AttendanceTable showTodayOnly={false} userEmail={employee.email || ''} />
+              <AttendanceTable 
+                showTodayOnly={false} 
+                userEmail={employee.email || ''} 
+                selectedMonth={selectedMonth}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -170,7 +203,7 @@ const EmployeePerformance = () => {
         <TabsContent value="tasks" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Task Overview - {currentMonth}</CardTitle>
+              <CardTitle>Task Overview - {format(parseISO(`${selectedMonth}-01`), 'MMMM yyyy')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
