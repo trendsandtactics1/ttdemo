@@ -16,12 +16,38 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      // First check if the user exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (!existingUser) {
+        toast.error("Login failed", {
+          description: "No account found with this email. Please check your credentials.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Login failed", {
+            description: "Invalid email or password. Please try again.",
+          });
+        } else {
+          toast.error("Login failed", {
+            description: error.message,
+          });
+        }
+        return;
+      }
 
       if (data.user) {
         // Fetch user profile to get role
@@ -82,6 +108,7 @@ const Login = () => {
                 required
                 className="w-full"
                 disabled={isLoading}
+                placeholder="Enter your email"
               />
             </div>
             <div className="space-y-2">
@@ -96,6 +123,7 @@ const Login = () => {
                 required
                 className="w-full"
                 disabled={isLoading}
+                placeholder="Enter your password"
               />
             </div>
             <button
