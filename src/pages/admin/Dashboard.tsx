@@ -11,8 +11,14 @@ import Announcements from "@/components/admin/Announcements";
 import AttendanceTable from "@/components/admin/AttendanceTable";
 import Payroll from "@/components/admin/Payroll";
 import EmployeePerformance from "@/components/admin/EmployeePerformance";
+import { AttendanceRecord } from "@/services/attendance/types";
 
 const AdminDashboard = () => {
+  const handleViewDetails = (log: AttendanceRecord) => {
+    console.log("Viewing details for:", log);
+    // Implement view details functionality if needed
+  };
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -21,7 +27,12 @@ const AdminDashboard = () => {
           <div className="px-4 md:px-6 py-16 md:py-6 max-w-7xl mx-auto">
             <Routes>
               <Route path="/" element={<AdminHome />} />
-              <Route path="/attendance" element={<AttendanceTable />} />
+              <Route path="/attendance" element={
+                <AttendanceTable 
+                  onViewDetails={handleViewDetails}
+                  userEmail=""
+                />
+              } />
               <Route path="/leave-requests" element={<LeaveRequests />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/tasks/:taskId/chat" element={<TaskChat />} />

@@ -4,6 +4,7 @@ import { Users, CheckCircle, XCircle, ClipboardList } from "lucide-react";
 import { attendanceService } from "@/services/attendanceService";
 import { supabase } from "@/integrations/supabase/client";
 import AttendanceTable from "./AttendanceTable";
+import { AttendanceRecord } from "@/services/attendance/types";
 
 const AdminHome = () => {
   const [stats, setStats] = useState([
@@ -106,6 +107,11 @@ const AdminHome = () => {
     };
   }, []);
 
+  const handleViewDetails = (log: AttendanceRecord) => {
+    console.log("Viewing details for:", log);
+    // Implement view details functionality if needed
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
@@ -130,7 +136,11 @@ const AdminHome = () => {
       
       <div className="space-y-4">
         <h3 className="text-2xl font-bold tracking-tight">Today's Attendance</h3>
-        <AttendanceTable showTodayOnly={true} />
+        <AttendanceTable 
+          showTodayOnly={true} 
+          onViewDetails={handleViewDetails}
+          userEmail=""
+        />
       </div>
     </div>
   );

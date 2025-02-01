@@ -11,8 +11,8 @@ import { format, parseISO } from "date-fns";
 
 interface AttendanceTableProps {
   showTodayOnly?: boolean;
-  onViewDetails: (log: AttendanceRecord) => void;
-  userEmail: string;
+  onViewDetails?: (log: AttendanceRecord) => void;
+  userEmail?: string;
   selectedMonth?: string;
 }
 
@@ -25,30 +25,32 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail, sele
     const fetchAttendanceLogs = async () => {
       try {
         const logs = await attendanceService.getAttendanceLogs();
-        const filteredLogs = logs.filter(log => 
-          log.email?.toLowerCase() === userEmail?.toLowerCase()
-        );
+        let filteredLogs = logs;
+
+        if (userEmail) {
+          filteredLogs = logs.filter(log => 
+            log.email?.toLowerCase() === userEmail?.toLowerCase()
+          );
+        }
 
         if (showTodayOnly) {
           const today = new Date().toDateString();
-          const todayLogs = filteredLogs.filter(log => 
+          filteredLogs = filteredLogs.filter(log => 
             new Date(log.date).toDateString() === today
           );
-          setAttendanceLogs(todayLogs);
-        } else {
-          setAttendanceLogs(filteredLogs);
         }
 
         // Filter by selected month if provided
         if (selectedMonth) {
-          const monthLogs = filteredLogs.filter(log => {
+          const [year, month] = selectedMonth.split('-');
+          filteredLogs = filteredLogs.filter(log => {
             const logDate = new Date(log.date);
-            const [year, month] = selectedMonth.split('-');
             return logDate.getFullYear() === parseInt(year) && 
                    logDate.getMonth() === parseInt(month) - 1;
           });
-          setAttendanceLogs(monthLogs);
         }
+
+        setAttendanceLogs(filteredLogs);
       } catch (error) {
         console.error('Error fetching attendance logs:', error);
       } finally {
@@ -56,9 +58,7 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail, sele
       }
     };
 
-    if (userEmail) {
-      fetchAttendanceLogs();
-    }
+    fetchAttendanceLogs();
   }, [userEmail, showTodayOnly, selectedMonth]);
 
   const formatTime = (dateTimeString: string) => {
@@ -108,7 +108,7 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail, sele
             <TableHead>Check In</TableHead>
             <TableHead>Check Out</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+            {onViewDetails && <TableHead>Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -119,15 +119,17 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail, sele
               <TableCell>{formatTime(log.checkIn)}</TableCell>
               <TableCell>{formatTime(log.checkOut)}</TableCell>
               <TableCell>{getAttendanceStatus(log.effectiveHours)}</TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onViewDetails(log)}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </TableCell>
+              {onViewDetails && (
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewDetails(log)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
