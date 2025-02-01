@@ -4,17 +4,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { attendanceService } from "@/services/attendanceService";
-import { AttendanceRecord } from "@/services/attendance/types";
 import { Task, User } from "@/types/user";
 import AttendanceTable from "./AttendanceTable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/employee/dashboard/StatCard";
+import { CalendarDays, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 
 const EmployeePerformance = () => {
   const { employeeId } = useParams();
   const [employee, setEmployee] = useState<User | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState({
+    presentDays: 0,
+    absentDays: 0,
+    completedTasks: 0,
+    pendingTasks: 0
+  });
 
   useEffect(() => {
     const fetchEmployeeData = async () => {
@@ -28,17 +36,45 @@ const EmployeePerformance = () => {
 
         if (profileData) {
           setEmployee(profileData);
-        }
 
-        // Fetch employee tasks
-        const { data: tasksData } = await supabase
-          .from('tasks')
-          .select('*')
-          .eq('assigned_to', employeeId)
-          .order('created_at', { ascending: false });
+          // Fetch current month's attendance logs
+          const logs = await attendanceService.getAttendanceLogs();
+          const currentMonth = new Date();
+          const startDate = startOfMonth(currentMonth);
+          const endDate = endOfMonth(currentMonth);
 
-        if (tasksData) {
-          setTasks(tasksData);
+          const monthLogs = logs.filter(log => {
+            const logDate = new Date(log.date);
+            return logDate >= startDate && logDate <= endDate && 
+                   log.email?.toLowerCase() === profileData.email?.toLowerCase();
+          });
+
+          // Calculate attendance analytics
+          const presentDays = monthLogs.filter(log => log.effectiveHours >= 8).length;
+          const absentDays = monthLogs.filter(log => log.effectiveHours === 0).length;
+
+          // Fetch current month's tasks
+          const { data: tasksData } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('assigned_to', employeeId)
+            .gte('created_at', startDate.toISOString())
+            .lte('created_at', endDate.toISOString())
+            .order('created_at', { ascending: false });
+
+          if (tasksData) {
+            setTasks(tasksData);
+            // Calculate task analytics
+            const completedTasks = tasksData.filter(task => task.status === 'completed').length;
+            const pendingTasks = tasksData.filter(task => task.status !== 'completed').length;
+
+            setAnalytics({
+              presentDays,
+              absentDays,
+              completedTasks,
+              pendingTasks
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching employee data:', error);
@@ -63,6 +99,8 @@ const EmployeePerformance = () => {
   if (!employee) {
     return <div>Employee not found</div>;
   }
+
+  const currentMonth = format(new Date(), 'MMMM yyyy');
 
   return (
     <div className="space-y-6">
@@ -89,6 +127,29 @@ const EmployeePerformance = () => {
         </CardHeader>
       </Card>
 
+      <div className="grid gap-4 md:grid-cols-4">
+        <StatCard
+          title="Present Days"
+          value={analytics.presentDays}
+          icon={CheckCircle2}
+        />
+        <StatCard
+          title="Absent Days"
+          value={analytics.absentDays}
+          icon={XCircle}
+        />
+        <StatCard
+          title="Completed Tasks"
+          value={analytics.completedTasks}
+          icon={CalendarDays}
+        />
+        <StatCard
+          title="Pending Tasks"
+          value={analytics.pendingTasks}
+          icon={Clock}
+        />
+      </div>
+
       <Tabs defaultValue="attendance" className="space-y-4">
         <TabsList>
           <TabsTrigger value="attendance">Attendance Records</TabsTrigger>
@@ -96,13 +157,20 @@ const EmployeePerformance = () => {
         </TabsList>
 
         <TabsContent value="attendance" className="space-y-4">
-          <AttendanceTable showTodayOnly={false} userEmail={employee.email || ''} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Attendance Records - {currentMonth}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AttendanceTable showTodayOnly={false} userEmail={employee.email || ''} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="tasks" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Task Overview</CardTitle>
+              <CardTitle>Task Overview - {currentMonth}</CardTitle>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
@@ -129,7 +197,7 @@ const EmployeePerformance = () => {
                     </div>
                   ))}
                   {tasks.length === 0 && (
-                    <p className="text-center text-muted-foreground">No tasks assigned</p>
+                    <p className="text-center text-muted-foreground">No tasks assigned for this month</p>
                   )}
                 </div>
               </ScrollArea>
