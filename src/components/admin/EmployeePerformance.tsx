@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/employee/dashboard/StatCard";
 import { CalendarDays, CheckCircle2, Clock, XCircle } from "lucide-react";
-import { startOfMonth, endOfMonth, format, parseISO, getDay, getDaysInMonth } from "date-fns";
+import { startOfMonth, endOfMonth, format, parseISO, getDay, getDaysInMonth, isAfter, isSunday } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const EmployeePerformance = () => {
@@ -38,17 +38,14 @@ const EmployeePerformance = () => {
     return options;
   };
 
-  const calculateSundaysInMonth = (year: number, month: number) => {
-    const daysInMonth = getDaysInMonth(new Date(year, month - 1));
+  const calculateSundaysInMonth = (year: number, month: number, endDay: number) => {
     let sundays = 0;
-    
-    for (let day = 1; day <= daysInMonth; day++) {
+    for (let day = 1; day <= endDay; day++) {
       const date = new Date(year, month - 1, day);
-      if (getDay(date) === 0) { // 0 represents Sunday
+      if (isSunday(date)) {
         sundays++;
       }
     }
-    
     return sundays;
   };
 
@@ -70,6 +67,7 @@ const EmployeePerformance = () => {
           const selectedDate = new Date(parseInt(year), parseInt(month) - 1);
           const startDate = startOfMonth(selectedDate);
           const endDate = endOfMonth(selectedDate);
+          const today = new Date();
 
           // Fetch attendance logs
           const logs = await attendanceService.getAttendanceLogs();
@@ -80,11 +78,18 @@ const EmployeePerformance = () => {
           });
 
           // Calculate attendance analytics
-          const presentDays = monthLogs.filter(log => log.effectiveHours > 0).length; // Include both full and partial days
+          const presentDays = monthLogs.filter(log => log.effectiveHours > 0).length;
+          
+          // Calculate days to consider for absence (up to today or end of month)
           const daysInMonth = getDaysInMonth(selectedDate);
-          const sundaysCount = calculateSundaysInMonth(parseInt(year), parseInt(month));
+          const lastDayToConsider = isAfter(endDate, today) ? today.getDate() : daysInMonth;
+          
+          // Calculate Sundays up to the last day to consider
+          const sundaysCount = calculateSundaysInMonth(parseInt(year), parseInt(month), lastDayToConsider);
           const casualLeaveAllowance = 1; // One casual leave per month
-          const absentDays = Math.max(0, daysInMonth - presentDays - sundaysCount - casualLeaveAllowance);
+          
+          // Calculate absent days only up to today or end of month
+          const absentDays = Math.max(0, lastDayToConsider - presentDays - sundaysCount - casualLeaveAllowance);
 
           // Fetch month's tasks
           const { data: tasksData } = await supabase
