@@ -12,10 +12,6 @@ import { StatCard } from "@/components/employee/dashboard/StatCard";
 import { CalendarDays, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { startOfMonth, endOfMonth, format, parseISO, getDay, getDaysInMonth, isAfter, isSunday } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 const EmployeePerformance = () => {
   const { employeeId } = useParams();
@@ -28,16 +24,6 @@ const EmployeePerformance = () => {
     absentDays: 0,
     completedTasks: 0,
     pendingTasks: 0
-  });
-  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    date_of_birth: "",
-    fathers_name: "",
-    mothers_name: "",
-    address: "",
-    contact_number: "",
-    emergency_contact: ""
   });
 
   const getMonthOptions = () => {
@@ -140,44 +126,6 @@ const EmployeePerformance = () => {
     }
   }, [employeeId, selectedMonth]);
 
-  useEffect(() => {
-    const fetchLeaveRequests = async () => {
-      if (employeeId) {
-        const { data, error } = await supabase
-          .from('leave_requests')
-          .select('*')
-          .eq('employee_id', employeeId)
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching leave requests:', error);
-          return;
-        }
-        
-        setLeaveRequests(data || []);
-      }
-    };
-
-    fetchLeaveRequests();
-  }, [employeeId]);
-
-  const handleProfileUpdate = async () => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update(profileData)
-        .eq('id', employeeId);
-
-      if (error) throw error;
-
-      toast.success("Profile updated successfully");
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error("Failed to update profile");
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
@@ -257,8 +205,6 @@ const EmployeePerformance = () => {
         <TabsList>
           <TabsTrigger value="attendance">Attendance Records</TabsTrigger>
           <TabsTrigger value="tasks">Task Status</TabsTrigger>
-          <TabsTrigger value="leaves">Leave Requests</TabsTrigger>
-          <TabsTrigger value="profile">Profile Information</TabsTrigger>
         </TabsList>
 
         <TabsContent value="attendance" className="space-y-4">
@@ -310,128 +256,6 @@ const EmployeePerformance = () => {
                   )}
                 </div>
               </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="leaves" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Leave Requests History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-4">
-                  {leaveRequests.map((request) => (
-                    <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h4 className="font-medium">{request.type}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          From: {new Date(request.start_date).toLocaleDateString()}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          To: {new Date(request.end_date).toLocaleDateString()}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Reason: {request.reason}
-                        </p>
-                      </div>
-                      <Badge
-                        className={
-                          request.status === 'approved'
-                            ? 'bg-green-500'
-                            : request.status === 'rejected'
-                            ? 'bg-red-500'
-                            : 'bg-yellow-500'
-                        }
-                      >
-                        {request.status}
-                      </Badge>
-                    </div>
-                  ))}
-                  {leaveRequests.length === 0 && (
-                    <p className="text-center text-muted-foreground">No leave requests found</p>
-                  )}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="profile" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Personal Information</CardTitle>
-                {!isEditing && (
-                  <Button onClick={() => setIsEditing(true)}>Edit</Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="date_of_birth">Date of Birth</Label>
-                  <Input
-                    id="date_of_birth"
-                    type="date"
-                    value={profileData.date_of_birth}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, date_of_birth: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fathers_name">Father's Name</Label>
-                  <Input
-                    id="fathers_name"
-                    value={profileData.fathers_name}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, fathers_name: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="mothers_name">Mother's Name</Label>
-                  <Input
-                    id="mothers_name"
-                    value={profileData.mothers_name}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, mothers_name: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    value={profileData.address}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contact_number">Contact Number</Label>
-                  <Input
-                    id="contact_number"
-                    value={profileData.contact_number}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, contact_number: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="emergency_contact">Emergency Contact</Label>
-                  <Input
-                    id="emergency_contact"
-                    value={profileData.emergency_contact}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, emergency_contact: e.target.value }))}
-                    disabled={!isEditing}
-                  />
-                </div>
-              </div>
-              {isEditing && (
-                <div className="flex justify-end gap-4 mt-6">
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
-                  <Button onClick={handleProfileUpdate}>Save Changes</Button>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
