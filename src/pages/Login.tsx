@@ -22,22 +22,29 @@ const Login = () => {
       });
 
       if (error) {
-        if (error.status === 400) { // ✅ More reliable error check
-          toast.error("Login failed", {
-            description: "Invalid email or password. Please try again.",
-          });
-        } else {
-          toast.error("Login failed", {
-            description: error.message,
-          });
-        }
+        toast.error("Login failed", {
+          description: "Invalid email or password. Please try again.",
+        });
         return;
       }
 
       if (data.user) {
-        // ✅ Get role directly from user metadata (faster)
-        const role = data.user.user_metadata?.role;
-        if (role === "admin") {
+        // Fetch user profile to get role
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (profileError) {
+          toast.error("Login failed", {
+            description: "Failed to fetch user profile. Try again later.",
+          });
+          return;
+        }
+
+        // Route based on user role
+        if (profileData?.role === 'admin') {
           navigate("/admin");
         } else {
           navigate("/employee");
@@ -50,7 +57,7 @@ const Login = () => {
     } catch (error) {
       console.error('Error:', error);
       toast.error("Login failed", {
-        description: error instanceof Error ? error.message : "Please check your credentials and try again",
+        description: "An unexpected error occurred. Please try again.",
       });
     } finally {
       setIsLoading(false);
