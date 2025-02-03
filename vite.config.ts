@@ -10,7 +10,8 @@ export default defineConfig(({ mode }) => ({
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE',
-      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization, apikey',
+      'Access-Control-Expose-Headers': 'Content-Range, X-Content-Range',
       'Content-Type': 'application/json',
     },
   },
