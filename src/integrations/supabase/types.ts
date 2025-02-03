@@ -131,30 +131,48 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
+          contact_number: string | null
+          date_of_birth: string | null
           designation: string | null
           email: string | null
+          emergency_contact: string | null
           employee_id: string | null
+          fathers_name: string | null
           id: string
+          mothers_name: string | null
           name: string | null
           password: string | null
           profile_photo: string | null
           role: string | null
         }
         Insert: {
+          address?: string | null
+          contact_number?: string | null
+          date_of_birth?: string | null
           designation?: string | null
           email?: string | null
+          emergency_contact?: string | null
           employee_id?: string | null
+          fathers_name?: string | null
           id: string
+          mothers_name?: string | null
           name?: string | null
           password?: string | null
           profile_photo?: string | null
           role?: string | null
         }
         Update: {
+          address?: string | null
+          contact_number?: string | null
+          date_of_birth?: string | null
           designation?: string | null
           email?: string | null
+          emergency_contact?: string | null
           employee_id?: string | null
+          fathers_name?: string | null
           id?: string
+          mothers_name?: string | null
           name?: string | null
           password?: string | null
           profile_photo?: string | null
