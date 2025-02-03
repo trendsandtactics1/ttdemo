@@ -16,36 +16,15 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // First check if the user exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email)
-        .single();
-
-      if (!existingUser) {
-        toast.error("Login failed", {
-          description: "No account found with this email. Please check your credentials.",
-        });
-        setIsLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          toast.error("Login failed", {
-            description: "Invalid email or password. Please try again.",
-          });
-        } else {
-          toast.error("Login failed", {
-            description: error.message,
-          });
-        }
+        toast.error("Login failed", {
+          description: "Invalid email or password. Please try again.",
+        });
         return;
       }
 
@@ -54,10 +33,15 @@ const Login = () => {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('role')
-          .eq('id', data.user.id)
+          .eq('user_id', data.user.id)
           .single();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          toast.error("Login failed", {
+            description: "Failed to fetch user profile. Try again later.",
+          });
+          return;
+        }
 
         // Route based on user role
         if (profileData?.role === 'admin') {
@@ -73,7 +57,7 @@ const Login = () => {
     } catch (error) {
       console.error('Error:', error);
       toast.error("Login failed", {
-        description: error instanceof Error ? error.message : "Please check your credentials and try again",
+        description: "An unexpected error occurred. Please try again.",
       });
     } finally {
       setIsLoading(false);
