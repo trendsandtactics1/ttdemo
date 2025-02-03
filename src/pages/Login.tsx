@@ -16,28 +16,13 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // First check if the user exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', email)
-        .single();
-
-      if (!existingUser) {
-        toast.error("Login failed", {
-          description: "No account found with this email. Please check your credentials.",
-        });
-        setIsLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
+        if (error.status === 400) { // ✅ More reliable error check
           toast.error("Login failed", {
             description: "Invalid email or password. Please try again.",
           });
@@ -50,17 +35,9 @@ const Login = () => {
       }
 
       if (data.user) {
-        // Fetch user profile to get role
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        // Route based on user role
-        if (profileData?.role === 'admin') {
+        // ✅ Get role directly from user metadata (faster)
+        const role = data.user.user_metadata?.role;
+        if (role === "admin") {
           navigate("/admin");
         } else {
           navigate("/employee");
