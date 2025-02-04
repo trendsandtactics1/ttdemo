@@ -9,13 +9,15 @@ import AttendanceTable from "./AttendanceTable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/employee/dashboard/StatCard";
-import { CalendarDays, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Download, XCircle } from "lucide-react";
 import { startOfMonth, endOfMonth, format, parseISO, getDay, getDaysInMonth, isAfter, isSunday } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const EmployeePerformance = () => {
   const { employeeId } = useParams();
@@ -178,6 +180,65 @@ const EmployeePerformance = () => {
     }
   };
 
+  const generatePDF = () => {
+    if (!employee) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+
+    // Add title
+    doc.setFontSize(16);
+    doc.text(`Performance Report - ${employee.name}`, pageWidth / 2, 15, { align: 'center' });
+    doc.setFontSize(12);
+    doc.text(`Month: ${format(parseISO(`${selectedMonth}-01`), 'MMMM yyyy')}`, pageWidth / 2, 25, { align: 'center' });
+
+    // Add employee details
+    doc.text(`Employee ID: ${employee.employee_id}`, 20, 35);
+    doc.text(`Designation: ${employee.designation}`, 20, 42);
+
+    // Add performance summary
+    doc.text('Performance Summary:', 20, 55);
+    doc.text(`Present Days: ${analytics.presentDays}`, 30, 62);
+    doc.text(`Absent Days: ${analytics.absentDays}`, 30, 69);
+    doc.text(`Completed Tasks: ${analytics.completedTasks}`, 30, 76);
+    doc.text(`Pending Tasks: ${analytics.pendingTasks}`, 30, 83);
+
+    // Add attendance table
+    doc.text('Attendance Records:', 20, 100);
+    const attendanceData = tasks.map(task => [
+      format(new Date(task.created_at || ''), 'MMM dd, yyyy'),
+      task.title,
+      task.status,
+      format(new Date(task.due_date || ''), 'MMM dd, yyyy')
+    ]);
+
+    autoTable(doc, {
+      startY: 105,
+      head: [['Date', 'Task', 'Status', 'Due Date']],
+      body: attendanceData,
+    });
+
+    // Add tasks table
+    doc.addPage();
+    doc.text('Tasks Overview:', 20, 20);
+    const tasksData = tasks.map(task => [
+      task.title,
+      task.status,
+      format(new Date(task.due_date || ''), 'MMM dd, yyyy')
+    ]);
+
+    autoTable(doc, {
+      startY: 25,
+      head: [['Task Title', 'Status', 'Due Date']],
+      body: tasksData,
+    });
+
+    // Save the PDF
+    const fileName = `${employee.name}_performance_report_${selectedMonth}.pdf`;
+    doc.save(fileName);
+    toast.success("Report downloaded successfully");
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
@@ -194,21 +255,30 @@ const EmployeePerformance = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Employee Performance</h2>
-        <Select
-          value={selectedMonth}
-          onValueChange={setSelectedMonth}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select month" />
-          </SelectTrigger>
-          <SelectContent>
-            {getMonthOptions().map(option => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-4">
+          <Select
+            value={selectedMonth}
+            onValueChange={setSelectedMonth}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select month" />
+            </SelectTrigger>
+            <SelectContent>
+              {getMonthOptions().map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button 
+            onClick={generatePDF}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Download Report
+          </Button>
+        </div>
       </div>
 
       <Card>
