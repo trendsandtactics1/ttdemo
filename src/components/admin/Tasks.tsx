@@ -39,22 +39,23 @@ const Tasks = () => {
         .order('created_at', { ascending: sortOrder === 'asc' });
 
       if (error) throw error;
-      console.log('Fetched tasks:', data);
       return data;
     }
   });
 
+  // Add real-time subscription for tasks
   useEffect(() => {
     const channel = supabase
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'tasks'
         },
         () => {
+          // Invalidate and refetch tasks when any change occurs
           queryClient.invalidateQueries({ queryKey: ['admin-tasks'] });
         }
       )
