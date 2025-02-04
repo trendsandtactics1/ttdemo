@@ -54,8 +54,8 @@ const Tasks = () => {
           schema: 'public',
           table: 'tasks'
         },
-        () => {
-          // Invalidate and refetch tasks when any change occurs
+        (payload) => {
+          console.log('Real-time update received:', payload);
           queryClient.invalidateQueries({ queryKey: ['admin-tasks'] });
         }
       )

@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import type { User } from "@/types/user";
 
 const Payroll = () => {
@@ -32,6 +36,50 @@ const Payroll = () => {
 
     fetchEmployees();
   }, []);
+
+  const generatePerformanceReport = async (employee: User) => {
+    try {
+      // Fetch tasks for the employee
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('assigned_to', employee.id)
+        .gte('created_at', new Date(new Date().setDate(1)).toISOString()) // Start of current month
+        .lte('created_at', new Date().toISOString()); // Current date
+
+      // Create PDF document
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text(`Performance Report - ${employee.name}`, 14, 15);
+      doc.setFontSize(12);
+      doc.text(`Month: ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}`, 14, 25);
+      
+      // Add employee details
+      doc.text(`Employee ID: ${employee.employee_id || 'N/A'}`, 14, 35);
+      doc.text(`Designation: ${employee.designation || 'N/A'}`, 14, 45);
+      
+      // Add tasks table
+      const taskData = tasks?.map(task => [
+        task.title,
+        task.status,
+        new Date(task.due_date).toLocaleDateString(),
+        task.description || 'N/A'
+      ]) || [];
+
+      autoTable(doc, {
+        head: [['Task Title', 'Status', 'Due Date', 'Description']],
+        body: taskData,
+        startY: 60,
+      });
+
+      // Save PDF
+      doc.save(`${employee.name}_performance_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
 
   const filteredEmployees = employees.filter((employee) =>
     employee.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -73,7 +121,6 @@ const Payroll = () => {
                 <Card
                   key={employee.id}
                   className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => navigate(`/admin/payroll/${employee.id}`)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-4">
@@ -90,10 +137,28 @@ const Payroll = () => {
                           </span>
                         </div>
                       )}
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-medium">{employee.name}</h3>
                         <p className="text-sm text-muted-foreground">{employee.designation}</p>
                         <p className="text-sm text-muted-foreground">ID: {employee.employee_id}</p>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/admin/payroll/${employee.id}`)}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => generatePerformanceReport(employee)}
+                          className="flex items-center gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download Report
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
