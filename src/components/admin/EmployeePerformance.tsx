@@ -203,40 +203,60 @@ const EmployeePerformance = () => {
     doc.text(`Completed Tasks: ${analytics.completedTasks}`, 30, 76);
     doc.text(`Pending Tasks: ${analytics.pendingTasks}`, 30, 83);
 
-    // Add attendance table
-    doc.text('Attendance Records:', 20, 100);
-    const attendanceData = tasks.map(task => [
-      format(new Date(task.created_at || ''), 'MMM dd, yyyy'),
-      task.title,
-      task.status,
-      format(new Date(task.due_date || ''), 'MMM dd, yyyy')
-    ]);
+    // Fetch attendance logs for the selected month
+    attendanceService.getAttendanceLogs().then((logs) => {
+      const [year, month] = selectedMonth.split('-');
+      const selectedDate = new Date(parseInt(year), parseInt(month) - 1);
+      const startDate = startOfMonth(selectedDate);
+      const endDate = endOfMonth(selectedDate);
 
-    autoTable(doc, {
-      startY: 105,
-      head: [['Date', 'Task', 'Status', 'Due Date']],
-      body: attendanceData,
+      const monthLogs = logs.filter(log => {
+        const logDate = new Date(log.date);
+        return logDate >= startDate && 
+               logDate <= endDate && 
+               log.email?.toLowerCase() === employee.email?.toLowerCase();
+      });
+
+      // Add attendance table
+      doc.text('Attendance Records:', 20, 100);
+      const attendanceData = monthLogs.map(log => [
+        format(new Date(log.date), 'MMM dd, yyyy'),
+        format(new Date(log.checkIn), 'hh:mm a'),
+        format(new Date(log.checkOut), 'hh:mm a'),
+        `${log.effectiveHours} hours`,
+        log.effectiveHours >= 8 ? 'Full Day' : log.effectiveHours > 0 ? 'Partial Day' : 'Absent'
+      ]);
+
+      autoTable(doc, {
+        startY: 105,
+        head: [['Date', 'Check In', 'Check Out', 'Hours Worked', 'Status']],
+        body: attendanceData,
+      });
+
+      // Add tasks table
+      doc.addPage();
+      doc.text('Tasks Overview:', 20, 20);
+      const tasksData = tasks.map(task => [
+        task.title,
+        task.description || 'N/A',
+        task.status,
+        format(new Date(task.due_date || ''), 'MMM dd, yyyy')
+      ]);
+
+      autoTable(doc, {
+        startY: 25,
+        head: [['Task Title', 'Description', 'Status', 'Due Date']],
+        body: tasksData,
+      });
+
+      // Save the PDF
+      const fileName = `${employee.name}_performance_report_${selectedMonth}.pdf`;
+      doc.save(fileName);
+      toast.success("Report downloaded successfully");
+    }).catch(error => {
+      console.error('Error generating PDF:', error);
+      toast.error("Failed to generate report");
     });
-
-    // Add tasks table
-    doc.addPage();
-    doc.text('Tasks Overview:', 20, 20);
-    const tasksData = tasks.map(task => [
-      task.title,
-      task.status,
-      format(new Date(task.due_date || ''), 'MMM dd, yyyy')
-    ]);
-
-    autoTable(doc, {
-      startY: 25,
-      head: [['Task Title', 'Status', 'Due Date']],
-      body: tasksData,
-    });
-
-    // Save the PDF
-    const fileName = `${employee.name}_performance_report_${selectedMonth}.pdf`;
-    doc.save(fileName);
-    toast.success("Report downloaded successfully");
   };
 
   if (loading) {
