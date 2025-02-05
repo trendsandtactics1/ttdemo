@@ -50,9 +50,9 @@ const Payroll = () => {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="space-y-6 p-2 sm:p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Payroll Management</h2>
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Payroll Management</h2>
       </div>
 
       <div className="flex items-center space-x-2">
@@ -60,7 +60,7 @@ const Payroll = () => {
           placeholder="Search employees..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
+          className="w-full sm:max-w-sm"
         />
       </div>
 
@@ -69,16 +69,16 @@ const Payroll = () => {
           <CardTitle>Employee List</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[600px] w-full">
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <ScrollArea className="h-[calc(100vh-300px)] w-full">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {filteredEmployees.map((employee) => (
                 <Card
                   key={employee.id}
                   className="cursor-pointer hover:shadow-lg transition-shadow"
                   onClick={() => navigate(`/admin/payroll/${employee.id}`)}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-4">
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                       {employee.profile_photo ? (
                         <img
                           src={employee.profile_photo}
@@ -86,16 +86,16 @@ const Payroll = () => {
                           className="h-12 w-12 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
                           <span className="text-xl font-medium text-gray-600">
                             {employee.name?.charAt(0)}
                           </span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">{employee.name}</h3>
+                        <h3 className="font-medium text-base sm:text-lg truncate">{employee.name}</h3>
                         <p className="text-sm text-muted-foreground truncate">{employee.designation}</p>
-                        <p className="text-sm text-muted-foreground truncate">ID: {employee.employee_id}</p>
+                        <p className="text-sm text-muted-foreground truncate mt-1">ID: {employee.employee_id}</p>
                       </div>
                     </div>
                   </CardContent>

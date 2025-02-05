@@ -63,10 +63,23 @@
     width: 95%;
     max-height: 90vh;
     margin: 0 auto;
+    padding: 1rem;
   }
   
   .form-container {
     padding: 1rem;
+  }
+
+  .table-wrapper {
+    margin: 0 -1rem;
+  }
+
+  .task-card {
+    padding: 0.75rem;
+  }
+
+  .employee-card {
+    margin: 0.5rem 0;
   }
 }
 
@@ -97,6 +110,27 @@
   p {
     font-size: 0.875rem;
   }
+
+  .mobile-stack {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mobile-full-width {
+    width: 100%;
+  }
+
+  .mobile-padding {
+    padding: 0.75rem;
+  }
+
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+
+  .mobile-gap {
+    gap: 0.5rem;
+  }
 }
 
 /* Responsive table adjustments */
@@ -104,10 +138,18 @@
   .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    margin: 0 -1rem;
+    padding: 0 1rem;
   }
   
   table {
     min-width: 100%;
+    font-size: 0.875rem;
+  }
+
+  td, th {
+    padding: 0.5rem;
+    white-space: nowrap;
   }
 }
 
@@ -116,12 +158,50 @@
   input,
   select,
   textarea {
-    font-size: 16px !important; /* Prevents zoom on iOS */
+    font-size: 16px !important;
     width: 100%;
+    margin-bottom: 0.5rem;
   }
   
   button {
     width: 100%;
     margin: 0.5rem 0;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Card responsiveness */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  padding: 0.5rem;
+}
+
+.card-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1rem;
+}
+
+/* Improved spacing for mobile */
+@media (max-width: 640px) {
+  .space-y-mobile > * + * {
+    margin-top: 0.75rem;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+    padding: 0.5rem;
+  }
+
+  .mobile-scroll {
+    max-height: 70vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
