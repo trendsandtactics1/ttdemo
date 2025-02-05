@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@/types/user";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 
 const Payroll = () => {
   const [employees, setEmployees] = useState<User[]>([]);
@@ -48,9 +50,9 @@ const Payroll = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Payroll Management</h2>
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Payroll Management</h2>
       </div>
 
       <div className="flex items-center space-x-2">
@@ -67,8 +69,8 @@ const Payroll = () => {
           <CardTitle>Employee List</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[600px]">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <ScrollArea className="h-[600px] w-full">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {filteredEmployees.map((employee) => (
                 <Card
                   key={employee.id}
@@ -90,17 +92,17 @@ const Payroll = () => {
                           </span>
                         </div>
                       )}
-                      <div className="flex-1">
-                        <h3 className="font-medium">{employee.name}</h3>
-                        <p className="text-sm text-muted-foreground">{employee.designation}</p>
-                        <p className="text-sm text-muted-foreground">ID: {employee.employee_id}</p>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate">{employee.name}</h3>
+                        <p className="text-sm text-muted-foreground truncate">{employee.designation}</p>
+                        <p className="text-sm text-muted-foreground truncate">ID: {employee.employee_id}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
               {filteredEmployees.length === 0 && (
-                <p className="text-center text-muted-foreground col-span-full">No employees found</p>
+                <p className="text-center text-muted-foreground col-span-full p-4">No employees found</p>
               )}
             </div>
           </ScrollArea>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { attendanceService } from "@/services/attendanceService";
 import { Badge } from "@/components/ui/badge";
 import { format, parseISO } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface AttendanceTableProps {
   showTodayOnly?: boolean;
@@ -83,7 +85,42 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail }: At
   }
 
   if (attendanceLogs.length === 0) {
-    return <div className="text-center text-gray-500">No attendance records found.</div>;
+    return <div className="text-center text-gray-500 p-4">No attendance records found.</div>;
+  }
+
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {attendanceLogs.map((log, index) => (
+          <Card key={index} className="w-full">
+            <CardContent className="p-4 space-y-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="font-medium">{formatDate(log.date)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Check In: {formatTime(log.checkIn)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Check Out: {formatTime(log.checkOut)}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  {getAttendanceStatus(log.effectiveHours)}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onViewDetails(log)}
+                    className="px-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -92,22 +129,20 @@ const AttendanceTable = ({ showTodayOnly = false, onViewDetails, userEmail }: At
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
-            {!isMobile && <TableHead>Employee ID</TableHead>}
             <TableHead>Check In</TableHead>
             <TableHead>Check Out</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {attendanceLogs.map((log, index) => (
             <TableRow key={index}>
               <TableCell>{formatDate(log.date)}</TableCell>
-              {!isMobile && <TableCell>{log.employeeId}</TableCell>}
               <TableCell>{formatTime(log.checkIn)}</TableCell>
               <TableCell>{formatTime(log.checkOut)}</TableCell>
               <TableCell>{getAttendanceStatus(log.effectiveHours)}</TableCell>
-              <TableCell>
+              <TableCell className="text-right">
                 <Button
                   variant="ghost"
                   size="sm"

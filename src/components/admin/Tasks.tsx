@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import CreateTaskModal from "./CreateTaskModal";
@@ -43,14 +44,13 @@ const Tasks = () => {
     }
   });
 
-  // Add real-time subscription for tasks
   useEffect(() => {
     const channel = supabase
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'tasks'
         },
@@ -75,13 +75,17 @@ const Tasks = () => {
   });
 
   if (isLoading) {
-    return <div>Loading tasks...</div>;
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-3xl font-bold tracking-tight">Tasks</h2>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Tasks</h2>
         <CreateTaskModal />
       </div>
 
