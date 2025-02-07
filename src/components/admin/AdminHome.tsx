@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CheckCircle, XCircle, ClipboardList } from "lucide-react";
@@ -5,12 +6,13 @@ import { attendanceService } from "@/services/attendanceService";
 import { supabase } from "@/integrations/supabase/client";
 import AttendanceTable from "./AttendanceTable";
 import { AttendanceRecord } from "@/services/attendance/types";
+import { useQuery } from "@tanstack/react-query";
 
 const AdminHome = () => {
   const [stats, setStats] = useState([
     {
       title: "Total Employees",
-      value: "10",
+      value: "0",
       icon: Users,
       description: "Active employees",
     },
@@ -34,6 +36,23 @@ const AdminHome = () => {
     },
   ]);
 
+  // Fetch employee count using React Query
+  const { data: employeeCount = 0 } = useQuery({
+    queryKey: ['employeeCount'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) {
+        console.error('Error fetching employee count:', error);
+        return 0;
+      }
+      
+      return count || 0;
+    }
+  });
+
   useEffect(() => {
     const updateStats = async () => {
       // Get pending tasks count from Supabase
@@ -43,7 +62,6 @@ const AdminHome = () => {
         .eq('status', 'pending');
       
       const pendingTasks = tasks?.length || 0;
-      const totalEmployees = 10; // Constant value as requested
 
       // Get today's date in YYYY-MM-DD format
       const today = new Date().toISOString().split('T')[0];
@@ -53,13 +71,13 @@ const AdminHome = () => {
       const todayAttendance = allAttendanceLogs.filter(log => log.date === today);
       const presentToday = todayAttendance.length;
       
-      // Calculate absent count
-      const absentToday = totalEmployees - presentToday;
+      // Calculate absent count using the actual employee count
+      const absentToday = employeeCount - presentToday;
       
       setStats([
         {
           title: "Total Employees",
-          value: totalEmployees.toString(),
+          value: employeeCount.toString(),
           icon: Users,
           description: "Active employees",
         },
@@ -67,13 +85,13 @@ const AdminHome = () => {
           title: "Present Today",
           value: presentToday.toString(),
           icon: CheckCircle,
-          description: `${Math.round((presentToday/totalEmployees) * 100)}% attendance`,
+          description: `${Math.round((presentToday/employeeCount) * 100)}% attendance`,
         },
         {
           title: "Absent Today",
           value: absentToday.toString(),
           icon: XCircle,
-          description: `${Math.round((absentToday/totalEmployees) * 100)}% absence rate`,
+          description: `${Math.round((absentToday/employeeCount) * 100)}% absence rate`,
         },
         {
           title: "Pending Tasks",
@@ -105,7 +123,7 @@ const AdminHome = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [employeeCount]);
 
   const handleViewDetails = (log: AttendanceRecord) => {
     console.log("Viewing details for:", log);
