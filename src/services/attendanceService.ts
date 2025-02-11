@@ -5,7 +5,7 @@ import { processAttendanceLogs } from './attendance/processor';
 // Constants for local storage keys
 const SCRIPT_URL_KEY = 'attendance_script_url';
 const SHEET_ID_KEY = 'attendance_sheet_id';
-const DEFAULT_SHEET_ID = '1_s2NILKubSewIlRgLPXypfGw7p5BwxZtrUjRURA4NdA';
+const DEFAULT_SHEET_ID = '1-2ohE0iAjfdBEetKg2RMZr9Hmilkh1IHLii8vh_wOAY';
 
 const fetchCheckInLogs = async (): Promise<CheckInLog[]> => {
   try {
