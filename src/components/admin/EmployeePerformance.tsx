@@ -108,7 +108,7 @@ const EmployeePerformance = () => {
 
       const { error } = await supabase
         .from("profiles")
-        .upsert({
+        .update({
           name: formData.name,
           email: formData.email,
           date_of_birth: formData.date_of_birth,
@@ -376,6 +376,10 @@ const EmployeePerformance = () => {
                   <div className="space-y-2">
                     <Label htmlFor="emergency_contact">Emergency Contact</Label>
                     <Input id="emergency_contact" name="emergency_contact" defaultValue={employee.emergency_contact || ''} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="date_of_joining">Contact Number</Label>
+                    <Input id="date_of_joining" name="contact_number" defaultValue={employee.date_of_joiningr || ''} />
                   </div>
                 </div>
                 <Button type="submit">Update Personal Information</Button>
