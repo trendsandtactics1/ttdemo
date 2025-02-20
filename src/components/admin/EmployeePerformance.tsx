@@ -378,7 +378,7 @@ const EmployeePerformance = () => {
                     <Input id="emergency_contact" name="emergency_contact" defaultValue={employee.emergency_contact || ''} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="date_of_joining">date_of_joining</Label>
+                    <Label htmlFor="date_of_joining">Date Of Joining</Label>
                     <Input id="date_of_joining" name="date_of_joining" defaultValue={employee.date_of_joiningr || ''} />
                   </div>
                 </div>
