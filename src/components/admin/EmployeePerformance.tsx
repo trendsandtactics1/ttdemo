@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
@@ -30,19 +31,9 @@ const EmployeePerformance = () => {
     fetchEmployeeData();
   }, [employeeId]);
 
-  const handleError = (error: any, customMessage: string) => {
-    console.error(`Error: ${customMessage}`, error);
-    toast({
-      title: "Error",
-      description: error.message || customMessage,
-      variant: "destructive",
-    });
-  };
-
   const fetchEmployeeData = async () => {
     try {
       if (!employeeId) return;
-      setLoading(true);
       
       const { data: employeeData, error: employeeError } = await supabase
         .from("profiles")
@@ -61,98 +52,73 @@ const EmployeePerformance = () => {
           fetchDocuments(),
         ]);
       }
+      setLoading(false);
     } catch (error) {
-      handleError(error, "Failed to fetch employee data");
-    } finally {
+      console.error("Error fetching employee:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch employee data",
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
 
   const fetchBankInfo = async () => {
-    try {
-      if (!employeeId) return;
-      const { data, error } = await supabase
-        .from("bank_information")
-        .select("*")
-        .eq("employee_id", employeeId)
-        .single();
-      
-      if (error) throw error;
-      setBankInfo(data);
-    } catch (error) {
-      handleError(error, "Failed to fetch bank information");
-    }
+    if (!employeeId) return;
+    const { data } = await supabase
+      .from("bank_information")
+      .select("*")
+      .eq("employee_id", employeeId)
+      .single();
+    setBankInfo(data);
   };
 
   const fetchExperiences = async () => {
-    try {
-      if (!employeeId) return;
-      const { data, error } = await supabase
-        .from("professional_experience")
-        .select("*")
-        .eq("employee_id", employeeId)
-        .order('start_date', { ascending: false });
-      
-      if (error) throw error;
-      setExperiences(data || []);
-    } catch (error) {
-      handleError(error, "Failed to fetch professional experiences");
-    }
+    if (!employeeId) return;
+    const { data } = await supabase
+      .from("professional_experience")
+      .select("*")
+      .eq("employee_id", employeeId);
+    setExperiences(data || []);
   };
 
   const fetchSalaryInfo = async () => {
-    try {
-      if (!employeeId) return;
-      const { data, error } = await supabase
-        .from("salary_information")
-        .select("*")
-        .eq("employee_id", employeeId)
-        .single();
-      
-      if (error) throw error;
-      setSalaryInfo(data);
-    } catch (error) {
-      handleError(error, "Failed to fetch salary information");
-    }
+    if (!employeeId) return;
+    const { data } = await supabase
+      .from("salary_information")
+      .select("*")
+      .eq("employee_id", employeeId)
+      .single();
+    setSalaryInfo(data);
   };
 
   const fetchDocuments = async () => {
-    try {
-      if (!employeeId) return;
-      const { data, error } = await supabase
-        .from("employee_documents")
-        .select("*")
-        .eq("employee_id", employeeId)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      setDocuments(data || []);
-    } catch (error) {
-      handleError(error, "Failed to fetch documents");
-    }
+    if (!employeeId) return;
+    const { data } = await supabase
+      .from("employee_documents")
+      .select("*")
+      .eq("employee_id", employeeId);
+    setDocuments(data || []);
   };
 
   const updatePersonalInfo = async (formData: any) => {
     try {
       if (!employeeId) return;
 
-      const profileData = {
-        id: employeeId,
-        name: formData.name,
-        email: formData.email,
-        date_of_birth: formData.date_of_birth,
-        fathers_name: formData.fathers_name,
-        mothers_name: formData.mothers_name,
-        address: formData.address,
-        contact_number: formData.contact_number,
-        emergency_contact: formData.emergency_contact,
-        date_of_joining: formData.date_of_joining,
-        updated_at: new Date().toISOString(),
-      };
-
       const { error } = await supabase
         .from("profiles")
-        .update(profileData)
+        .upsert({
+          name: formData.name,
+          email: formData.email,
+          date_of_birth: formData.date_of_birth,
+          fathers_name: formData.fathers_name,
+          mothers_name: formData.mothers_name,
+          address: formData.address,
+          contact_number: formData.contact_number,
+          emergency_contact: formData.emergency_contact,
+          date_of_joining: formData.date_of_joining,
+        })
         .eq("id", employeeId);
 
       if (error) throw error;
@@ -164,7 +130,12 @@ const EmployeePerformance = () => {
       
       await fetchEmployeeData();
     } catch (error) {
-      handleError(error, "Failed to update personal information");
+      console.error("Error updating personal info:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update personal information",
+        variant: "destructive",
+      });
     }
   };
 
@@ -172,20 +143,17 @@ const EmployeePerformance = () => {
     try {
       if (!employeeId) return;
 
-      const bankData = {
-        employee_id: employeeId,
-        bank_name: formData.bank_name,
-        branch_name: formData.branch_name,
-        account_number: formData.account_number,
-        ifsc_code: formData.ifsc_code,
-        account_type: formData.account_type,
-        bank_address: formData.bank_address,
-        updated_at: new Date().toISOString(),
-      };
-
       const { error } = await supabase
         .from("bank_information")
-        .upsert(bankData, { onConflict: 'employee_id' });
+        .upsert({
+          employee_id: employeeId,
+          bank_name: formData.bank_name,
+          branch_name: formData.branch_name,
+          account_number: formData.account_number,
+          ifsc_code: formData.ifsc_code,
+          account_type: formData.account_type,
+          bank_address: formData.bank_address,
+        });
 
       if (error) throw error;
 
@@ -196,7 +164,12 @@ const EmployeePerformance = () => {
       
       await fetchBankInfo();
     } catch (error) {
-      handleError(error, "Failed to update bank information");
+      console.error("Error updating bank info:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update bank information",
+        variant: "destructive",
+      });
     }
   };
 
@@ -204,19 +177,16 @@ const EmployeePerformance = () => {
     try {
       if (!employeeId) return;
 
-      const experienceData = {
-        employee_id: employeeId,
-        company_name: formData.company_name,
-        position: formData.position,
-        start_date: formData.start_date,
-        end_date: formData.end_date || null,
-        responsibilities: formData.responsibilities,
-        created_at: new Date().toISOString(),
-      };
-
       const { error } = await supabase
         .from("professional_experience")
-        .insert([experienceData]);
+        .insert({
+          employee_id: employeeId,
+          company_name: formData.company_name,
+          position: formData.position,
+          start_date: formData.start_date,
+          end_date: formData.end_date || null,
+          responsibilities: formData.responsibilities,
+        });
 
       if (error) throw error;
 
@@ -227,7 +197,12 @@ const EmployeePerformance = () => {
       
       await fetchExperiences();
     } catch (error) {
-      handleError(error, "Failed to add professional experience");
+      console.error("Error adding experience:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add professional experience",
+        variant: "destructive",
+      });
     }
   };
 
@@ -247,7 +222,12 @@ const EmployeePerformance = () => {
       
       await fetchExperiences();
     } catch (error) {
-      handleError(error, "Failed to delete experience");
+      console.error("Error deleting experience:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete experience",
+        variant: "destructive",
+      });
     }
   };
 
@@ -256,7 +236,7 @@ const EmployeePerformance = () => {
       if (!employeeId) return;
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${name.replace(/\s+/g, '_')}.${fileExt}`;
+      const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${employeeId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -273,7 +253,6 @@ const EmployeePerformance = () => {
           document_type: type,
           file_path: filePath,
           uploaded_by: employeeId,
-          created_at: new Date().toISOString(),
         });
 
       if (dbError) throw dbError;
@@ -285,35 +264,12 @@ const EmployeePerformance = () => {
       
       await fetchDocuments();
     } catch (error) {
-      handleError(error, "Failed to upload document");
-    }
-  };
-
-  const deleteDocument = async (docId: string, filePath: string) => {
-    try {
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('employee-documents')
-        .remove([filePath]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('employee_documents')
-        .delete()
-        .eq('id', docId);
-
-      if (dbError) throw dbError;
-
+      console.error("Error uploading document:", error);
       toast({
-        title: "Success",
-        description: "Document deleted successfully",
+        title: "Error",
+        description: "Failed to upload document",
+        variant: "destructive",
       });
-      
-      await fetchDocuments();
-    } catch (error) {
-      handleError(error, "Failed to delete document");
     }
   };
 
@@ -321,18 +277,15 @@ const EmployeePerformance = () => {
     try {
       if (!employeeId) return;
 
-      const salaryData = {
-        employee_id: employeeId,
-        gross_salary: parseFloat(formData.gross_salary),
-        epf_percentage: formData.epf_percentage ? parseFloat(formData.epf_percentage) : null,
-        net_pay: formData.net_pay ? parseFloat(formData.net_pay) : null,
-        total_deduction: formData.total_deduction ? parseFloat(formData.total_deduction) : null,
-        updated_at: new Date().toISOString(),
-      };
-
       const { error } = await supabase
         .from("salary_information")
-        .upsert(salaryData, { onConflict: 'employee_id' });
+        .upsert({
+          employee_id: employeeId,
+          gross_salary: parseFloat(formData.gross_salary),
+          epf_percentage: formData.epf_percentage ? parseFloat(formData.epf_percentage) : null,
+          net_pay: formData.net_pay ? parseFloat(formData.net_pay) : null,
+          total_deduction: formData.total_deduction ? parseFloat(formData.total_deduction) : null,
+        });
 
       if (error) throw error;
 
@@ -343,7 +296,12 @@ const EmployeePerformance = () => {
       
       await fetchSalaryInfo();
     } catch (error) {
-      handleError(error, "Failed to update salary information");
+      console.error("Error updating salary info:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update salary information",
+        variant: "destructive",
+      });
     }
   };
 
@@ -389,15 +347,15 @@ const EmployeePerformance = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>
-                    <Input id="name" name="name" defaultValue={employee.name || ''} required />
+                    <Input id="name" name="name" defaultValue={employee.name || ''} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" defaultValue={employee.email || ''} required />
+                    <Input id="email" name="email" defaultValue={employee.email || ''} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="date_of_birth">Date of Birth</Label>
-                    <Input id="date_of_birth" name="date_of_birth" type="date" defaultValue={employee.date_of_birth || ''} required />
+                    <Input id="date_of_birth" name="date_of_birth" type="date" defaultValue={employee.date_of_birth || ''} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="fathers_name">Father's Name</Label>
@@ -413,15 +371,15 @@ const EmployeePerformance = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="contact_number">Contact Number</Label>
-                    <Input id="contact_number" name="contact_number" defaultValue={employee.contact_number || ''} required />
+                    <Input id="contact_number" name="contact_number" defaultValue={employee.contact_number || ''} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emergency_contact">Emergency Contact</Label>
                     <Input id="emergency_contact" name="emergency_contact" defaultValue={employee.emergency_contact || ''} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="date_of_joining">Date of Joining</Label>
-                    <Input id="date_of_joining" name="date_of_joining" type="date" defaultValue={employee.date_of_joining || ''} required />
+                    <Label htmlFor="date_of_joining">date_of_joining</Label>
+                    <Input id="date_of_joining" name="date_of_joining" defaultValue={employee.date_of_joiningr || ''} />
                   </div>
                 </div>
                 <Button type="submit">Update Personal Information</Button>
@@ -439,27 +397,29 @@ const EmployeePerformance = () => {
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                const data = Object.
-                 <div className="grid grid-cols-2 gap-4">
+                const data = Object.fromEntries(formData);
+                updateBankInfo(data);
+              }} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="bank_name">Bank Name</Label>
-                    <Input id="bank_name" name="bank_name" defaultValue={bankInfo?.bank_name || ''} required />
+                    <Input id="bank_name" name="bank_name" defaultValue={bankInfo?.bank_name || ''} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="branch_name">Branch Name</Label>
-                    <Input id="branch_name" name="branch_name" defaultValue={bankInfo?.branch_name || ''} required />
+                    <Input id="branch_name" name="branch_name" defaultValue={bankInfo?.branch_name || ''} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="account_number">Account Number</Label>
-                    <Input id="account_number" name="account_number" defaultValue={bankInfo?.account_number || ''} required />
+                    <Input id="account_number" name="account_number" defaultValue={bankInfo?.account_number || ''} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="ifsc_code">IFSC Code</Label>
-                    <Input id="ifsc_code" name="ifsc_code" defaultValue={bankInfo?.ifsc_code || ''} required />
+                    <Input id="ifsc_code" name="ifsc_code" defaultValue={bankInfo?.ifsc_code || ''} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="account_type">Account Type</Label>
-                    <Input id="account_type" name="account_type" defaultValue={bankInfo?.account_type || ''} required />
+                    <Input id="account_type" name="account_type" defaultValue={bankInfo?.account_type || ''} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="bank_address">Bank Address</Label>
@@ -583,36 +543,24 @@ const EmployeePerformance = () => {
               </form>
 
               <div className="mt-6 space-y-4">
-                {documents.map((doc) => (
+                {documents.map((doc: any) => (
                   <Card key={doc.id} className="p-4">
                     <div className="flex justify-between items-center">
                       <div>
                         <h3 className="font-semibold">{doc.document_name}</h3>
                         <p className="text-sm text-gray-600">{doc.document_type}</p>
-                        <p className="text-sm text-gray-500">
-                          Uploaded: {new Date(doc.created_at).toLocaleDateString()}
-                        </p>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="secondary"
-                          onClick={async () => {
-                            const { data } = await supabase.storage
-                              .from('employee-documents')
-                              .getPublicUrl(doc.file_path);
-                            window.open(data.publicUrl, '_blank');
-                          }}
-                        >
-                          Download
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => deleteDocument(doc.id, doc.file_path)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <Button
+                        variant="secondary"
+                        onClick={async () => {
+                          const { data } = await supabase.storage
+                            .from('employee-documents')
+                            .getPublicUrl(doc.file_path);
+                          window.open(data.publicUrl, '_blank');
+                        }}
+                      >
+                        Download
+                      </Button>
                     </div>
                   </Card>
                 ))}
@@ -641,7 +589,6 @@ const EmployeePerformance = () => {
                       name="gross_salary"
                       type="number"
                       defaultValue={salaryInfo?.gross_salary || ''}
-                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -669,7 +616,6 @@ const EmployeePerformance = () => {
                       name="net_pay"
                       type="number"
                       defaultValue={salaryInfo?.net_pay || ''}
-                      required
                     />
                   </div>
                 </div>
@@ -683,4 +629,4 @@ const EmployeePerformance = () => {
   );
 };
 
-export default EmployeePerformance; 
+export default EmployeePerformance;
