@@ -108,7 +108,7 @@ const EmployeePerformance = () => {
 
       const { error } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
           name: formData.name,
           email: formData.email,
           date_of_birth: formData.date_of_birth,
